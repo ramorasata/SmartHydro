@@ -1,4 +1,4 @@
-nome: Déploiement du site
+name: Déploiement du site
 
 on:
   push:
