@@ -1,0 +1,60 @@
+project:
+    type: website
+    output-dir: _site
+
+website:
+    title: "Johary - Ingénieur Hydraulicien"
+    description: "hydraulique urbaine, eau potable, AEP, assainissement, python, code, SIG"
+    favicon: static/avatar.jpg
+    
+# Barre de navigation
+navbar:
+    left:
+        - text: "Accueil"
+          href: index.qmd
+        - text: "Parcours"
+          href: parcours.qmd
+        - text: "Etude de cas"
+          href: etude-de-cas.qmd
+    right:
+        - icon: github
+          href: https://github.com/ramorasata
+        - icon: linkedin
+          href: https://www.linkedin.com/in/johariniaina-ramorasata
+        - text: "EN"
+          href: /en/index.qmd
+
+# Pied de page
+page-footer:
+    left: "© 2026 Johary - Ingénieur Hydraulicien"
+    right: "Conception par Johary Ramorasata"
+
+search: true
+
+open_graph:
+    title: "Johary - Ingénieur Hydraulicien"
+    image : static/avatar.jpg
+    locale: "fr_FR"
+
+format:
+    html:
+        theme:
+            light: flatly
+            dark: darkly
+        css: styles.css
+        toc: true
+        toc-depth: 3
+        toc-title: "Sommaire"
+        number-sections: false
+        smooth-scroll: true
+        code-fold: true
+        code-tools: true
+        code-copy: true
+        highlight-style: github
+
+execute:
+    freeze: auto
+    echo: true
+    warning: false
+    
+lang: fr
