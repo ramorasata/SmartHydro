@@ -1,0 +1,26 @@
+---
+title: "Johary RAMORASATA"
+subtitle : "Ingénieur Hydraulicien – Eau potable et assainissement"
+image : static/avatar.jpg
+about:
+    template: trestles
+    links:
+        - icon: linkedin
+          text: LinkedIn
+          url: "https://www.linkedin.com/in/johariniaina-ramorasata/"
+        
+        - icon: github
+          text: GitHub
+          url: "https://github.com/ramorasata"
+
+---
+
+Ingénieur hydraulicien spécialisé dans les domaines de l'eau potable et de l'assainissement. Mon expertise inclut la modélisation hydraulique, la planification de réseaux d'eau, et la gestion de projets complexes, avec un engagement envers l'innovation, la sobriété et la durabilité environnementale.
+
+Ce site web est un projet personnel pour déployer des contenus pédagiogiques et des ressources liées à l'hydraulique.
+
+## Compétences
+- **Modélisation hydraulique** : Maîtrise des logiciels tels que EPANET, SWMM, et HEC-RAS pour la simulation de réseaux d'eau potable et d'assainissement.
+- **Planification de réseaux d'eau** : Conception et optimisation de systèmes de distribution d'eau potable et de réseaux d'assainissement, en tenant compte des contraintes techniques et environnementales.
+- **Gestion de projets** : Expérience dans la coordination de projets d'infrastructure hydraulique, de la phase de conception à la mise en œuvre, en assurant le respect des délais et des budgets.
+- **Innovation et durabilité** : Engagement envers l'intégration de solutions innovantes et durables pour répondre aux défis liés à la gestion de l'eau, en mettant l'accent sur la sobriété et la préservation des ressources naturelles.
