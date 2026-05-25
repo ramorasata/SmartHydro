@@ -1,7 +1,0 @@
----
-title: "Parcours"
-toc: true
----
-
-## Qui suis-je ?
-En cours de rédaction...

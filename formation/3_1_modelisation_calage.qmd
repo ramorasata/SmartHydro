@@ -1,0 +1,406 @@
+---
+title: "Calage et validation de modèles hydrauliques"
+subtitle: "Méthodes, indicateurs et gestion de l'incertitude"
+date: "2026-05-16"
+author: ""
+categories: [Hydraulique, Modélisation, Calage, Ingénierie]
+page-layout: article
+toc: true
+toc-title: "Sommaire"
+toc-depth: 3
+number-sections: true
+lang: fr
+---
+
+::: {.callout-note}
+## Note de la série
+Cette note est la première note transversale de la série — elle s'applique à tous les types de modèles hydrauliques traités dans les notes précédentes (AEP, assainissement, irrigation, gravitaire, sous pression, permanent, transitoire). Elle synthétise et approfondit les éléments de calage évoqués dans chaque note de niveau 2, et pose les bases méthodologiques qui permettent de passer d'un modèle "qui tourne" à un modèle "en lequel on peut avoir confiance".
+:::
+
+## Pourquoi caler ? Pourquoi valider ? La distinction fondamentale
+
+### Le modèle comme approximation de la réalité
+
+Un modèle hydraulique n'est jamais une représentation exacte de la réalité — c'est une **approximation structurée** construite à partir d'équations physiques simplifiées, de paramètres estimés, et de données imparfaites. Trois sources d'écart entre le modèle et la réalité coexistent en permanence :
+
+**L'incertitude structurelle** : les équations du modèle sont elles-mêmes des simplifications (Saint-Venant 1D au lieu de Navier-Stokes 3D, Manning-Strickler au lieu d'une modélisation fine de la turbulence aux parois). Cette incertitude est irréductible — elle est inhérente au choix du type de modèle.
+
+**L'incertitude paramétrique** : les valeurs des paramètres du modèle (rugosité, demandes nodales, coefficients d'ouvrages) ne sont pas connues exactement. Elles sont estimées à partir de tables, d'abaques, ou de données de terrain dont la précision est limitée.
+
+**L'incertitude des données d'entrée** : les forçages du modèle (pluie, consommation, apports en tête de canal) sont eux-mêmes incertains. Une incertitude de 10 % sur la pluie se répercute directement sur les débits simulés.
+
+Le **calage** et la **validation** sont les deux étapes qui permettent de réduire l'incertitude paramétrique et d'évaluer l'incertitude résiduelle du modèle.
+
+### Calage : ajuster les paramètres — le risque de surapprentissage
+
+Le **calage** consiste à ajuster les paramètres libres du modèle jusqu'à ce que les sorties simulées reproduisent les observations avec une précision acceptable. C'est une opération d'**optimisation inverse** : on cherche les valeurs de paramètres qui minimisent l'écart entre simulation et observation.
+
+Le calage réduit l'incertitude paramétrique — mais il introduit un risque : le **surapprentissage** (*overfitting*). Un modèle surajusté reproduit parfaitement les données de calage (les mesures sur lesquelles il a été calé), mais échoue sur d'autres données — parce que ses paramètres ont été ajustés pour coller aux particularités des données de calage (bruit de mesure, variabilité d'un événement particulier) plutôt qu'aux caractéristiques physiques permanentes du système.
+
+Le surapprentissage est d'autant plus probable que :
+- Le nombre de paramètres libres est grand par rapport au nombre de données de calage
+- Les données de calage sont peu variées (un seul événement, une seule saison)
+- Les paramètres sont fortement corrélés entre eux (équifinalité, cf. section 6)
+
+### Validation : tester sur des données indépendantes — la vraie mesure de robustesse
+
+La **validation** consiste à tester le modèle calé sur un jeu de données **indépendant** — des observations qui n'ont pas servi au calage. Si le modèle performe correctement sur ces données indépendantes, on a des raisons de croire qu'il capture les caractéristiques physiques permanentes du système, et pas seulement les particularités des données de calage.
+
+La validation est la **condition nécessaire** (mais non suffisante) pour qu'un modèle soit utilisable en prédiction ou en diagnostic. Un modèle calé mais non validé est un outil dont on ne connaît pas la robustesse — on ne sait pas si ses bonnes performances sur les données de calage sont dues à une bonne représentation physique ou à un surapprentissage.
+
+::: {.callout-important}
+## La distinction calage/validation en pratique courante
+Dans de nombreux bureaux d'études, la validation est l'étape oubliée — on cale le modèle jusqu'à satisfaction, et on l'utilise sans avoir vérifié sa robustesse sur des données indépendantes. Cette pratique est compréhensible (les données sont rares, le temps manque), mais elle conduit à une fausse confiance dans les résultats du modèle. La règle minimale : **ne jamais utiliser toutes les données disponibles pour le calage** — réserver au moins 30 % pour la validation.
+:::
+
+### Le protocole standard
+
+La procédure recommandée est la suivante :
+
+**Étape 1 — Collecte des données :** campagne de mesures sur le réseau (pressions, débits, niveaux), couvrant une variété de conditions (saisons, événements pluvieux, scénarios de fonctionnement).
+
+**Étape 2 — Séparation calage/validation :** partage aléatoire ou temporel des données en deux jeux. Règle typique : 60 à 70 % pour le calage, 30 à 40 % pour la validation.
+
+**Étape 3 — Calage :** ajustement des paramètres sur le jeu de calage jusqu'à atteindre les indicateurs de qualité cibles.
+
+**Étape 4 — Validation :** application du modèle calé au jeu de validation sans aucun ajustement. Calcul des indicateurs de qualité sur ce jeu indépendant.
+
+**Étape 5 — Diagnostic :** si la performance sur le jeu de validation est significativement inférieure à celle sur le jeu de calage, il y a surapprentissage — revenir à l'étape 3 avec moins de paramètres libres ou des contraintes physiques plus fortes.
+
+Lorsque les données sont insuffisantes pour une séparation calage/validation directe (cas fréquent en hydraulique), la **validation croisée** (*leave-one-out cross-validation*) est une alternative : on cale le modèle $n$ fois en laissant à chaque fois une observation de côté, puis on valide sur l'observation laissée de côté.
+
+---
+
+## Les données de calage : collecter les bonnes mesures
+
+### Quelles grandeurs mesurer selon le type de modèle
+
+Les données de calage doivent être **adaptées au type de modèle** et aux paramètres qu'on cherche à caler :
+
+**Modèles AEP en charge (régime permanent) :**
+- Pressions en des nœuds représentatifs (points hauts, points bas, extrémités de réseau)
+- Débits aux entrées de secteur (débitmètres sur les artères principales)
+- Niveaux de réservoirs enregistrés sur 24 à 72 heures
+
+**Modèles d'assainissement gravitaire :**
+- Hauteurs d'eau (niveaux) dans les collecteurs principaux (limnigraphes)
+- Débits à l'exutoire de chaque sous-secteur (débitmètres)
+- Pluviogrammes synchrones pour les modèles pluviaux
+
+**Modèles de canaux d'irrigation :**
+- Niveaux d'eau aux biefs (limnigraphes en amont et aval de chaque ouvrage de régulation)
+- Débits à l'entrée du réseau et aux prises principales (débitmètres)
+- Relevés de pertes par infiltration (bilans de débit entre deux sections consécutives)
+
+**Modèles d'irrigation sous pression :**
+- Pressions en tête, milieu et bout de rampe (manomètres enregistreurs)
+- Débit total à la station de pompage et aux sous-secteurs
+- Mesures d'uniformité sur planche d'essai ($CU$ mesuré)
+
+### Les instruments : précision et fréquence d'acquisition
+
+| Instrument | Grandeur mesurée | Précision typique | Fréquence recommandée |
+|---|---|---|---|
+| Capteur de pression piézorésistif | Pression (m ou bar) | ±0,1 à 0,5 % FS | 1 à 15 min |
+| Débitmètre électromagnétique | Débit (m³/h) | ±0,5 à 1 % | 1 à 15 min |
+| Débitmètre acoustique (transit-time) | Débit (m³/h) | ±1 à 2 % | 1 à 15 min |
+| Limnigraphe à bulle ou à pression | Niveau d'eau (m) | ±1 à 5 mm | 1 à 15 min |
+| Pluviographe à auget basculeur | Hauteur de pluie (mm) | ±2 à 5 % | 1 à 5 min |
+| Pluviomètre à pesée | Hauteur de pluie (mm) | ±0,1 % | 1 min |
+
+: Instruments de mesure courants pour le calage hydraulique {#tbl-instruments}
+
+La **fréquence d'acquisition** doit être adaptée à la dynamique du phénomène mesuré :
+- Réseau AEP en régime étendu : 5 à 15 minutes (les variations de consommation sont lentes)
+- Assainissement pluvial : 1 à 5 minutes (le temps de montée d'un hydrogramme urbain peut être de 10 à 20 minutes)
+- Transitoire hydraulique (coup de bélier) : 0,1 à 1 seconde (les ondes se propagent en quelques secondes)
+
+### Le plan de mesures : positionner les capteurs pour maximiser l'information
+
+Le positionnement des capteurs n'est pas une question anodine — un capteur mal positionné apporte peu d'information pour le calage, alors qu'un capteur bien positionné peut contraindre fortement un paramètre clé.
+
+Les principes généraux du plan de mesures :
+
+**Couvrir les extrema :** instrumenter les points hauts (pression minimale en AEP), les points bas (mise en charge en assainissement), et les extrémités de réseau (points les plus éloignés de la source).
+
+**Isoler les paramètres :** si on veut caler la rugosité d'un tronçon, instrumenter en amont et en aval de ce tronçon seul — pas seulement en aval d'un long parcours qui cumule les incertitudes de plusieurs tronçons.
+
+**Diversifier les conditions de mesure :** un capteur qui enregistre toujours la même valeur (réseau trop stable) n'apporte pas d'information pour le calage. Il faut couvrir des conditions variées — pointe et creux de consommation, événements pluvieux de différentes intensités, scénarios de vannes différents.
+
+**Utiliser les données existantes :** la télégestion fournit souvent des données de pression et de niveau en continu sur certains nœuds. Ces données, même si leur précision est moindre que celle de capteurs de mesure dédiés, sont précieuses pour le calage sur le long terme.
+
+### La qualité des données : détecter les anomalies
+
+Les données de mesure brutes contiennent presque toujours des **anomalies** qu'il faut détecter et traiter avant le calage :
+
+**Valeurs aberrantes** (*outliers*) : valeurs incohérentes avec les valeurs voisines dans le temps ou avec les autres capteurs dans l'espace. Détection par des critères statistiques (valeur à plus de $3\sigma$ de la moyenne) ou par comparaison avec les valeurs simulées.
+
+**Dérives de capteur** : certains capteurs piézorésistifs dérivent progressivement dans le temps (décalage de zéro). La dérive se détecte par comparaison avec des mesures manuelles périodiques ou par analyse de la tendance à long terme.
+
+**Lacunes** : périodes sans données (batterie déchargée, saturation de la mémoire, problème de transmission). Les lacunes courtes peuvent être interpolées ; les lacunes longues doivent être exclues du calage.
+
+**Décalage temporel** : si les capteurs ne sont pas synchronisés sur une horloge commune, un décalage temporel entre les séries peut fausser le calage (comparaison de valeurs à des instants différents). Vérifier la synchronisation des horloges avant la campagne de mesures.
+
+---
+
+## Les paramètres à caler selon le type de modèle
+
+### Hiérarchisation a priori des paramètres
+
+Tous les paramètres n'ont pas le même impact sur les sorties du modèle. Avant de lancer un calage, une **hiérarchisation a priori** des paramètres — basée sur l'expertise physique et sur une analyse de sensibilité préliminaire — permet de concentrer les efforts sur les paramètres qui comptent vraiment.
+
+| Type de modèle | Paramètres à fort impact | Paramètres à faible impact |
+|---|---|---|
+| AEP en charge (pression) | Rugosité conduites principales, demandes nodales, état des vannes | Rugosité conduites secondaires, pertes singulières mineures |
+| Assainissement gravitaire | Strickler $K_s$, cotes de radier, pertes singulières aux confluences | Rugosité des petits branchements |
+| Assainissement pluvial | Coefficient de ruissellement $C$, temps de concentration $t_c$ | Paramètres de forme de l'hydrogramme unitaire |
+| Irrigation gravitaire | Strickler $K_s$, pertes par infiltration, coefficients d'ouvrages | Revanche, forme exacte de la section |
+| Irrigation sous pression | Rugosité conduites principales, coefficients émetteurs $k$ | Rugosité rampes tertiaires |
+
+: Hiérarchisation indicative des paramètres par type de modèle {#tbl-parametres}
+
+### Les contraintes physiques sur les paramètres
+
+Le calage ne doit pas conduire à des valeurs de paramètres physiquement absurdes. Des **bornes physiques** doivent être imposées à chaque paramètre :
+
+- Coefficient de Strickler $K_s$ : entre 25 (canal en terre très dégradé) et 100 (PVC neuf) m$^{1/3}$/s
+- Rugosité de Colebrook $\varepsilon$ : entre 0,001 mm (PVC lisse) et 3 mm (fonte tuberculeuse) 
+- Coefficient de ruissellement $C$ : entre 0 et 1
+- Temps de concentration $t_c$ : entre la valeur minimale physique (vitesse d'écoulement maximale × longueur) et une valeur maximale raisonnable
+
+Un paramètre calé en limite de ses bornes physiques est un signal d'alerte : soit le paramètre est réellement à sa valeur extrême (réseau très dégradé, bassin versant très imperméable), soit le modèle a une erreur structurelle que le calage compense de façon artificielle.
+
+---
+
+## Les méthodes de calage
+
+### Le calage manuel : l'expertise avant l'algorithme
+
+Le **calage manuel** est la méthode traditionnelle : l'ingénieur ajuste les paramètres par essais-erreurs successifs, guidé par son expertise physique et par l'interprétation des écarts entre simulation et observation.
+
+**Avantages :**
+- L'ingénieur garde le contrôle — chaque ajustement est motivé par un raisonnement physique
+- Détection naturelle des anomalies : un paramètre qui "tire fort" pour reproduire les observations signale souvent une erreur dans les données ou une limite du modèle
+- Applicable sans logiciel d'optimisation spécialisé
+
+**Limites :**
+- Inefficace pour les modèles avec de nombreux paramètres corrélés
+- Risque de convergence vers un optimum local (l'ingénieur s'arrête dès qu'il est satisfait, sans vérifier si un meilleur jeu de paramètres existe)
+- Non reproductible : deux ingénieurs peuvent aboutir à des jeux de paramètres différents sur le même modèle
+
+### Le calage automatique par optimisation
+
+Le **calage automatique** utilise un algorithme d'optimisation pour minimiser une fonction objectif (mesure de l'écart entre simulation et observation) sur l'espace des paramètres.
+
+**Les algorithmes courants :**
+
+**Moindres carrés non linéaires** (Levenberg-Marquardt) : efficace pour les problèmes bien posés avec peu de paramètres. Converge rapidement mais peut rester bloqué dans un optimum local sur des fonctions objectif complexes.
+
+**Algorithmes évolutionnaires** (SCE-UA, algorithmes génétiques) : inspirés de l'évolution biologique. Explorent l'espace des paramètres de façon plus globale, moins sensibles aux optima locaux. Plus coûteux en temps de calcul. Recommandés pour les modèles pluviaux avec de nombreux paramètres corrélés.
+
+**Méthodes MCMC** (*Markov Chain Monte Carlo*) : échantillonnent la distribution de probabilité des paramètres plutôt que de chercher un optimum unique. Fournissent directement une estimation de l'incertitude paramétrique. Plus coûteux mais plus informatifs — ils répondent à "quelle est la plage de paramètres compatibles avec les observations ?" plutôt que seulement "quel est le meilleur jeu de paramètres ?".
+
+### La fonction objectif : quel critère minimiser ?
+
+Le choix de la fonction objectif est une décision cruciale qui conditionne le résultat du calage. Les fonctions objectif courantes ont des propriétés différentes :
+
+**Somme des carrés des erreurs (SCE) :** $J = \sum_t (y_{sim,t} - y_{obs,t})^2$. Dominée par les grandes erreurs aux instants de forte valeur (pointes). Calage qui privilégie la reproduction des pointes au détriment des périodes ordinaires.
+
+**Somme des carrés des erreurs relatives :** $J = \sum_t \left(\frac{y_{sim,t} - y_{obs,t}}{y_{obs,t}}\right)^2$. Donne le même poids à tous les instants. Risque de sur-pondérer les instants à faibles valeurs (où les erreurs relatives sont amplifiées par des petits dénominateurs).
+
+**Critère de Nash-Sutcliffe transformé :** utiliser $\sqrt{y}$ ou $\ln(y)$ au lieu de $y$ dans le calcul du NSE permet de donner plus ou moins de poids aux valeurs extrêmes (cf. section 5).
+
+**Critère multi-objectif :** minimiser simultanément l'erreur sur le volume (bilan de masse) et l'erreur sur la pointe (valeur dimensionnante). Les méthodes d'optimisation multi-objectif (front de Pareto) permettent d'explorer le compromis entre ces deux objectifs.
+
+::: {.callout-tip}
+## Choisir sa fonction objectif en fonction de l'usage du modèle
+Un modèle utilisé pour le dimensionnement d'un bassin de rétention doit bien reproduire le **débit de pointe** — utiliser une fonction objectif qui pénalise les erreurs aux pointes (SCE classique). Un modèle utilisé pour l'évaluation réglementaire des déversoirs d'orage doit bien reproduire le **volume annuel déversé** — utiliser une fonction objectif qui pénalise les erreurs de bilan volumétrique. Ne pas utiliser le même critère pour tous les usages.
+:::
+
+---
+
+## Les indicateurs de qualité du calage
+
+### Nash-Sutcliffe (NSE) : définition et limites
+
+Le **critère de Nash-Sutcliffe** est l'indicateur de performance le plus utilisé en hydrologie et hydraulique :
+
+$$NSE = 1 - \frac{\sum_t (y_{sim,t} - y_{obs,t})^2}{\sum_t (y_{obs,t} - \bar{y}_{obs})^2}$$
+
+**Interprétation :**
+- $NSE = 1$ : simulation parfaite
+- $NSE = 0$ : le modèle n'est pas meilleur que la moyenne des observations
+- $NSE < 0$ : le modèle est moins bon que la moyenne — inadmissible
+
+**Limites :**
+- Le NSE est dominé par les erreurs aux valeurs extrêmes (pointes de débit, pressions maximales) — un modèle qui reproduit bien les pointes mais mal les périodes ordinaires peut avoir un NSE élevé
+- Le NSE est sensible à la variabilité des observations : sur une série très variable (fort $\sigma$), même un modèle médiocre peut avoir un NSE élevé
+
+**Variantes pour corriger ces limites :**
+- $NSE_{\sqrt{Q}}$ : calculé sur $\sqrt{y}$ au lieu de $y$ — donne plus de poids aux valeurs faibles et modérées
+- $NSE_{\ln Q}$ : calculé sur $\ln(y)$ — très sensible aux faibles valeurs, peu sensible aux pointes
+- $NSE_{modifié}$ : utilise la valeur absolue au lieu du carré — moins sensible aux valeurs extrêmes
+
+### RMSE, MAE et biais
+
+**RMSE** (*Root Mean Square Error*) : $\sqrt{\frac{1}{n}\sum_t(y_{sim,t} - y_{obs,t})^2}$
+
+Exprimé dans la même unité que la grandeur mesurée (m pour les pressions, m³/s pour les débits). Permet de juger l'erreur en termes absolus, indépendamment de la variabilité des observations.
+
+**MAE** (*Mean Absolute Error*) : $\frac{1}{n}\sum_t|y_{sim,t} - y_{obs,t}|$
+
+Moins sensible aux valeurs extrêmes que le RMSE. Plus robuste pour des séries avec quelques valeurs aberrantes résiduelles.
+
+**Biais** : $\frac{1}{n}\sum_t(y_{sim,t} - y_{obs,t})$
+
+Mesure l'erreur systématique du modèle. Un biais positif signifie que le modèle surestime systématiquement — un biais négatif qu'il sous-estime. Un biais nul avec un RMSE élevé indique des erreurs aléatoires sans tendance systématique.
+
+**Biais volumétrique** : $\frac{V_{sim} - V_{obs}}{V_{obs}}$
+
+Spécifique aux modèles pluviaux et d'irrigation — mesure l'erreur sur le bilan de masse intégré sur la période de simulation. Un biais volumétrique de ±5 % est généralement acceptable.
+
+### Seuils acceptables selon le type de modèle et l'usage
+
+| Type de modèle | Indicateur | Calage acceptable | Calage bon | Calage excellent |
+|---|---|---|---|---|
+| AEP — pression | RMSE (m) | < 5 | < 2 | < 1 |
+| AEP — pression | NSE | > 0,70 | > 0,85 | > 0,95 |
+| Assainissement gravitaire | NSE débit | > 0,65 | > 0,80 | > 0,90 |
+| Assainissement pluvial | NSE débit | > 0,60 | > 0,75 | > 0,85 |
+| Assainissement pluvial | Biais vol. | < ±15 % | < ±10 % | < ±5 % |
+| Irrigation sous pression | Erreur $CU$ | < ±10 % | < ±5 % | < ±2 % |
+| Canal gravitaire | RMSE niveau (m) | < 0,10 | < 0,05 | < 0,02 |
+
+: Seuils indicatifs de qualité du calage par type de modèle {#tbl-seuils}
+
+Ces seuils sont **indicatifs** — ils dépendent fortement de la qualité des données de mesure, de la variabilité du système, et de l'usage prévu du modèle. Un modèle utilisé pour un pré-dimensionnement peut se contenter de seuils "acceptables" ; un modèle utilisé pour une étude réglementaire ou une décision d'investissement importante doit viser les seuils "bon" à "excellent".
+
+---
+
+## L'équifinalité : quand plusieurs jeux de paramètres donnent le même résultat
+
+### Définition et causes
+
+L'**équifinalité** (terme introduit par Beven & Binley, 1992 en hydrologie) est la propriété d'un modèle pour laquelle plusieurs jeux de paramètres différents produisent des sorties indiscernables par rapport aux données d'observation disponibles. Autrement dit : il n'existe pas un unique jeu de paramètres "correct" — il existe un **ensemble de jeux équivalents**, tous compatibles avec les observations dans leurs incertitudes.
+
+Les causes de l'équifinalité sont :
+
+**La corrélation entre paramètres :** dans un modèle pluvial, augmenter $C$ (plus de ruissellement) et diminuer $t_c$ (moins d'étalement temporel) peuvent produire le même débit de pointe. Les deux paramètres sont corrélés sur cette sortie — il existe une infinité de couples ($C$, $t_c$) qui reproduisent le même pic.
+
+**L'insuffisance des données :** si les observations disponibles ne "voient" pas toutes les dimensions de l'espace des paramètres (par exemple, si on n'a mesuré que des événements pluvieux de faible intensité), certains paramètres ne peuvent pas être contraints par ces données.
+
+**La non-linéarité du modèle :** sur un modèle fortement non linéaire, plusieurs combinaisons de paramètres peuvent produire des sorties similaires via des mécanismes physiques différents.
+
+### Conséquences pratiques
+
+L'équifinalité a une conséquence fondamentale souvent ignorée : **un modèle peut être bien calé pour de mauvaises raisons physiques**. Ses paramètres ont des valeurs qui reproduisent les observations, mais qui ne correspondent pas aux propriétés physiques réelles du système. En dehors du domaine de calage (conditions plus extrêmes, période future), ce modèle peut donner des résultats très différents de ceux d'un modèle avec les "vrais" paramètres.
+
+L'exemple classique en hydraulique urbaine : un modèle pluvial calé sur des pluies estivales (sol sec, fort ruissellement) avec un $C$ élevé et un $t_c$ court. Appliqué à une pluie automnale (sol humide, ruissellement également fort mais mécanisme différent), il peut donner des résultats corrects par compensation d'erreurs — ou des résultats très faux.
+
+### Comment détecter et gérer l'équifinalité
+
+**Visualiser la surface de réponse :** calculer la fonction objectif pour une grille de valeurs de paramètres et tracer les courbes d'iso-performance. Si la surface de réponse est plate (une large zone de l'espace des paramètres donne des performances similaires), l'équifinalité est forte.
+
+**Approche GLUE** (*Generalized Likelihood Uncertainty Estimation*, Beven & Binley) : échantillonner l'espace des paramètres (Monte Carlo), calculer la fonction objectif pour chaque tirage, retenir tous les jeux de paramètres dont la performance dépasse un seuil. L'ensemble des jeux retenus constitue la **distribution de comportements équifinaux** — elle est plus informative qu'un unique "meilleur jeu".
+
+**Contraintes physiques supplémentaires :** si les données hydrauliques ne permettent pas de distinguer les jeux équivalents, des données d'une autre nature peuvent lever l'ambiguïté. En modélisation pluviale : une mesure de la capacité d'infiltration du sol (essai de perméabilité) contraint $C$ indépendamment du calage hydraulique.
+
+**Accepter et quantifier l'incertitude :** dans bien des cas, l'équifinalité est irréductible avec les données disponibles. La bonne pratique est alors d'accepter cet ensemble de solutions équivalentes, de propager chaque jeu de paramètres à travers le modèle, et de présenter les résultats comme une plage d'incertitude plutôt que comme une valeur unique.
+
+---
+
+## L'analyse de sensibilité
+
+### Sensibilité locale vs sensibilité globale
+
+L'**analyse de sensibilité** quantifie l'impact des variations des paramètres d'entrée sur les sorties du modèle. Elle est l'outil qui permet de hiérarchiser les paramètres, de cibler les efforts de mesure, et de quantifier l'incertitude des résultats.
+
+**Sensibilité locale (OAT — One-At-a-Time) :** on perturbe un paramètre à la fois de ±10 % (ou d'une valeur fixe) et on observe la variation de la sortie. Simple à mettre en œuvre, elle donne une image de la sensibilité au voisinage du point nominal.
+
+$$S_i = \frac{\partial y / y_0}{\partial \theta_i / \theta_{i,0}}$$
+
+**Limite :** la sensibilité locale ne capture pas les **interactions** entre paramètres. Si deux paramètres sont fortement corrélés dans leur effet (équifinalité), l'analyse OAT ne le révèle pas.
+
+**Sensibilité globale :** explore l'espace entier des paramètres, pas seulement le voisinage du point nominal. Elle capture les interactions et les effets non linéaires. Plus coûteuse (nécessite de nombreuses simulations) mais plus informative.
+
+### Méthodes de sensibilité globale
+
+**Méthode de Morris :** chaque paramètre est perturbé successivement selon un chemin aléatoire dans l'espace des paramètres. La moyenne ($\mu^*$) et l'écart-type ($\sigma$) des effets élémentaires caractérisent l'importance ($\mu^*$ élevé) et la non-linéarité/interaction ($\sigma$ élevé) de chaque paramètre. Méthode de **screening** — rapide, utile pour éliminer les paramètres sans influence avant une analyse plus fine.
+
+**Indices de Sobol :** décomposent la variance de la sortie en contributions de chaque paramètre et de leurs interactions. L'indice de premier ordre $S_i$ mesure la part de variance expliquée par le paramètre $i$ seul ; l'indice total $S_{Ti}$ inclut aussi les interactions. Méthode rigoureuse mais coûteuse (plusieurs milliers de simulations).
+
+$$S_i = \frac{V[\mathbb{E}(Y|\theta_i)]}{V(Y)}, \quad S_{Ti} = 1 - \frac{V[\mathbb{E}(Y|\theta_{\sim i})]}{V(Y)}$$
+
+où $\theta_{\sim i}$ désigne tous les paramètres sauf $\theta_i$.
+
+**Application pratique :** pour la plupart des modèles hydrauliques (50 à 200 paramètres), une analyse de Morris préliminaire permet d'identifier les 5 à 15 paramètres les plus influents, sur lesquels une analyse de Sobol complète est ensuite conduite.
+
+### La matrice de sensibilité : outil de diagnostic
+
+La **matrice de sensibilité** est un tableau qui croise les paramètres (colonnes) et les sorties d'intérêt (lignes), avec les indices de sensibilité dans les cellules. Elle permet d'identifier :
+
+- Les paramètres **très influents sur toutes les sorties** : prioritaires pour le calage et les mesures de terrain
+- Les paramètres **influents sur certaines sorties seulement** : à caler sur les données correspondant à ces sorties
+- Les paramètres **sans influence** : peuvent être fixés à leurs valeurs nominales sans calage
+
+Elle révèle aussi les **sorties peu sensibles à tous les paramètres** : elles sont soit bien contraintes par la physique du modèle, soit mal représentées par les équations (signal que le modèle a une limite structurelle sur cette sortie).
+
+---
+
+## De la validation à l'incertitude des résultats
+
+### Les sources d'incertitude résiduelle
+
+Même après un calage et une validation soigneux, le modèle reste entaché d'une **incertitude résiduelle** qui ne peut pas être éliminée :
+
+**Incertitude paramétrique résiduelle :** l'équifinalité implique qu'on ne connaît pas précisément les "vrais" paramètres. La plage de jeux équifinaux se traduit par une plage de résultats.
+
+**Incertitude des données d'entrée :** la pluie est imprécise, la consommation est estimée, les apports en tête de canal sont mesurés avec une incertitude de ±2 à 5 %. Cette incertitude se propage directement dans les résultats.
+
+**Incertitude structurelle :** les équations simplifiées (Saint-Venant 1D au lieu de 3D, Manning-Strickler au lieu d'une modélisation fine de la turbulence) introduisent une erreur systématique difficile à quantifier. Elle est particulièrement importante lors de l'extrapolation aux conditions hors du domaine de calage (événements extrêmes, configurations hors-norme).
+
+### Propagation de l'incertitude par Monte Carlo
+
+La méthode de **Monte Carlo** est l'outil standard pour propager l'incertitude des paramètres vers l'incertitude des sorties :
+
+1. Définir une distribution de probabilité pour chaque paramètre incertain (uniforme sur la plage physique admissible, ou distribution tirée de l'analyse GLUE)
+2. Tirer $N$ jeux de paramètres au hasard selon ces distributions ($N$ = 1 000 à 10 000)
+3. Exécuter le modèle pour chaque tirage
+4. Analyser la distribution des sorties : médiane, percentiles 5 % et 95 %, histogramme
+
+Le résultat est une **distribution de probabilité des sorties** — par exemple, la distribution des hauteurs d'eau maximales dans un collecteur pour un événement décennal, tenant compte de l'incertitude sur $C$, $t_c$ et $K_s$.
+
+### Communiquer l'incertitude
+
+La communication de l'incertitude est un enjeu autant technique que relationnel. Les maîtres d'ouvrage et les élus ont souvent du mal à accepter qu'un modèle ne donne pas une réponse unique et précise — ils ont parfois l'impression qu'une fourchette d'incertitude signifie que le modèle "ne marche pas".
+
+Quelques principes pour une communication efficace :
+
+**Présenter des fourchettes, pas des valeurs ponctuelles :** "Le modèle prédit une hauteur d'eau maximale entre 0,45 m et 0,65 m au point X pour la pluie décennale" est une information honnête. "Le modèle prédit 0,52 m" est une fausse précision.
+
+**Distinguer l'incertitude du résultat de l'incertitude de la décision :** même avec une fourchette d'incertitude large, la décision peut être robuste. Si le résultat "entre 0,45 m et 0,65 m" est inférieur au seuil de danger (1,0 m dans tous les cas), la décision "pas de travaux nécessaires" est robuste à l'incertitude.
+
+**Nommer les sources d'incertitude dominantes :** "L'incertitude principale provient de la méconnaissance de la pluie spatiale sur le bassin versant" est plus utile pour le décideur que "il y a une incertitude de ±25 %".
+
+::: {.callout-warning}
+## Le modèle dans la décision : la responsabilité de l'ingénieur
+Un modèle est un outil d'aide à la décision, pas un décideur. Lorsqu'un modèle donne un résultat incertain qui conditionne une décision d'investissement importante (construction d'un bassin de rétention, réhabilitation d'un réseau), c'est l'ingénieur — pas le logiciel — qui est responsable de l'interprétation. La compétence de l'ingénieur se mesure à sa capacité à quantifier honnêtement l'incertitude de son modèle, à identifier ses limites, et à conseiller le maître d'ouvrage en conséquence.
+:::
+
+---
+
+## Conclusion
+
+Le calage et la validation ne sont pas des étapes techniques facultatives à réaliser "si on a le temps" — ce sont les opérations qui transforment un modèle en outil crédible. Un modèle non calé est un outil de pré-dimensionnement indicatif. Un modèle calé mais non validé est un outil dont on ne connaît pas la robustesse. Seul un modèle calé, validé, et dont l'incertitude résiduelle a été quantifiée mérite d'être utilisé pour des décisions importantes.
+
+Quatre convictions doivent guider l'ingénieur dans cette démarche :
+
+**Premièrement**, le calage commence par les données — un modèle calé sur de mauvaises données est un mauvais modèle, quels que soient les algorithmes utilisés. **Deuxièmement**, les paramètres physiquement absurdes sont des signaux d'alerte, pas des solutions acceptables. **Troisièmement**, l'équifinalité n'est pas un échec du modèle — c'est une information sur la limite de ce que les données disponibles permettent de conclure. **Quatrièmement**, communiquer honnêtement l'incertitude est une obligation professionnelle, pas une faiblesse.
+
+---
+
+## Pour aller plus loin dans cette série
+
+- **Note 3.2** — *Quand le 1D ne suffit plus* : critères de passage au 2D et au 3D, introduction à Telemac et HEC-RAS 2D, aperçu de la CFD pour les ouvrages hydrauliques
+- **Note 3.3** — *Données et modèles : SIG, capteurs, vers le jumeau numérique hydraulique* : acquisition de données, intégration SIG, IoT réseau, notion de jumeau numérique
+- **Note 3.4** — *Incertitudes en modélisation hydraulique : ce que le modèle ne peut pas vous dire* : analyse de sensibilité avancée, propagation d'incertitudes, honnêteté des résultats

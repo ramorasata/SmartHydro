@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="fr" xml:lang="fr"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="">
+
+<title>Calage et validation de modèles hydrauliques – Johary - Ingénieur Hydraulicien</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../static/avatar.jpg" rel="icon" type="image/jpeg">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-23bbe8b5e4efc1e257f6d59dce478b08.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-7f128302b46659ec05c1cdf12d27b5f1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-fcb2e74b6da07224c5b59afd36009af3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-7f128302b46659ec05c1cdf12d27b5f1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "Pas de résultats",
+    "search-matching-documents-text": "documents trouvés",
+    "search-copy-link-title": "Copier le lien vers la recherche",
+    "search-hide-matches-text": "Cacher les correspondances additionnelles",
+    "search-more-match-text": "correspondance de plus dans ce document",
+    "search-more-matches-text": "correspondances de plus dans ce document",
+    "search-clear-button-title": "Effacer",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Annuler",
+    "search-submit-button-title": "Envoyer",
+    "search-label": "Recherche"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../styles.css">
+</head>
+
+<body class="nav-sidebar floating quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Basculer la barre latérale" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item">
+      Johary - Ingénieur Hydraulicien
+      </li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Basculer la barre latérale" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Recherche" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Johary - Ingénieur Hydraulicien</a> 
+        <div class="sidebar-tools-main">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Basculer le mode sombre"><i class="bi"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Recherche"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🏠 Accueil</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../formation/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🌊 Formation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../etudes-de-cas/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">📐 Études de cas</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../geomatique/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🌍 Géomatique</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../programmation/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🐍 Programmation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../parcours/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🗺️ Parcours</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../contact.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">✉️ Contact</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Sommaire</h2>
+   
+  <ul>
+  <li><a href="#pourquoi-caler-pourquoi-valider-la-distinction-fondamentale" id="toc-pourquoi-caler-pourquoi-valider-la-distinction-fondamentale" class="nav-link active" data-scroll-target="#pourquoi-caler-pourquoi-valider-la-distinction-fondamentale"><span class="header-section-number">1</span> Pourquoi caler ? Pourquoi valider ? La distinction fondamentale</a>
+  <ul class="collapse">
+  <li><a href="#le-modèle-comme-approximation-de-la-réalité" id="toc-le-modèle-comme-approximation-de-la-réalité" class="nav-link" data-scroll-target="#le-modèle-comme-approximation-de-la-réalité"><span class="header-section-number">1.1</span> Le modèle comme approximation de la réalité</a></li>
+  <li><a href="#calage-ajuster-les-paramètres-le-risque-de-surapprentissage" id="toc-calage-ajuster-les-paramètres-le-risque-de-surapprentissage" class="nav-link" data-scroll-target="#calage-ajuster-les-paramètres-le-risque-de-surapprentissage"><span class="header-section-number">1.2</span> Calage : ajuster les paramètres — le risque de surapprentissage</a></li>
+  <li><a href="#validation-tester-sur-des-données-indépendantes-la-vraie-mesure-de-robustesse" id="toc-validation-tester-sur-des-données-indépendantes-la-vraie-mesure-de-robustesse" class="nav-link" data-scroll-target="#validation-tester-sur-des-données-indépendantes-la-vraie-mesure-de-robustesse"><span class="header-section-number">1.3</span> Validation : tester sur des données indépendantes — la vraie mesure de robustesse</a></li>
+  <li><a href="#le-protocole-standard" id="toc-le-protocole-standard" class="nav-link" data-scroll-target="#le-protocole-standard"><span class="header-section-number">1.4</span> Le protocole standard</a></li>
+  </ul></li>
+  <li><a href="#les-données-de-calage-collecter-les-bonnes-mesures" id="toc-les-données-de-calage-collecter-les-bonnes-mesures" class="nav-link" data-scroll-target="#les-données-de-calage-collecter-les-bonnes-mesures"><span class="header-section-number">2</span> Les données de calage : collecter les bonnes mesures</a>
+  <ul class="collapse">
+  <li><a href="#quelles-grandeurs-mesurer-selon-le-type-de-modèle" id="toc-quelles-grandeurs-mesurer-selon-le-type-de-modèle" class="nav-link" data-scroll-target="#quelles-grandeurs-mesurer-selon-le-type-de-modèle"><span class="header-section-number">2.1</span> Quelles grandeurs mesurer selon le type de modèle</a></li>
+  <li><a href="#les-instruments-précision-et-fréquence-dacquisition" id="toc-les-instruments-précision-et-fréquence-dacquisition" class="nav-link" data-scroll-target="#les-instruments-précision-et-fréquence-dacquisition"><span class="header-section-number">2.2</span> Les instruments : précision et fréquence d’acquisition</a></li>
+  <li><a href="#le-plan-de-mesures-positionner-les-capteurs-pour-maximiser-linformation" id="toc-le-plan-de-mesures-positionner-les-capteurs-pour-maximiser-linformation" class="nav-link" data-scroll-target="#le-plan-de-mesures-positionner-les-capteurs-pour-maximiser-linformation"><span class="header-section-number">2.3</span> Le plan de mesures : positionner les capteurs pour maximiser l’information</a></li>
+  <li><a href="#la-qualité-des-données-détecter-les-anomalies" id="toc-la-qualité-des-données-détecter-les-anomalies" class="nav-link" data-scroll-target="#la-qualité-des-données-détecter-les-anomalies"><span class="header-section-number">2.4</span> La qualité des données : détecter les anomalies</a></li>
+  </ul></li>
+  <li><a href="#les-paramètres-à-caler-selon-le-type-de-modèle" id="toc-les-paramètres-à-caler-selon-le-type-de-modèle" class="nav-link" data-scroll-target="#les-paramètres-à-caler-selon-le-type-de-modèle"><span class="header-section-number">3</span> Les paramètres à caler selon le type de modèle</a>
+  <ul class="collapse">
+  <li><a href="#hiérarchisation-a-priori-des-paramètres" id="toc-hiérarchisation-a-priori-des-paramètres" class="nav-link" data-scroll-target="#hiérarchisation-a-priori-des-paramètres"><span class="header-section-number">3.1</span> Hiérarchisation a priori des paramètres</a></li>
+  <li><a href="#les-contraintes-physiques-sur-les-paramètres" id="toc-les-contraintes-physiques-sur-les-paramètres" class="nav-link" data-scroll-target="#les-contraintes-physiques-sur-les-paramètres"><span class="header-section-number">3.2</span> Les contraintes physiques sur les paramètres</a></li>
+  </ul></li>
+  <li><a href="#les-méthodes-de-calage" id="toc-les-méthodes-de-calage" class="nav-link" data-scroll-target="#les-méthodes-de-calage"><span class="header-section-number">4</span> Les méthodes de calage</a>
+  <ul class="collapse">
+  <li><a href="#le-calage-manuel-lexpertise-avant-lalgorithme" id="toc-le-calage-manuel-lexpertise-avant-lalgorithme" class="nav-link" data-scroll-target="#le-calage-manuel-lexpertise-avant-lalgorithme"><span class="header-section-number">4.1</span> Le calage manuel : l’expertise avant l’algorithme</a></li>
+  <li><a href="#le-calage-automatique-par-optimisation" id="toc-le-calage-automatique-par-optimisation" class="nav-link" data-scroll-target="#le-calage-automatique-par-optimisation"><span class="header-section-number">4.2</span> Le calage automatique par optimisation</a></li>
+  <li><a href="#la-fonction-objectif-quel-critère-minimiser" id="toc-la-fonction-objectif-quel-critère-minimiser" class="nav-link" data-scroll-target="#la-fonction-objectif-quel-critère-minimiser"><span class="header-section-number">4.3</span> La fonction objectif : quel critère minimiser ?</a></li>
+  </ul></li>
+  <li><a href="#les-indicateurs-de-qualité-du-calage" id="toc-les-indicateurs-de-qualité-du-calage" class="nav-link" data-scroll-target="#les-indicateurs-de-qualité-du-calage"><span class="header-section-number">5</span> Les indicateurs de qualité du calage</a>
+  <ul class="collapse">
+  <li><a href="#nash-sutcliffe-nse-définition-et-limites" id="toc-nash-sutcliffe-nse-définition-et-limites" class="nav-link" data-scroll-target="#nash-sutcliffe-nse-définition-et-limites"><span class="header-section-number">5.1</span> Nash-Sutcliffe (NSE) : définition et limites</a></li>
+  <li><a href="#rmse-mae-et-biais" id="toc-rmse-mae-et-biais" class="nav-link" data-scroll-target="#rmse-mae-et-biais"><span class="header-section-number">5.2</span> RMSE, MAE et biais</a></li>
+  <li><a href="#seuils-acceptables-selon-le-type-de-modèle-et-lusage" id="toc-seuils-acceptables-selon-le-type-de-modèle-et-lusage" class="nav-link" data-scroll-target="#seuils-acceptables-selon-le-type-de-modèle-et-lusage"><span class="header-section-number">5.3</span> Seuils acceptables selon le type de modèle et l’usage</a></li>
+  </ul></li>
+  <li><a href="#léquifinalité-quand-plusieurs-jeux-de-paramètres-donnent-le-même-résultat" id="toc-léquifinalité-quand-plusieurs-jeux-de-paramètres-donnent-le-même-résultat" class="nav-link" data-scroll-target="#léquifinalité-quand-plusieurs-jeux-de-paramètres-donnent-le-même-résultat"><span class="header-section-number">6</span> L’équifinalité : quand plusieurs jeux de paramètres donnent le même résultat</a>
+  <ul class="collapse">
+  <li><a href="#définition-et-causes" id="toc-définition-et-causes" class="nav-link" data-scroll-target="#définition-et-causes"><span class="header-section-number">6.1</span> Définition et causes</a></li>
+  <li><a href="#conséquences-pratiques" id="toc-conséquences-pratiques" class="nav-link" data-scroll-target="#conséquences-pratiques"><span class="header-section-number">6.2</span> Conséquences pratiques</a></li>
+  <li><a href="#comment-détecter-et-gérer-léquifinalité" id="toc-comment-détecter-et-gérer-léquifinalité" class="nav-link" data-scroll-target="#comment-détecter-et-gérer-léquifinalité"><span class="header-section-number">6.3</span> Comment détecter et gérer l’équifinalité</a></li>
+  </ul></li>
+  <li><a href="#lanalyse-de-sensibilité" id="toc-lanalyse-de-sensibilité" class="nav-link" data-scroll-target="#lanalyse-de-sensibilité"><span class="header-section-number">7</span> L’analyse de sensibilité</a>
+  <ul class="collapse">
+  <li><a href="#sensibilité-locale-vs-sensibilité-globale" id="toc-sensibilité-locale-vs-sensibilité-globale" class="nav-link" data-scroll-target="#sensibilité-locale-vs-sensibilité-globale"><span class="header-section-number">7.1</span> Sensibilité locale vs sensibilité globale</a></li>
+  <li><a href="#méthodes-de-sensibilité-globale" id="toc-méthodes-de-sensibilité-globale" class="nav-link" data-scroll-target="#méthodes-de-sensibilité-globale"><span class="header-section-number">7.2</span> Méthodes de sensibilité globale</a></li>
+  <li><a href="#la-matrice-de-sensibilité-outil-de-diagnostic" id="toc-la-matrice-de-sensibilité-outil-de-diagnostic" class="nav-link" data-scroll-target="#la-matrice-de-sensibilité-outil-de-diagnostic"><span class="header-section-number">7.3</span> La matrice de sensibilité : outil de diagnostic</a></li>
+  </ul></li>
+  <li><a href="#de-la-validation-à-lincertitude-des-résultats" id="toc-de-la-validation-à-lincertitude-des-résultats" class="nav-link" data-scroll-target="#de-la-validation-à-lincertitude-des-résultats"><span class="header-section-number">8</span> De la validation à l’incertitude des résultats</a>
+  <ul class="collapse">
+  <li><a href="#les-sources-dincertitude-résiduelle" id="toc-les-sources-dincertitude-résiduelle" class="nav-link" data-scroll-target="#les-sources-dincertitude-résiduelle"><span class="header-section-number">8.1</span> Les sources d’incertitude résiduelle</a></li>
+  <li><a href="#propagation-de-lincertitude-par-monte-carlo" id="toc-propagation-de-lincertitude-par-monte-carlo" class="nav-link" data-scroll-target="#propagation-de-lincertitude-par-monte-carlo"><span class="header-section-number">8.2</span> Propagation de l’incertitude par Monte Carlo</a></li>
+  <li><a href="#communiquer-lincertitude" id="toc-communiquer-lincertitude" class="nav-link" data-scroll-target="#communiquer-lincertitude"><span class="header-section-number">8.3</span> Communiquer l’incertitude</a></li>
+  </ul></li>
+  <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion"><span class="header-section-number">9</span> Conclusion</a></li>
+  <li><a href="#pour-aller-plus-loin-dans-cette-série" id="toc-pour-aller-plus-loin-dans-cette-série" class="nav-link" data-scroll-target="#pour-aller-plus-loin-dans-cette-série"><span class="header-section-number">10</span> Pour aller plus loin dans cette série</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Calage et validation de modèles hydrauliques</h1>
+<p class="subtitle lead">Méthodes, indicateurs et gestion de l’incertitude</p>
+  <div class="quarto-categories">
+    <div class="quarto-category">Hydraulique</div>
+    <div class="quarto-category">Modélisation</div>
+    <div class="quarto-category">Calage</div>
+    <div class="quarto-category">Ingénierie</div>
+  </div>
+  </div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+    <div>
+    <div class="quarto-title-meta-heading">Date de publication</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">16 mai 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Note de la série
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Cette note est la première note transversale de la série — elle s’applique à tous les types de modèles hydrauliques traités dans les notes précédentes (AEP, assainissement, irrigation, gravitaire, sous pression, permanent, transitoire). Elle synthétise et approfondit les éléments de calage évoqués dans chaque note de niveau 2, et pose les bases méthodologiques qui permettent de passer d’un modèle “qui tourne” à un modèle “en lequel on peut avoir confiance”.</p>
+</div>
+</div>
+<section id="pourquoi-caler-pourquoi-valider-la-distinction-fondamentale" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="pourquoi-caler-pourquoi-valider-la-distinction-fondamentale"><span class="header-section-number">1</span> Pourquoi caler ? Pourquoi valider ? La distinction fondamentale</h2>
+<section id="le-modèle-comme-approximation-de-la-réalité" class="level3" data-number="1.1">
+<h3 data-number="1.1" class="anchored" data-anchor-id="le-modèle-comme-approximation-de-la-réalité"><span class="header-section-number">1.1</span> Le modèle comme approximation de la réalité</h3>
+<p>Un modèle hydraulique n’est jamais une représentation exacte de la réalité — c’est une <strong>approximation structurée</strong> construite à partir d’équations physiques simplifiées, de paramètres estimés, et de données imparfaites. Trois sources d’écart entre le modèle et la réalité coexistent en permanence :</p>
+<p><strong>L’incertitude structurelle</strong> : les équations du modèle sont elles-mêmes des simplifications (Saint-Venant 1D au lieu de Navier-Stokes 3D, Manning-Strickler au lieu d’une modélisation fine de la turbulence aux parois). Cette incertitude est irréductible — elle est inhérente au choix du type de modèle.</p>
+<p><strong>L’incertitude paramétrique</strong> : les valeurs des paramètres du modèle (rugosité, demandes nodales, coefficients d’ouvrages) ne sont pas connues exactement. Elles sont estimées à partir de tables, d’abaques, ou de données de terrain dont la précision est limitée.</p>
+<p><strong>L’incertitude des données d’entrée</strong> : les forçages du modèle (pluie, consommation, apports en tête de canal) sont eux-mêmes incertains. Une incertitude de 10 % sur la pluie se répercute directement sur les débits simulés.</p>
+<p>Le <strong>calage</strong> et la <strong>validation</strong> sont les deux étapes qui permettent de réduire l’incertitude paramétrique et d’évaluer l’incertitude résiduelle du modèle.</p>
+</section>
+<section id="calage-ajuster-les-paramètres-le-risque-de-surapprentissage" class="level3" data-number="1.2">
+<h3 data-number="1.2" class="anchored" data-anchor-id="calage-ajuster-les-paramètres-le-risque-de-surapprentissage"><span class="header-section-number">1.2</span> Calage : ajuster les paramètres — le risque de surapprentissage</h3>
+<p>Le <strong>calage</strong> consiste à ajuster les paramètres libres du modèle jusqu’à ce que les sorties simulées reproduisent les observations avec une précision acceptable. C’est une opération d’<strong>optimisation inverse</strong> : on cherche les valeurs de paramètres qui minimisent l’écart entre simulation et observation.</p>
+<p>Le calage réduit l’incertitude paramétrique — mais il introduit un risque : le <strong>surapprentissage</strong> (<em>overfitting</em>). Un modèle surajusté reproduit parfaitement les données de calage (les mesures sur lesquelles il a été calé), mais échoue sur d’autres données — parce que ses paramètres ont été ajustés pour coller aux particularités des données de calage (bruit de mesure, variabilité d’un événement particulier) plutôt qu’aux caractéristiques physiques permanentes du système.</p>
+<p>Le surapprentissage est d’autant plus probable que : - Le nombre de paramètres libres est grand par rapport au nombre de données de calage - Les données de calage sont peu variées (un seul événement, une seule saison) - Les paramètres sont fortement corrélés entre eux (équifinalité, cf.&nbsp;section 6)</p>
+</section>
+<section id="validation-tester-sur-des-données-indépendantes-la-vraie-mesure-de-robustesse" class="level3" data-number="1.3">
+<h3 data-number="1.3" class="anchored" data-anchor-id="validation-tester-sur-des-données-indépendantes-la-vraie-mesure-de-robustesse"><span class="header-section-number">1.3</span> Validation : tester sur des données indépendantes — la vraie mesure de robustesse</h3>
+<p>La <strong>validation</strong> consiste à tester le modèle calé sur un jeu de données <strong>indépendant</strong> — des observations qui n’ont pas servi au calage. Si le modèle performe correctement sur ces données indépendantes, on a des raisons de croire qu’il capture les caractéristiques physiques permanentes du système, et pas seulement les particularités des données de calage.</p>
+<p>La validation est la <strong>condition nécessaire</strong> (mais non suffisante) pour qu’un modèle soit utilisable en prédiction ou en diagnostic. Un modèle calé mais non validé est un outil dont on ne connaît pas la robustesse — on ne sait pas si ses bonnes performances sur les données de calage sont dues à une bonne représentation physique ou à un surapprentissage.</p>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>La distinction calage/validation en pratique courante
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Dans de nombreux bureaux d’études, la validation est l’étape oubliée — on cale le modèle jusqu’à satisfaction, et on l’utilise sans avoir vérifié sa robustesse sur des données indépendantes. Cette pratique est compréhensible (les données sont rares, le temps manque), mais elle conduit à une fausse confiance dans les résultats du modèle. La règle minimale : <strong>ne jamais utiliser toutes les données disponibles pour le calage</strong> — réserver au moins 30 % pour la validation.</p>
+</div>
+</div>
+</section>
+<section id="le-protocole-standard" class="level3" data-number="1.4">
+<h3 data-number="1.4" class="anchored" data-anchor-id="le-protocole-standard"><span class="header-section-number">1.4</span> Le protocole standard</h3>
+<p>La procédure recommandée est la suivante :</p>
+<p><strong>Étape 1 — Collecte des données :</strong> campagne de mesures sur le réseau (pressions, débits, niveaux), couvrant une variété de conditions (saisons, événements pluvieux, scénarios de fonctionnement).</p>
+<p><strong>Étape 2 — Séparation calage/validation :</strong> partage aléatoire ou temporel des données en deux jeux. Règle typique : 60 à 70 % pour le calage, 30 à 40 % pour la validation.</p>
+<p><strong>Étape 3 — Calage :</strong> ajustement des paramètres sur le jeu de calage jusqu’à atteindre les indicateurs de qualité cibles.</p>
+<p><strong>Étape 4 — Validation :</strong> application du modèle calé au jeu de validation sans aucun ajustement. Calcul des indicateurs de qualité sur ce jeu indépendant.</p>
+<p><strong>Étape 5 — Diagnostic :</strong> si la performance sur le jeu de validation est significativement inférieure à celle sur le jeu de calage, il y a surapprentissage — revenir à l’étape 3 avec moins de paramètres libres ou des contraintes physiques plus fortes.</p>
+<p>Lorsque les données sont insuffisantes pour une séparation calage/validation directe (cas fréquent en hydraulique), la <strong>validation croisée</strong> (<em>leave-one-out cross-validation</em>) est une alternative : on cale le modèle <span class="math inline">\(n\)</span> fois en laissant à chaque fois une observation de côté, puis on valide sur l’observation laissée de côté.</p>
+<hr>
+</section>
+</section>
+<section id="les-données-de-calage-collecter-les-bonnes-mesures" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="les-données-de-calage-collecter-les-bonnes-mesures"><span class="header-section-number">2</span> Les données de calage : collecter les bonnes mesures</h2>
+<section id="quelles-grandeurs-mesurer-selon-le-type-de-modèle" class="level3" data-number="2.1">
+<h3 data-number="2.1" class="anchored" data-anchor-id="quelles-grandeurs-mesurer-selon-le-type-de-modèle"><span class="header-section-number">2.1</span> Quelles grandeurs mesurer selon le type de modèle</h3>
+<p>Les données de calage doivent être <strong>adaptées au type de modèle</strong> et aux paramètres qu’on cherche à caler :</p>
+<p><strong>Modèles AEP en charge (régime permanent) :</strong> - Pressions en des nœuds représentatifs (points hauts, points bas, extrémités de réseau) - Débits aux entrées de secteur (débitmètres sur les artères principales) - Niveaux de réservoirs enregistrés sur 24 à 72 heures</p>
+<p><strong>Modèles d’assainissement gravitaire :</strong> - Hauteurs d’eau (niveaux) dans les collecteurs principaux (limnigraphes) - Débits à l’exutoire de chaque sous-secteur (débitmètres) - Pluviogrammes synchrones pour les modèles pluviaux</p>
+<p><strong>Modèles de canaux d’irrigation :</strong> - Niveaux d’eau aux biefs (limnigraphes en amont et aval de chaque ouvrage de régulation) - Débits à l’entrée du réseau et aux prises principales (débitmètres) - Relevés de pertes par infiltration (bilans de débit entre deux sections consécutives)</p>
+<p><strong>Modèles d’irrigation sous pression :</strong> - Pressions en tête, milieu et bout de rampe (manomètres enregistreurs) - Débit total à la station de pompage et aux sous-secteurs - Mesures d’uniformité sur planche d’essai (<span class="math inline">\(CU\)</span> mesuré)</p>
+</section>
+<section id="les-instruments-précision-et-fréquence-dacquisition" class="level3" data-number="2.2">
+<h3 data-number="2.2" class="anchored" data-anchor-id="les-instruments-précision-et-fréquence-dacquisition"><span class="header-section-number">2.2</span> Les instruments : précision et fréquence d’acquisition</h3>
+<div id="tbl-instruments" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-instruments-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Instruments de mesure courants pour le calage hydraulique
+</figcaption>
+<div aria-describedby="tbl-instruments-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Instrument</th>
+<th>Grandeur mesurée</th>
+<th>Précision typique</th>
+<th>Fréquence recommandée</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Capteur de pression piézorésistif</td>
+<td>Pression (m ou bar)</td>
+<td>±0,1 à 0,5 % FS</td>
+<td>1 à 15 min</td>
+</tr>
+<tr class="even">
+<td>Débitmètre électromagnétique</td>
+<td>Débit (m³/h)</td>
+<td>±0,5 à 1 %</td>
+<td>1 à 15 min</td>
+</tr>
+<tr class="odd">
+<td>Débitmètre acoustique (transit-time)</td>
+<td>Débit (m³/h)</td>
+<td>±1 à 2 %</td>
+<td>1 à 15 min</td>
+</tr>
+<tr class="even">
+<td>Limnigraphe à bulle ou à pression</td>
+<td>Niveau d’eau (m)</td>
+<td>±1 à 5 mm</td>
+<td>1 à 15 min</td>
+</tr>
+<tr class="odd">
+<td>Pluviographe à auget basculeur</td>
+<td>Hauteur de pluie (mm)</td>
+<td>±2 à 5 %</td>
+<td>1 à 5 min</td>
+</tr>
+<tr class="even">
+<td>Pluviomètre à pesée</td>
+<td>Hauteur de pluie (mm)</td>
+<td>±0,1 %</td>
+<td>1 min</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>La <strong>fréquence d’acquisition</strong> doit être adaptée à la dynamique du phénomène mesuré : - Réseau AEP en régime étendu : 5 à 15 minutes (les variations de consommation sont lentes) - Assainissement pluvial : 1 à 5 minutes (le temps de montée d’un hydrogramme urbain peut être de 10 à 20 minutes) - Transitoire hydraulique (coup de bélier) : 0,1 à 1 seconde (les ondes se propagent en quelques secondes)</p>
+</section>
+<section id="le-plan-de-mesures-positionner-les-capteurs-pour-maximiser-linformation" class="level3" data-number="2.3">
+<h3 data-number="2.3" class="anchored" data-anchor-id="le-plan-de-mesures-positionner-les-capteurs-pour-maximiser-linformation"><span class="header-section-number">2.3</span> Le plan de mesures : positionner les capteurs pour maximiser l’information</h3>
+<p>Le positionnement des capteurs n’est pas une question anodine — un capteur mal positionné apporte peu d’information pour le calage, alors qu’un capteur bien positionné peut contraindre fortement un paramètre clé.</p>
+<p>Les principes généraux du plan de mesures :</p>
+<p><strong>Couvrir les extrema :</strong> instrumenter les points hauts (pression minimale en AEP), les points bas (mise en charge en assainissement), et les extrémités de réseau (points les plus éloignés de la source).</p>
+<p><strong>Isoler les paramètres :</strong> si on veut caler la rugosité d’un tronçon, instrumenter en amont et en aval de ce tronçon seul — pas seulement en aval d’un long parcours qui cumule les incertitudes de plusieurs tronçons.</p>
+<p><strong>Diversifier les conditions de mesure :</strong> un capteur qui enregistre toujours la même valeur (réseau trop stable) n’apporte pas d’information pour le calage. Il faut couvrir des conditions variées — pointe et creux de consommation, événements pluvieux de différentes intensités, scénarios de vannes différents.</p>
+<p><strong>Utiliser les données existantes :</strong> la télégestion fournit souvent des données de pression et de niveau en continu sur certains nœuds. Ces données, même si leur précision est moindre que celle de capteurs de mesure dédiés, sont précieuses pour le calage sur le long terme.</p>
+</section>
+<section id="la-qualité-des-données-détecter-les-anomalies" class="level3" data-number="2.4">
+<h3 data-number="2.4" class="anchored" data-anchor-id="la-qualité-des-données-détecter-les-anomalies"><span class="header-section-number">2.4</span> La qualité des données : détecter les anomalies</h3>
+<p>Les données de mesure brutes contiennent presque toujours des <strong>anomalies</strong> qu’il faut détecter et traiter avant le calage :</p>
+<p><strong>Valeurs aberrantes</strong> (<em>outliers</em>) : valeurs incohérentes avec les valeurs voisines dans le temps ou avec les autres capteurs dans l’espace. Détection par des critères statistiques (valeur à plus de <span class="math inline">\(3\sigma\)</span> de la moyenne) ou par comparaison avec les valeurs simulées.</p>
+<p><strong>Dérives de capteur</strong> : certains capteurs piézorésistifs dérivent progressivement dans le temps (décalage de zéro). La dérive se détecte par comparaison avec des mesures manuelles périodiques ou par analyse de la tendance à long terme.</p>
+<p><strong>Lacunes</strong> : périodes sans données (batterie déchargée, saturation de la mémoire, problème de transmission). Les lacunes courtes peuvent être interpolées ; les lacunes longues doivent être exclues du calage.</p>
+<p><strong>Décalage temporel</strong> : si les capteurs ne sont pas synchronisés sur une horloge commune, un décalage temporel entre les séries peut fausser le calage (comparaison de valeurs à des instants différents). Vérifier la synchronisation des horloges avant la campagne de mesures.</p>
+<hr>
+</section>
+</section>
+<section id="les-paramètres-à-caler-selon-le-type-de-modèle" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="les-paramètres-à-caler-selon-le-type-de-modèle"><span class="header-section-number">3</span> Les paramètres à caler selon le type de modèle</h2>
+<section id="hiérarchisation-a-priori-des-paramètres" class="level3" data-number="3.1">
+<h3 data-number="3.1" class="anchored" data-anchor-id="hiérarchisation-a-priori-des-paramètres"><span class="header-section-number">3.1</span> Hiérarchisation a priori des paramètres</h3>
+<p>Tous les paramètres n’ont pas le même impact sur les sorties du modèle. Avant de lancer un calage, une <strong>hiérarchisation a priori</strong> des paramètres — basée sur l’expertise physique et sur une analyse de sensibilité préliminaire — permet de concentrer les efforts sur les paramètres qui comptent vraiment.</p>
+<div id="tbl-parametres" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-parametres-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;2: Hiérarchisation indicative des paramètres par type de modèle
+</figcaption>
+<div aria-describedby="tbl-parametres-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Type de modèle</th>
+<th>Paramètres à fort impact</th>
+<th>Paramètres à faible impact</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>AEP en charge (pression)</td>
+<td>Rugosité conduites principales, demandes nodales, état des vannes</td>
+<td>Rugosité conduites secondaires, pertes singulières mineures</td>
+</tr>
+<tr class="even">
+<td>Assainissement gravitaire</td>
+<td>Strickler <span class="math inline">\(K_s\)</span>, cotes de radier, pertes singulières aux confluences</td>
+<td>Rugosité des petits branchements</td>
+</tr>
+<tr class="odd">
+<td>Assainissement pluvial</td>
+<td>Coefficient de ruissellement <span class="math inline">\(C\)</span>, temps de concentration <span class="math inline">\(t_c\)</span></td>
+<td>Paramètres de forme de l’hydrogramme unitaire</td>
+</tr>
+<tr class="even">
+<td>Irrigation gravitaire</td>
+<td>Strickler <span class="math inline">\(K_s\)</span>, pertes par infiltration, coefficients d’ouvrages</td>
+<td>Revanche, forme exacte de la section</td>
+</tr>
+<tr class="odd">
+<td>Irrigation sous pression</td>
+<td>Rugosité conduites principales, coefficients émetteurs <span class="math inline">\(k\)</span></td>
+<td>Rugosité rampes tertiaires</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+</section>
+<section id="les-contraintes-physiques-sur-les-paramètres" class="level3" data-number="3.2">
+<h3 data-number="3.2" class="anchored" data-anchor-id="les-contraintes-physiques-sur-les-paramètres"><span class="header-section-number">3.2</span> Les contraintes physiques sur les paramètres</h3>
+<p>Le calage ne doit pas conduire à des valeurs de paramètres physiquement absurdes. Des <strong>bornes physiques</strong> doivent être imposées à chaque paramètre :</p>
+<ul>
+<li>Coefficient de Strickler <span class="math inline">\(K_s\)</span> : entre 25 (canal en terre très dégradé) et 100 (PVC neuf) m<span class="math inline">\(^{1/3}\)</span>/s</li>
+<li>Rugosité de Colebrook <span class="math inline">\(\varepsilon\)</span> : entre 0,001 mm (PVC lisse) et 3 mm (fonte tuberculeuse)</li>
+<li>Coefficient de ruissellement <span class="math inline">\(C\)</span> : entre 0 et 1</li>
+<li>Temps de concentration <span class="math inline">\(t_c\)</span> : entre la valeur minimale physique (vitesse d’écoulement maximale × longueur) et une valeur maximale raisonnable</li>
+</ul>
+<p>Un paramètre calé en limite de ses bornes physiques est un signal d’alerte : soit le paramètre est réellement à sa valeur extrême (réseau très dégradé, bassin versant très imperméable), soit le modèle a une erreur structurelle que le calage compense de façon artificielle.</p>
+<hr>
+</section>
+</section>
+<section id="les-méthodes-de-calage" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="les-méthodes-de-calage"><span class="header-section-number">4</span> Les méthodes de calage</h2>
+<section id="le-calage-manuel-lexpertise-avant-lalgorithme" class="level3" data-number="4.1">
+<h3 data-number="4.1" class="anchored" data-anchor-id="le-calage-manuel-lexpertise-avant-lalgorithme"><span class="header-section-number">4.1</span> Le calage manuel : l’expertise avant l’algorithme</h3>
+<p>Le <strong>calage manuel</strong> est la méthode traditionnelle : l’ingénieur ajuste les paramètres par essais-erreurs successifs, guidé par son expertise physique et par l’interprétation des écarts entre simulation et observation.</p>
+<p><strong>Avantages :</strong> - L’ingénieur garde le contrôle — chaque ajustement est motivé par un raisonnement physique - Détection naturelle des anomalies : un paramètre qui “tire fort” pour reproduire les observations signale souvent une erreur dans les données ou une limite du modèle - Applicable sans logiciel d’optimisation spécialisé</p>
+<p><strong>Limites :</strong> - Inefficace pour les modèles avec de nombreux paramètres corrélés - Risque de convergence vers un optimum local (l’ingénieur s’arrête dès qu’il est satisfait, sans vérifier si un meilleur jeu de paramètres existe) - Non reproductible : deux ingénieurs peuvent aboutir à des jeux de paramètres différents sur le même modèle</p>
+</section>
+<section id="le-calage-automatique-par-optimisation" class="level3" data-number="4.2">
+<h3 data-number="4.2" class="anchored" data-anchor-id="le-calage-automatique-par-optimisation"><span class="header-section-number">4.2</span> Le calage automatique par optimisation</h3>
+<p>Le <strong>calage automatique</strong> utilise un algorithme d’optimisation pour minimiser une fonction objectif (mesure de l’écart entre simulation et observation) sur l’espace des paramètres.</p>
+<p><strong>Les algorithmes courants :</strong></p>
+<p><strong>Moindres carrés non linéaires</strong> (Levenberg-Marquardt) : efficace pour les problèmes bien posés avec peu de paramètres. Converge rapidement mais peut rester bloqué dans un optimum local sur des fonctions objectif complexes.</p>
+<p><strong>Algorithmes évolutionnaires</strong> (SCE-UA, algorithmes génétiques) : inspirés de l’évolution biologique. Explorent l’espace des paramètres de façon plus globale, moins sensibles aux optima locaux. Plus coûteux en temps de calcul. Recommandés pour les modèles pluviaux avec de nombreux paramètres corrélés.</p>
+<p><strong>Méthodes MCMC</strong> (<em>Markov Chain Monte Carlo</em>) : échantillonnent la distribution de probabilité des paramètres plutôt que de chercher un optimum unique. Fournissent directement une estimation de l’incertitude paramétrique. Plus coûteux mais plus informatifs — ils répondent à “quelle est la plage de paramètres compatibles avec les observations ?” plutôt que seulement “quel est le meilleur jeu de paramètres ?”.</p>
+</section>
+<section id="la-fonction-objectif-quel-critère-minimiser" class="level3" data-number="4.3">
+<h3 data-number="4.3" class="anchored" data-anchor-id="la-fonction-objectif-quel-critère-minimiser"><span class="header-section-number">4.3</span> La fonction objectif : quel critère minimiser ?</h3>
+<p>Le choix de la fonction objectif est une décision cruciale qui conditionne le résultat du calage. Les fonctions objectif courantes ont des propriétés différentes :</p>
+<p><strong>Somme des carrés des erreurs (SCE) :</strong> <span class="math inline">\(J = \sum_t (y_{sim,t} - y_{obs,t})^2\)</span>. Dominée par les grandes erreurs aux instants de forte valeur (pointes). Calage qui privilégie la reproduction des pointes au détriment des périodes ordinaires.</p>
+<p><strong>Somme des carrés des erreurs relatives :</strong> <span class="math inline">\(J = \sum_t \left(\frac{y_{sim,t} - y_{obs,t}}{y_{obs,t}}\right)^2\)</span>. Donne le même poids à tous les instants. Risque de sur-pondérer les instants à faibles valeurs (où les erreurs relatives sont amplifiées par des petits dénominateurs).</p>
+<p><strong>Critère de Nash-Sutcliffe transformé :</strong> utiliser <span class="math inline">\(\sqrt{y}\)</span> ou <span class="math inline">\(\ln(y)\)</span> au lieu de <span class="math inline">\(y\)</span> dans le calcul du NSE permet de donner plus ou moins de poids aux valeurs extrêmes (cf.&nbsp;section 5).</p>
+<p><strong>Critère multi-objectif :</strong> minimiser simultanément l’erreur sur le volume (bilan de masse) et l’erreur sur la pointe (valeur dimensionnante). Les méthodes d’optimisation multi-objectif (front de Pareto) permettent d’explorer le compromis entre ces deux objectifs.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Astuce</span>Choisir sa fonction objectif en fonction de l’usage du modèle
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Un modèle utilisé pour le dimensionnement d’un bassin de rétention doit bien reproduire le <strong>débit de pointe</strong> — utiliser une fonction objectif qui pénalise les erreurs aux pointes (SCE classique). Un modèle utilisé pour l’évaluation réglementaire des déversoirs d’orage doit bien reproduire le <strong>volume annuel déversé</strong> — utiliser une fonction objectif qui pénalise les erreurs de bilan volumétrique. Ne pas utiliser le même critère pour tous les usages.</p>
+</div>
+</div>
+<hr>
+</section>
+</section>
+<section id="les-indicateurs-de-qualité-du-calage" class="level2" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="les-indicateurs-de-qualité-du-calage"><span class="header-section-number">5</span> Les indicateurs de qualité du calage</h2>
+<section id="nash-sutcliffe-nse-définition-et-limites" class="level3" data-number="5.1">
+<h3 data-number="5.1" class="anchored" data-anchor-id="nash-sutcliffe-nse-définition-et-limites"><span class="header-section-number">5.1</span> Nash-Sutcliffe (NSE) : définition et limites</h3>
+<p>Le <strong>critère de Nash-Sutcliffe</strong> est l’indicateur de performance le plus utilisé en hydrologie et hydraulique :</p>
+<p><span class="math display">\[NSE = 1 - \frac{\sum_t (y_{sim,t} - y_{obs,t})^2}{\sum_t (y_{obs,t} - \bar{y}_{obs})^2}\]</span></p>
+<p><strong>Interprétation :</strong> - <span class="math inline">\(NSE = 1\)</span> : simulation parfaite - <span class="math inline">\(NSE = 0\)</span> : le modèle n’est pas meilleur que la moyenne des observations - <span class="math inline">\(NSE &lt; 0\)</span> : le modèle est moins bon que la moyenne — inadmissible</p>
+<p><strong>Limites :</strong> - Le NSE est dominé par les erreurs aux valeurs extrêmes (pointes de débit, pressions maximales) — un modèle qui reproduit bien les pointes mais mal les périodes ordinaires peut avoir un NSE élevé - Le NSE est sensible à la variabilité des observations : sur une série très variable (fort <span class="math inline">\(\sigma\)</span>), même un modèle médiocre peut avoir un NSE élevé</p>
+<p><strong>Variantes pour corriger ces limites :</strong> - <span class="math inline">\(NSE_{\sqrt{Q}}\)</span> : calculé sur <span class="math inline">\(\sqrt{y}\)</span> au lieu de <span class="math inline">\(y\)</span> — donne plus de poids aux valeurs faibles et modérées - <span class="math inline">\(NSE_{\ln Q}\)</span> : calculé sur <span class="math inline">\(\ln(y)\)</span> — très sensible aux faibles valeurs, peu sensible aux pointes - <span class="math inline">\(NSE_{modifié}\)</span> : utilise la valeur absolue au lieu du carré — moins sensible aux valeurs extrêmes</p>
+</section>
+<section id="rmse-mae-et-biais" class="level3" data-number="5.2">
+<h3 data-number="5.2" class="anchored" data-anchor-id="rmse-mae-et-biais"><span class="header-section-number">5.2</span> RMSE, MAE et biais</h3>
+<p><strong>RMSE</strong> (<em>Root Mean Square Error</em>) : <span class="math inline">\(\sqrt{\frac{1}{n}\sum_t(y_{sim,t} - y_{obs,t})^2}\)</span></p>
+<p>Exprimé dans la même unité que la grandeur mesurée (m pour les pressions, m³/s pour les débits). Permet de juger l’erreur en termes absolus, indépendamment de la variabilité des observations.</p>
+<p><strong>MAE</strong> (<em>Mean Absolute Error</em>) : <span class="math inline">\(\frac{1}{n}\sum_t|y_{sim,t} - y_{obs,t}|\)</span></p>
+<p>Moins sensible aux valeurs extrêmes que le RMSE. Plus robuste pour des séries avec quelques valeurs aberrantes résiduelles.</p>
+<p><strong>Biais</strong> : <span class="math inline">\(\frac{1}{n}\sum_t(y_{sim,t} - y_{obs,t})\)</span></p>
+<p>Mesure l’erreur systématique du modèle. Un biais positif signifie que le modèle surestime systématiquement — un biais négatif qu’il sous-estime. Un biais nul avec un RMSE élevé indique des erreurs aléatoires sans tendance systématique.</p>
+<p><strong>Biais volumétrique</strong> : <span class="math inline">\(\frac{V_{sim} - V_{obs}}{V_{obs}}\)</span></p>
+<p>Spécifique aux modèles pluviaux et d’irrigation — mesure l’erreur sur le bilan de masse intégré sur la période de simulation. Un biais volumétrique de ±5 % est généralement acceptable.</p>
+</section>
+<section id="seuils-acceptables-selon-le-type-de-modèle-et-lusage" class="level3" data-number="5.3">
+<h3 data-number="5.3" class="anchored" data-anchor-id="seuils-acceptables-selon-le-type-de-modèle-et-lusage"><span class="header-section-number">5.3</span> Seuils acceptables selon le type de modèle et l’usage</h3>
+<div id="tbl-seuils" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-seuils-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;3: Seuils indicatifs de qualité du calage par type de modèle
+</figcaption>
+<div aria-describedby="tbl-seuils-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Type de modèle</th>
+<th>Indicateur</th>
+<th>Calage acceptable</th>
+<th>Calage bon</th>
+<th>Calage excellent</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>AEP — pression</td>
+<td>RMSE (m)</td>
+<td>&lt; 5</td>
+<td>&lt; 2</td>
+<td>&lt; 1</td>
+</tr>
+<tr class="even">
+<td>AEP — pression</td>
+<td>NSE</td>
+<td>&gt; 0,70</td>
+<td>&gt; 0,85</td>
+<td>&gt; 0,95</td>
+</tr>
+<tr class="odd">
+<td>Assainissement gravitaire</td>
+<td>NSE débit</td>
+<td>&gt; 0,65</td>
+<td>&gt; 0,80</td>
+<td>&gt; 0,90</td>
+</tr>
+<tr class="even">
+<td>Assainissement pluvial</td>
+<td>NSE débit</td>
+<td>&gt; 0,60</td>
+<td>&gt; 0,75</td>
+<td>&gt; 0,85</td>
+</tr>
+<tr class="odd">
+<td>Assainissement pluvial</td>
+<td>Biais vol.</td>
+<td>&lt; ±15 %</td>
+<td>&lt; ±10 %</td>
+<td>&lt; ±5 %</td>
+</tr>
+<tr class="even">
+<td>Irrigation sous pression</td>
+<td>Erreur <span class="math inline">\(CU\)</span></td>
+<td>&lt; ±10 %</td>
+<td>&lt; ±5 %</td>
+<td>&lt; ±2 %</td>
+</tr>
+<tr class="odd">
+<td>Canal gravitaire</td>
+<td>RMSE niveau (m)</td>
+<td>&lt; 0,10</td>
+<td>&lt; 0,05</td>
+<td>&lt; 0,02</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>Ces seuils sont <strong>indicatifs</strong> — ils dépendent fortement de la qualité des données de mesure, de la variabilité du système, et de l’usage prévu du modèle. Un modèle utilisé pour un pré-dimensionnement peut se contenter de seuils “acceptables” ; un modèle utilisé pour une étude réglementaire ou une décision d’investissement importante doit viser les seuils “bon” à “excellent”.</p>
+<hr>
+</section>
+</section>
+<section id="léquifinalité-quand-plusieurs-jeux-de-paramètres-donnent-le-même-résultat" class="level2" data-number="6">
+<h2 data-number="6" class="anchored" data-anchor-id="léquifinalité-quand-plusieurs-jeux-de-paramètres-donnent-le-même-résultat"><span class="header-section-number">6</span> L’équifinalité : quand plusieurs jeux de paramètres donnent le même résultat</h2>
+<section id="définition-et-causes" class="level3" data-number="6.1">
+<h3 data-number="6.1" class="anchored" data-anchor-id="définition-et-causes"><span class="header-section-number">6.1</span> Définition et causes</h3>
+<p>L’<strong>équifinalité</strong> (terme introduit par Beven &amp; Binley, 1992 en hydrologie) est la propriété d’un modèle pour laquelle plusieurs jeux de paramètres différents produisent des sorties indiscernables par rapport aux données d’observation disponibles. Autrement dit : il n’existe pas un unique jeu de paramètres “correct” — il existe un <strong>ensemble de jeux équivalents</strong>, tous compatibles avec les observations dans leurs incertitudes.</p>
+<p>Les causes de l’équifinalité sont :</p>
+<p><strong>La corrélation entre paramètres :</strong> dans un modèle pluvial, augmenter <span class="math inline">\(C\)</span> (plus de ruissellement) et diminuer <span class="math inline">\(t_c\)</span> (moins d’étalement temporel) peuvent produire le même débit de pointe. Les deux paramètres sont corrélés sur cette sortie — il existe une infinité de couples (<span class="math inline">\(C\)</span>, <span class="math inline">\(t_c\)</span>) qui reproduisent le même pic.</p>
+<p><strong>L’insuffisance des données :</strong> si les observations disponibles ne “voient” pas toutes les dimensions de l’espace des paramètres (par exemple, si on n’a mesuré que des événements pluvieux de faible intensité), certains paramètres ne peuvent pas être contraints par ces données.</p>
+<p><strong>La non-linéarité du modèle :</strong> sur un modèle fortement non linéaire, plusieurs combinaisons de paramètres peuvent produire des sorties similaires via des mécanismes physiques différents.</p>
+</section>
+<section id="conséquences-pratiques" class="level3" data-number="6.2">
+<h3 data-number="6.2" class="anchored" data-anchor-id="conséquences-pratiques"><span class="header-section-number">6.2</span> Conséquences pratiques</h3>
+<p>L’équifinalité a une conséquence fondamentale souvent ignorée : <strong>un modèle peut être bien calé pour de mauvaises raisons physiques</strong>. Ses paramètres ont des valeurs qui reproduisent les observations, mais qui ne correspondent pas aux propriétés physiques réelles du système. En dehors du domaine de calage (conditions plus extrêmes, période future), ce modèle peut donner des résultats très différents de ceux d’un modèle avec les “vrais” paramètres.</p>
+<p>L’exemple classique en hydraulique urbaine : un modèle pluvial calé sur des pluies estivales (sol sec, fort ruissellement) avec un <span class="math inline">\(C\)</span> élevé et un <span class="math inline">\(t_c\)</span> court. Appliqué à une pluie automnale (sol humide, ruissellement également fort mais mécanisme différent), il peut donner des résultats corrects par compensation d’erreurs — ou des résultats très faux.</p>
+</section>
+<section id="comment-détecter-et-gérer-léquifinalité" class="level3" data-number="6.3">
+<h3 data-number="6.3" class="anchored" data-anchor-id="comment-détecter-et-gérer-léquifinalité"><span class="header-section-number">6.3</span> Comment détecter et gérer l’équifinalité</h3>
+<p><strong>Visualiser la surface de réponse :</strong> calculer la fonction objectif pour une grille de valeurs de paramètres et tracer les courbes d’iso-performance. Si la surface de réponse est plate (une large zone de l’espace des paramètres donne des performances similaires), l’équifinalité est forte.</p>
+<p><strong>Approche GLUE</strong> (<em>Generalized Likelihood Uncertainty Estimation</em>, Beven &amp; Binley) : échantillonner l’espace des paramètres (Monte Carlo), calculer la fonction objectif pour chaque tirage, retenir tous les jeux de paramètres dont la performance dépasse un seuil. L’ensemble des jeux retenus constitue la <strong>distribution de comportements équifinaux</strong> — elle est plus informative qu’un unique “meilleur jeu”.</p>
+<p><strong>Contraintes physiques supplémentaires :</strong> si les données hydrauliques ne permettent pas de distinguer les jeux équivalents, des données d’une autre nature peuvent lever l’ambiguïté. En modélisation pluviale : une mesure de la capacité d’infiltration du sol (essai de perméabilité) contraint <span class="math inline">\(C\)</span> indépendamment du calage hydraulique.</p>
+<p><strong>Accepter et quantifier l’incertitude :</strong> dans bien des cas, l’équifinalité est irréductible avec les données disponibles. La bonne pratique est alors d’accepter cet ensemble de solutions équivalentes, de propager chaque jeu de paramètres à travers le modèle, et de présenter les résultats comme une plage d’incertitude plutôt que comme une valeur unique.</p>
+<hr>
+</section>
+</section>
+<section id="lanalyse-de-sensibilité" class="level2" data-number="7">
+<h2 data-number="7" class="anchored" data-anchor-id="lanalyse-de-sensibilité"><span class="header-section-number">7</span> L’analyse de sensibilité</h2>
+<section id="sensibilité-locale-vs-sensibilité-globale" class="level3" data-number="7.1">
+<h3 data-number="7.1" class="anchored" data-anchor-id="sensibilité-locale-vs-sensibilité-globale"><span class="header-section-number">7.1</span> Sensibilité locale vs sensibilité globale</h3>
+<p>L’<strong>analyse de sensibilité</strong> quantifie l’impact des variations des paramètres d’entrée sur les sorties du modèle. Elle est l’outil qui permet de hiérarchiser les paramètres, de cibler les efforts de mesure, et de quantifier l’incertitude des résultats.</p>
+<p><strong>Sensibilité locale (OAT — One-At-a-Time) :</strong> on perturbe un paramètre à la fois de ±10 % (ou d’une valeur fixe) et on observe la variation de la sortie. Simple à mettre en œuvre, elle donne une image de la sensibilité au voisinage du point nominal.</p>
+<p><span class="math display">\[S_i = \frac{\partial y / y_0}{\partial \theta_i / \theta_{i,0}}\]</span></p>
+<p><strong>Limite :</strong> la sensibilité locale ne capture pas les <strong>interactions</strong> entre paramètres. Si deux paramètres sont fortement corrélés dans leur effet (équifinalité), l’analyse OAT ne le révèle pas.</p>
+<p><strong>Sensibilité globale :</strong> explore l’espace entier des paramètres, pas seulement le voisinage du point nominal. Elle capture les interactions et les effets non linéaires. Plus coûteuse (nécessite de nombreuses simulations) mais plus informative.</p>
+</section>
+<section id="méthodes-de-sensibilité-globale" class="level3" data-number="7.2">
+<h3 data-number="7.2" class="anchored" data-anchor-id="méthodes-de-sensibilité-globale"><span class="header-section-number">7.2</span> Méthodes de sensibilité globale</h3>
+<p><strong>Méthode de Morris :</strong> chaque paramètre est perturbé successivement selon un chemin aléatoire dans l’espace des paramètres. La moyenne (<span class="math inline">\(\mu^*\)</span>) et l’écart-type (<span class="math inline">\(\sigma\)</span>) des effets élémentaires caractérisent l’importance (<span class="math inline">\(\mu^*\)</span> élevé) et la non-linéarité/interaction (<span class="math inline">\(\sigma\)</span> élevé) de chaque paramètre. Méthode de <strong>screening</strong> — rapide, utile pour éliminer les paramètres sans influence avant une analyse plus fine.</p>
+<p><strong>Indices de Sobol :</strong> décomposent la variance de la sortie en contributions de chaque paramètre et de leurs interactions. L’indice de premier ordre <span class="math inline">\(S_i\)</span> mesure la part de variance expliquée par le paramètre <span class="math inline">\(i\)</span> seul ; l’indice total <span class="math inline">\(S_{Ti}\)</span> inclut aussi les interactions. Méthode rigoureuse mais coûteuse (plusieurs milliers de simulations).</p>
+<p><span class="math display">\[S_i = \frac{V[\mathbb{E}(Y|\theta_i)]}{V(Y)}, \quad S_{Ti} = 1 - \frac{V[\mathbb{E}(Y|\theta_{\sim i})]}{V(Y)}\]</span></p>
+<p>où <span class="math inline">\(\theta_{\sim i}\)</span> désigne tous les paramètres sauf <span class="math inline">\(\theta_i\)</span>.</p>
+<p><strong>Application pratique :</strong> pour la plupart des modèles hydrauliques (50 à 200 paramètres), une analyse de Morris préliminaire permet d’identifier les 5 à 15 paramètres les plus influents, sur lesquels une analyse de Sobol complète est ensuite conduite.</p>
+</section>
+<section id="la-matrice-de-sensibilité-outil-de-diagnostic" class="level3" data-number="7.3">
+<h3 data-number="7.3" class="anchored" data-anchor-id="la-matrice-de-sensibilité-outil-de-diagnostic"><span class="header-section-number">7.3</span> La matrice de sensibilité : outil de diagnostic</h3>
+<p>La <strong>matrice de sensibilité</strong> est un tableau qui croise les paramètres (colonnes) et les sorties d’intérêt (lignes), avec les indices de sensibilité dans les cellules. Elle permet d’identifier :</p>
+<ul>
+<li>Les paramètres <strong>très influents sur toutes les sorties</strong> : prioritaires pour le calage et les mesures de terrain</li>
+<li>Les paramètres <strong>influents sur certaines sorties seulement</strong> : à caler sur les données correspondant à ces sorties</li>
+<li>Les paramètres <strong>sans influence</strong> : peuvent être fixés à leurs valeurs nominales sans calage</li>
+</ul>
+<p>Elle révèle aussi les <strong>sorties peu sensibles à tous les paramètres</strong> : elles sont soit bien contraintes par la physique du modèle, soit mal représentées par les équations (signal que le modèle a une limite structurelle sur cette sortie).</p>
+<hr>
+</section>
+</section>
+<section id="de-la-validation-à-lincertitude-des-résultats" class="level2" data-number="8">
+<h2 data-number="8" class="anchored" data-anchor-id="de-la-validation-à-lincertitude-des-résultats"><span class="header-section-number">8</span> De la validation à l’incertitude des résultats</h2>
+<section id="les-sources-dincertitude-résiduelle" class="level3" data-number="8.1">
+<h3 data-number="8.1" class="anchored" data-anchor-id="les-sources-dincertitude-résiduelle"><span class="header-section-number">8.1</span> Les sources d’incertitude résiduelle</h3>
+<p>Même après un calage et une validation soigneux, le modèle reste entaché d’une <strong>incertitude résiduelle</strong> qui ne peut pas être éliminée :</p>
+<p><strong>Incertitude paramétrique résiduelle :</strong> l’équifinalité implique qu’on ne connaît pas précisément les “vrais” paramètres. La plage de jeux équifinaux se traduit par une plage de résultats.</p>
+<p><strong>Incertitude des données d’entrée :</strong> la pluie est imprécise, la consommation est estimée, les apports en tête de canal sont mesurés avec une incertitude de ±2 à 5 %. Cette incertitude se propage directement dans les résultats.</p>
+<p><strong>Incertitude structurelle :</strong> les équations simplifiées (Saint-Venant 1D au lieu de 3D, Manning-Strickler au lieu d’une modélisation fine de la turbulence) introduisent une erreur systématique difficile à quantifier. Elle est particulièrement importante lors de l’extrapolation aux conditions hors du domaine de calage (événements extrêmes, configurations hors-norme).</p>
+</section>
+<section id="propagation-de-lincertitude-par-monte-carlo" class="level3" data-number="8.2">
+<h3 data-number="8.2" class="anchored" data-anchor-id="propagation-de-lincertitude-par-monte-carlo"><span class="header-section-number">8.2</span> Propagation de l’incertitude par Monte Carlo</h3>
+<p>La méthode de <strong>Monte Carlo</strong> est l’outil standard pour propager l’incertitude des paramètres vers l’incertitude des sorties :</p>
+<ol type="1">
+<li>Définir une distribution de probabilité pour chaque paramètre incertain (uniforme sur la plage physique admissible, ou distribution tirée de l’analyse GLUE)</li>
+<li>Tirer <span class="math inline">\(N\)</span> jeux de paramètres au hasard selon ces distributions (<span class="math inline">\(N\)</span> = 1 000 à 10 000)</li>
+<li>Exécuter le modèle pour chaque tirage</li>
+<li>Analyser la distribution des sorties : médiane, percentiles 5 % et 95 %, histogramme</li>
+</ol>
+<p>Le résultat est une <strong>distribution de probabilité des sorties</strong> — par exemple, la distribution des hauteurs d’eau maximales dans un collecteur pour un événement décennal, tenant compte de l’incertitude sur <span class="math inline">\(C\)</span>, <span class="math inline">\(t_c\)</span> et <span class="math inline">\(K_s\)</span>.</p>
+</section>
+<section id="communiquer-lincertitude" class="level3" data-number="8.3">
+<h3 data-number="8.3" class="anchored" data-anchor-id="communiquer-lincertitude"><span class="header-section-number">8.3</span> Communiquer l’incertitude</h3>
+<p>La communication de l’incertitude est un enjeu autant technique que relationnel. Les maîtres d’ouvrage et les élus ont souvent du mal à accepter qu’un modèle ne donne pas une réponse unique et précise — ils ont parfois l’impression qu’une fourchette d’incertitude signifie que le modèle “ne marche pas”.</p>
+<p>Quelques principes pour une communication efficace :</p>
+<p><strong>Présenter des fourchettes, pas des valeurs ponctuelles :</strong> “Le modèle prédit une hauteur d’eau maximale entre 0,45 m et 0,65 m au point X pour la pluie décennale” est une information honnête. “Le modèle prédit 0,52 m” est une fausse précision.</p>
+<p><strong>Distinguer l’incertitude du résultat de l’incertitude de la décision :</strong> même avec une fourchette d’incertitude large, la décision peut être robuste. Si le résultat “entre 0,45 m et 0,65 m” est inférieur au seuil de danger (1,0 m dans tous les cas), la décision “pas de travaux nécessaires” est robuste à l’incertitude.</p>
+<p><strong>Nommer les sources d’incertitude dominantes :</strong> “L’incertitude principale provient de la méconnaissance de la pluie spatiale sur le bassin versant” est plus utile pour le décideur que “il y a une incertitude de ±25 %”.</p>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Avertissement</span>Le modèle dans la décision : la responsabilité de l’ingénieur
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Un modèle est un outil d’aide à la décision, pas un décideur. Lorsqu’un modèle donne un résultat incertain qui conditionne une décision d’investissement importante (construction d’un bassin de rétention, réhabilitation d’un réseau), c’est l’ingénieur — pas le logiciel — qui est responsable de l’interprétation. La compétence de l’ingénieur se mesure à sa capacité à quantifier honnêtement l’incertitude de son modèle, à identifier ses limites, et à conseiller le maître d’ouvrage en conséquence.</p>
+</div>
+</div>
+<hr>
+</section>
+</section>
+<section id="conclusion" class="level2" data-number="9">
+<h2 data-number="9" class="anchored" data-anchor-id="conclusion"><span class="header-section-number">9</span> Conclusion</h2>
+<p>Le calage et la validation ne sont pas des étapes techniques facultatives à réaliser “si on a le temps” — ce sont les opérations qui transforment un modèle en outil crédible. Un modèle non calé est un outil de pré-dimensionnement indicatif. Un modèle calé mais non validé est un outil dont on ne connaît pas la robustesse. Seul un modèle calé, validé, et dont l’incertitude résiduelle a été quantifiée mérite d’être utilisé pour des décisions importantes.</p>
+<p>Quatre convictions doivent guider l’ingénieur dans cette démarche :</p>
+<p><strong>Premièrement</strong>, le calage commence par les données — un modèle calé sur de mauvaises données est un mauvais modèle, quels que soient les algorithmes utilisés. <strong>Deuxièmement</strong>, les paramètres physiquement absurdes sont des signaux d’alerte, pas des solutions acceptables. <strong>Troisièmement</strong>, l’équifinalité n’est pas un échec du modèle — c’est une information sur la limite de ce que les données disponibles permettent de conclure. <strong>Quatrièmement</strong>, communiquer honnêtement l’incertitude est une obligation professionnelle, pas une faiblesse.</p>
+<hr>
+</section>
+<section id="pour-aller-plus-loin-dans-cette-série" class="level2" data-number="10">
+<h2 data-number="10" class="anchored" data-anchor-id="pour-aller-plus-loin-dans-cette-série"><span class="header-section-number">10</span> Pour aller plus loin dans cette série</h2>
+<ul>
+<li><strong>Note 3.2</strong> — <em>Quand le 1D ne suffit plus</em> : critères de passage au 2D et au 3D, introduction à Telemac et HEC-RAS 2D, aperçu de la CFD pour les ouvrages hydrauliques</li>
+<li><strong>Note 3.3</strong> — <em>Données et modèles : SIG, capteurs, vers le jumeau numérique hydraulique</em> : acquisition de données, intégration SIG, IoT réseau, notion de jumeau numérique</li>
+<li><strong>Note 3.4</strong> — <em>Incertitudes en modélisation hydraulique : ce que le modèle ne peut pas vous dire</em> : analyse de sensibilité avancée, propagation d’incertitudes, honnêteté des résultats</li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copié");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copié");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<script src="../site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="fr" xml:lang="fr"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="">
+
+<title>Ce que le modèle ne peut pas vous dire – Johary - Ingénieur Hydraulicien</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../static/avatar.jpg" rel="icon" type="image/jpeg">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-23bbe8b5e4efc1e257f6d59dce478b08.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-7f128302b46659ec05c1cdf12d27b5f1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-fcb2e74b6da07224c5b59afd36009af3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-7f128302b46659ec05c1cdf12d27b5f1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "Pas de résultats",
+    "search-matching-documents-text": "documents trouvés",
+    "search-copy-link-title": "Copier le lien vers la recherche",
+    "search-hide-matches-text": "Cacher les correspondances additionnelles",
+    "search-more-match-text": "correspondance de plus dans ce document",
+    "search-more-matches-text": "correspondances de plus dans ce document",
+    "search-clear-button-title": "Effacer",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Annuler",
+    "search-submit-button-title": "Envoyer",
+    "search-label": "Recherche"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../styles.css">
+</head>
+
+<body class="nav-sidebar floating quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Basculer la barre latérale" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item">
+      Johary - Ingénieur Hydraulicien
+      </li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Basculer la barre latérale" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Recherche" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Johary - Ingénieur Hydraulicien</a> 
+        <div class="sidebar-tools-main">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Basculer le mode sombre"><i class="bi"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Recherche"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🏠 Accueil</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../formation/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🌊 Formation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../etudes-de-cas/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">📐 Études de cas</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../geomatique/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🌍 Géomatique</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../programmation/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🐍 Programmation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../parcours/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🗺️ Parcours</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../contact.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">✉️ Contact</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Sommaire</h2>
+   
+  <ul>
+  <li><a href="#les-trois-catégories-dincertitude-revisitées" id="toc-les-trois-catégories-dincertitude-revisitées" class="nav-link active" data-scroll-target="#les-trois-catégories-dincertitude-revisitées"><span class="header-section-number">1</span> Les trois catégories d’incertitude revisitées</a>
+  <ul class="collapse">
+  <li><a href="#ce-qui-a-été-traité-et-ce-qui-reste" id="toc-ce-qui-a-été-traité-et-ce-qui-reste" class="nav-link" data-scroll-target="#ce-qui-a-été-traité-et-ce-qui-reste"><span class="header-section-number">1.1</span> Ce qui a été traité — et ce qui reste</a></li>
+  <li><a href="#la-modélisation-comme-réduction-dincertitude-pas-comme-suppression" id="toc-la-modélisation-comme-réduction-dincertitude-pas-comme-suppression" class="nav-link" data-scroll-target="#la-modélisation-comme-réduction-dincertitude-pas-comme-suppression"><span class="header-section-number">1.2</span> La modélisation comme réduction d’incertitude, pas comme suppression</a></li>
+  </ul></li>
+  <li><a href="#les-limites-structurelles-des-modèles-1d" id="toc-les-limites-structurelles-des-modèles-1d" class="nav-link" data-scroll-target="#les-limites-structurelles-des-modèles-1d"><span class="header-section-number">2</span> Les limites structurelles des modèles 1D</a>
+  <ul class="collapse">
+  <li><a href="#ce-que-manning-strickler-ne-capture-pas" id="toc-ce-que-manning-strickler-ne-capture-pas" class="nav-link" data-scroll-target="#ce-que-manning-strickler-ne-capture-pas"><span class="header-section-number">2.1</span> Ce que Manning-Strickler ne capture pas</a></li>
+  <li><a href="#ce-que-saint-venant-1d-rate" id="toc-ce-que-saint-venant-1d-rate" class="nav-link" data-scroll-target="#ce-que-saint-venant-1d-rate"><span class="header-section-number">2.2</span> Ce que Saint-Venant 1D rate</a></li>
+  <li><a href="#ce-que-bernoulli-généralisé-ignore" id="toc-ce-que-bernoulli-généralisé-ignore" class="nav-link" data-scroll-target="#ce-que-bernoulli-généralisé-ignore"><span class="header-section-number">2.3</span> Ce que Bernoulli généralisé ignore</a></li>
+  </ul></li>
+  <li><a href="#lextrapolation-la-limite-la-plus-dangereuse" id="toc-lextrapolation-la-limite-la-plus-dangereuse" class="nav-link" data-scroll-target="#lextrapolation-la-limite-la-plus-dangereuse"><span class="header-section-number">3</span> L’extrapolation : la limite la plus dangereuse</a>
+  <ul class="collapse">
+  <li><a href="#caler-sur-des-événements-courants-prédire-des-événements-extrêmes" id="toc-caler-sur-des-événements-courants-prédire-des-événements-extrêmes" class="nav-link" data-scroll-target="#caler-sur-des-événements-courants-prédire-des-événements-extrêmes"><span class="header-section-number">3.1</span> Caler sur des événements courants, prédire des événements extrêmes</a></li>
+  <li><a href="#les-événements-composés" id="toc-les-événements-composés" class="nav-link" data-scroll-target="#les-événements-composés"><span class="header-section-number">3.2</span> Les événements composés</a></li>
+  <li><a href="#la-non-stationnarité-quand-le-passé-ne-prédit-plus-le-futur" id="toc-la-non-stationnarité-quand-le-passé-ne-prédit-plus-le-futur" class="nav-link" data-scroll-target="#la-non-stationnarité-quand-le-passé-ne-prédit-plus-le-futur"><span class="header-section-number">3.3</span> La non-stationnarité : quand le passé ne prédit plus le futur</a></li>
+  </ul></li>
+  <li><a href="#le-changement-climatique-et-la-non-stationnarité" id="toc-le-changement-climatique-et-la-non-stationnarité" class="nav-link" data-scroll-target="#le-changement-climatique-et-la-non-stationnarité"><span class="header-section-number">4</span> Le changement climatique et la non-stationnarité</a>
+  <ul class="collapse">
+  <li><a href="#ce-que-le-changement-climatique-modifie-en-hydraulique" id="toc-ce-que-le-changement-climatique-modifie-en-hydraulique" class="nav-link" data-scroll-target="#ce-que-le-changement-climatique-modifie-en-hydraulique"><span class="header-section-number">4.1</span> Ce que le changement climatique modifie en hydraulique</a></li>
+  <li><a href="#comment-intégrer-le-changement-climatique-dans-la-modélisation" id="toc-comment-intégrer-le-changement-climatique-dans-la-modélisation" class="nav-link" data-scroll-target="#comment-intégrer-le-changement-climatique-dans-la-modélisation"><span class="header-section-number">4.2</span> Comment intégrer le changement climatique dans la modélisation</a></li>
+  </ul></li>
+  <li><a href="#les-phénomènes-hors-cadre" id="toc-les-phénomènes-hors-cadre" class="nav-link" data-scroll-target="#les-phénomènes-hors-cadre"><span class="header-section-number">5</span> Les phénomènes hors-cadre</a>
+  <ul class="collapse">
+  <li><a href="#les-écoulements-polyphasiques" id="toc-les-écoulements-polyphasiques" class="nav-link" data-scroll-target="#les-écoulements-polyphasiques"><span class="header-section-number">5.1</span> Les écoulements polyphasiques</a></li>
+  <li><a href="#les-défaillances-douvrages" id="toc-les-défaillances-douvrages" class="nav-link" data-scroll-target="#les-défaillances-douvrages"><span class="header-section-number">5.2</span> Les défaillances d’ouvrages</a></li>
+  <li><a href="#les-phénomènes-émergents" id="toc-les-phénomènes-émergents" class="nav-link" data-scroll-target="#les-phénomènes-émergents"><span class="header-section-number">5.3</span> Les phénomènes émergents</a></li>
+  </ul></li>
+  <li><a href="#lincertitude-dans-la-décision" id="toc-lincertitude-dans-la-décision" class="nav-link" data-scroll-target="#lincertitude-dans-la-décision"><span class="header-section-number">6</span> L’incertitude dans la décision</a>
+  <ul class="collapse">
+  <li><a href="#la-décision-sous-incertitude-quelques-cadres" id="toc-la-décision-sous-incertitude-quelques-cadres" class="nav-link" data-scroll-target="#la-décision-sous-incertitude-quelques-cadres"><span class="header-section-number">6.1</span> La décision sous incertitude : quelques cadres</a></li>
+  <li><a href="#lanalyse-coût-bénéfice-sous-incertitude" id="toc-lanalyse-coût-bénéfice-sous-incertitude" class="nav-link" data-scroll-target="#lanalyse-coût-bénéfice-sous-incertitude"><span class="header-section-number">6.2</span> L’analyse coût-bénéfice sous incertitude</a></li>
+  </ul></li>
+  <li><a href="#la-responsabilité-de-lingénieur" id="toc-la-responsabilité-de-lingénieur" class="nav-link" data-scroll-target="#la-responsabilité-de-lingénieur"><span class="header-section-number">7</span> La responsabilité de l’ingénieur</a>
+  <ul class="collapse">
+  <li><a href="#le-modèle-comme-outil-daide-à-la-décision-pas-comme-décideur" id="toc-le-modèle-comme-outil-daide-à-la-décision-pas-comme-décideur" class="nav-link" data-scroll-target="#le-modèle-comme-outil-daide-à-la-décision-pas-comme-décideur"><span class="header-section-number">7.1</span> Le modèle comme outil d’aide à la décision, pas comme décideur</a></li>
+  <li><a href="#lobligation-de-transparence" id="toc-lobligation-de-transparence" class="nav-link" data-scroll-target="#lobligation-de-transparence"><span class="header-section-number">7.2</span> L’obligation de transparence</a></li>
+  <li><a href="#la-tentation-de-la-fausse-précision" id="toc-la-tentation-de-la-fausse-précision" class="nav-link" data-scroll-target="#la-tentation-de-la-fausse-précision"><span class="header-section-number">7.3</span> La tentation de la fausse précision</a></li>
+  <li><a href="#le-dialogue-avec-le-maître-douvrage" id="toc-le-dialogue-avec-le-maître-douvrage" class="nav-link" data-scroll-target="#le-dialogue-avec-le-maître-douvrage"><span class="header-section-number">7.4</span> Le dialogue avec le maître d’ouvrage</a></li>
+  <li><a href="#la-mise-en-cause-professionnelle" id="toc-la-mise-en-cause-professionnelle" class="nav-link" data-scroll-target="#la-mise-en-cause-professionnelle"><span class="header-section-number">7.5</span> La mise en cause professionnelle</a></li>
+  </ul></li>
+  <li><a href="#ce-que-cette-série-vous-a-donné-et-ce-quelle-ne-peut-pas-vous-donner" id="toc-ce-que-cette-série-vous-a-donné-et-ce-quelle-ne-peut-pas-vous-donner" class="nav-link" data-scroll-target="#ce-que-cette-série-vous-a-donné-et-ce-quelle-ne-peut-pas-vous-donner"><span class="header-section-number">8</span> Ce que cette série vous a donné — et ce qu’elle ne peut pas vous donner</a>
+  <ul class="collapse">
+  <li><a href="#un-bilan-honnête" id="toc-un-bilan-honnête" class="nav-link" data-scroll-target="#un-bilan-honnête"><span class="header-section-number">8.1</span> Un bilan honnête</a></li>
+  <li><a href="#lingénieur-hydraulicien-comme-interprète-de-la-physique" id="toc-lingénieur-hydraulicien-comme-interprète-de-la-physique" class="nav-link" data-scroll-target="#lingénieur-hydraulicien-comme-interprète-de-la-physique"><span class="header-section-number">8.2</span> L’ingénieur hydraulicien comme interprète de la physique</a></li>
+  <li><a href="#la-modélisation-hydraulique-comme-discipline-vivante" id="toc-la-modélisation-hydraulique-comme-discipline-vivante" class="nav-link" data-scroll-target="#la-modélisation-hydraulique-comme-discipline-vivante"><span class="header-section-number">8.3</span> La modélisation hydraulique comme discipline vivante</a></li>
+  </ul></li>
+  <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion"><span class="header-section-number">9</span> Conclusion</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Ce que le modèle ne peut pas vous dire</h1>
+<p class="subtitle lead">Limites structurelles de la modélisation hydraulique et responsabilité de l’ingénieur</p>
+  <div class="quarto-categories">
+    <div class="quarto-category">Hydraulique</div>
+    <div class="quarto-category">Modélisation</div>
+    <div class="quarto-category">Incertitude</div>
+    <div class="quarto-category">Ingénierie</div>
+  </div>
+  </div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+    <div>
+    <div class="quarto-title-meta-heading">Date de publication</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">16 mai 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Note de clôture de la série
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Cette note clôt la série sur la modélisation des réseaux hydrauliques. Elle suppose la lecture de l’ensemble des notes précédentes, et en particulier de la note <em>Calage et validation de modèles hydrauliques</em> (note 3.1) qui traitait de l’incertitude paramétrique. On aborde ici un registre différent : les <strong>incertitudes irréductibles</strong> — celles qui persistent même avec le meilleur calage, les meilleures données et le modèle le plus sophistiqué — et la responsabilité professionnelle qui en découle.</p>
+</div>
+</div>
+<section id="les-trois-catégories-dincertitude-revisitées" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="les-trois-catégories-dincertitude-revisitées"><span class="header-section-number">1</span> Les trois catégories d’incertitude revisitées</h2>
+<section id="ce-qui-a-été-traité-et-ce-qui-reste" class="level3" data-number="1.1">
+<h3 data-number="1.1" class="anchored" data-anchor-id="ce-qui-a-été-traité-et-ce-qui-reste"><span class="header-section-number">1.1</span> Ce qui a été traité — et ce qui reste</h3>
+<p>La note 3.1 posait le cadre des trois sources d’incertitude d’un modèle hydraulique : incertitude paramétrique (les valeurs des paramètres sont mal connues), incertitude des données d’entrée (la pluie, la consommation, les apports sont imprécis), et incertitude structurelle (les équations simplifient la réalité).</p>
+<p>La note 3.1 montrait comment <strong>réduire</strong> l’incertitude paramétrique par le calage, et comment la <strong>quantifier</strong> par l’analyse de sensibilité et la propagation Monte Carlo. Ces outils sont puissants — mais ils ont une limite fondamentale : ils quantifient l’incertitude à l’intérieur du cadre du modèle. Ils ne questionnent pas le cadre lui-même.</p>
+<p>Cette note traite d’un registre différent : les <strong>incertitudes irréductibles</strong>, celles qui ne disparaissent pas avec un meilleur calage, plus de données, ou un algorithme d’optimisation plus sophistiqué. Ce sont les limites structurelles de la modélisation hydraulique — les choses que les équations ne peuvent pas représenter, les domaines où les modèles ne sont pas extrapolables, les phénomènes qui échappent fondamentalement au cadre continu et déterministe dans lequel nous travaillons.</p>
+</section>
+<section id="la-modélisation-comme-réduction-dincertitude-pas-comme-suppression" class="level3" data-number="1.2">
+<h3 data-number="1.2" class="anchored" data-anchor-id="la-modélisation-comme-réduction-dincertitude-pas-comme-suppression"><span class="header-section-number">1.2</span> La modélisation comme réduction d’incertitude, pas comme suppression</h3>
+<p>Le premier réflexe intellectuel à corriger est de penser qu’un “bon modèle” est un modèle sans incertitude. Ce n’est pas possible — et prétendre le contraire est une forme de malhonnêteté professionnelle.</p>
+<p>Un modèle hydraulique est toujours une <strong>réduction d’incertitude</strong>, jamais une suppression. Avant le modèle, on ignore quelles pressions règnent dans un réseau AEP en pointe d’incendie. Après le modèle, on sait que la pression au nœud critique est probablement entre 0,8 et 1,4 bar, avec une valeur la plus probable de 1,1 bar. L’incertitude a été réduite — pas éliminée.</p>
+<p>La valeur du modèle est dans cette réduction. Son danger est dans l’oubli de ce qui subsiste.</p>
+<hr>
+</section>
+</section>
+<section id="les-limites-structurelles-des-modèles-1d" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="les-limites-structurelles-des-modèles-1d"><span class="header-section-number">2</span> Les limites structurelles des modèles 1D</h2>
+<section id="ce-que-manning-strickler-ne-capture-pas" class="level3" data-number="2.1">
+<h3 data-number="2.1" class="anchored" data-anchor-id="ce-que-manning-strickler-ne-capture-pas"><span class="header-section-number">2.1</span> Ce que Manning-Strickler ne capture pas</h3>
+<p>La formule de Manning-Strickler est l’outil de base de la hydraulique à surface libre depuis 150 ans. Elle est robuste, simple, et fonctionne remarquablement bien dans son domaine de validité. Mais ses hypothèses fondatrices (régime uniforme, turbulence représentée par un coefficient scalaire <span class="math inline">\(K_s\)</span>, profil de vitesse uniforme sur la section) génèrent des erreurs systématiques dans plusieurs situations :</p>
+<p><strong>La turbulence locale aux ouvrages :</strong> un coude, une jonction, une vanne créent des zones de recirculation, de décollement et de tourbillon dont l’étendue peut dépasser plusieurs dizaines de diamètres. Dans ces zones, la perte de charge n’est pas représentée correctement par Manning-Strickler — d’où l’usage de coefficients de pertes singulières <span class="math inline">\(\xi\)</span> qui sont, au fond, des paramètres de calage déguisés en constantes physiques.</p>
+<p><strong>La sédimentation non linéaire :</strong> Manning-Strickler suppose un lit fixe et une rugosité constante. Dans la réalité, le dépôt de sédiments dans un collecteur modifie progressivement la section utile, augmente la rugosité effective, et réduit la capacité hydraulique de façon non linéaire dans le temps. Un modèle calé sur un réseau propre sera optimiste pour un réseau envasé — sans que le calage puisse le détecter.</p>
+<p><strong>Les écoulements à faible nombre de Reynolds :</strong> Manning-Strickler est une loi de régime turbulent établi. À très faible débit (débit de temps sec dans un grand collecteur, par exemple), l’écoulement peut être laminaire ou en transition — et Manning-Strickler prédit mal les hauteurs d’eau dans cette gamme. Ce n’est pas un cas fréquent, mais il peut être important pour la vérification de l’auto-curage en conditions extrêmes.</p>
+</section>
+<section id="ce-que-saint-venant-1d-rate" class="level3" data-number="2.2">
+<h3 data-number="2.2" class="anchored" data-anchor-id="ce-que-saint-venant-1d-rate"><span class="header-section-number">2.2</span> Ce que Saint-Venant 1D rate</h3>
+<p>Les équations de Saint-Venant 1D (cf.&nbsp;note socle) sont une simplification remarquablement efficace de Navier-Stokes pour les canaux et collecteurs. Mais leur dérivation repose sur des hypothèses dont la violation génère des erreurs structurelles non compensables par le calage :</p>
+<p><strong>Les débordements latéraux réels :</strong> lorsqu’une rivière déborde dans son lit majeur, Saint-Venant 1D représente l’écoulement dans le lit majeur comme une extension de la section transversale. Mais l’eau qui s’écoule dans le lit majeur le fait dans une direction qui peut être très différente de celle du lit mineur — parfois quasi-perpendiculaire en plaine alluviale. Cette composante transversale, ignorée par le 1D, peut modifier significativement la dynamique de propagation de la crue.</p>
+<p><strong>Les écoulements polyphasiques :</strong> Saint-Venant suppose un fluide monophasique homogène. Les poches d’air piégées dans un collecteur lors d’un remplissage rapide, les embruns et l’air entraîné dans un déversoir à forte chute, la cavitation dans une conduite en dépression — tous ces phénomènes font intervenir une phase gazeuse que Saint-Venant ignore totalement. Les surpressions générées par l’effondrement de poches d’air (cf.&nbsp;note 2.B3) peuvent dépasser de plusieurs fois les prédictions du modèle monophasique.</p>
+<p><strong>La stratification :</strong> dans les grandes retenues, les lacs et les estuaires, la stratification thermique ou saline crée des gradients verticaux de vitesse et de densité que Saint-Venant 1D — qui suppose un profil de vitesse uniforme sur la section — ne peut pas représenter.</p>
+</section>
+<section id="ce-que-bernoulli-généralisé-ignore" class="level3" data-number="2.3">
+<h3 data-number="2.3" class="anchored" data-anchor-id="ce-que-bernoulli-généralisé-ignore"><span class="header-section-number">2.3</span> Ce que Bernoulli généralisé ignore</h3>
+<p>En hydraulique en charge, la formulation de Bernoulli généralisé avec pertes de charge (cf.&nbsp;note socle) est l’équation de référence du régime permanent. Ses limites structurelles sont bien connues mais souvent oubliées :</p>
+<p><strong>Les transitoires rapides :</strong> Bernoulli est une équation d’équilibre statique — elle ne contient aucune information temporelle. Elle est aveugle aux coups de bélier, aux oscillations de pression après une manœuvre de vanne, et à tous les phénomènes dont le temps caractéristique est inférieur au temps de relaxation du réseau vers l’équilibre. Un réseau AEP “correct” en régime permanent peut être soumis à des surpressions destructrices lors de manœuvres d’exploitation que Bernoulli ne verra jamais.</p>
+<p><strong>Les poches d’air et la cavitation :</strong> comme pour Saint-Venant, Bernoulli suppose un fluide monophasique incompressible. Une poche d’air dans une conduite introduit une discontinuité de pression que Bernoulli ne peut pas représenter. La cavitation — formation de bulles de vapeur lorsque la pression descend en dessous de la pression de vapeur — génère des forces impulsives lors de l’effondrement des bulles qui peuvent être 10 à 100 fois supérieures à la surpression de Joukowsky.</p>
+<hr>
+</section>
+</section>
+<section id="lextrapolation-la-limite-la-plus-dangereuse" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="lextrapolation-la-limite-la-plus-dangereuse"><span class="header-section-number">3</span> L’extrapolation : la limite la plus dangereuse</h2>
+<section id="caler-sur-des-événements-courants-prédire-des-événements-extrêmes" class="level3" data-number="3.1">
+<h3 data-number="3.1" class="anchored" data-anchor-id="caler-sur-des-événements-courants-prédire-des-événements-extrêmes"><span class="header-section-number">3.1</span> Caler sur des événements courants, prédire des événements extrêmes</h3>
+<p>La grande majorité des modèles hydrauliques est calée sur des événements <strong>courants à modérés</strong> — des pluies annuelles à décennales, des débits de temps sec à modérés, des pressions nominales de service. Les données de mesure nécessaires au calage sont disponibles pour ces événements (ils sont suffisamment fréquents pour avoir été observés et instrumentés).</p>
+<p>Mais les études de risque demandent des prédictions pour des événements <strong>rares à extrêmes</strong> — pluies centennales, crues millénales, séismes, ruptures d’ouvrages. Et c’est précisément dans ces conditions que les modèles calés sur les événements courants sont les moins fiables.</p>
+<p>La raison physique est la <strong>non-linéarité des processus hydrologiques et hydrauliques</strong> : au-delà d’un certain seuil, les mécanismes de ruissellement changent de nature (saturation généralisée, voies d’eau préférentielles activées, remontée de nappe), les structures hydrauliques sortent de leur plage de fonctionnement nominal, et les interactions entre phénomènes (pluie + marée + sol saturé + réseau plein) créent des conjonctions que le modèle calé séparément sur chaque phénomène ne peut pas prédire.</p>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>L’extrapolation comme pari, pas comme prédiction
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Utiliser un modèle calé sur des événements décennaux pour prédire le comportement d’un réseau face à un événement centennal est un <strong>pari</strong> — pas une prédiction au sens physique du terme. Ce pari peut être raisonnable si les mécanismes physiques ne changent pas qualitativement avec l’intensité de l’événement (réseau bien dimensionné, pas de saturation des sols, pas de débordement généralisé). Il est risqué si l’événement extrême active des mécanismes absents du domaine de calage. L’ingénieur doit nommer ce pari explicitement dans son rapport, pas le présenter comme une prédiction certaine.</p>
+</div>
+</div>
+</section>
+<section id="les-événements-composés" class="level3" data-number="3.2">
+<h3 data-number="3.2" class="anchored" data-anchor-id="les-événements-composés"><span class="header-section-number">3.2</span> Les événements composés</h3>
+<p>Les études de risque hydraulique traitent souvent les phénomènes séparément : une étude pluviale, une étude de crue fluviale, une étude de submersion marine. Chaque étude a sa propre période de retour de référence, son propre modèle, ses propres paramètres calés.</p>
+<p>Mais les événements catastrophiques réels sont rarement des événements simples — ce sont presque toujours des <strong>événements composés</strong> : une tempête qui apporte simultanément des pluies intenses, une houle forte et une surcote marine ; une crue combinant des apports des sous-bassins versants et un embâcle en aval ; un orage sur un sol saturé par les précipitations des jours précédents.</p>
+<p>La probabilité conjointe de ces événements composés est <strong>très difficile à estimer</strong> — les dépendances statistiques entre les phénomènes (sont-ils indépendants ? corrélés positivement ?) sont mal connues et varient selon les régions et les saisons. Les modèles hydrauliques, calés sur des phénomènes séparés, ne sont pas conçus pour capturer ces interactions — et leurs résultats sur des événements composés sont entachés d’une incertitude structurelle majeure.</p>
+</section>
+<section id="la-non-stationnarité-quand-le-passé-ne-prédit-plus-le-futur" class="level3" data-number="3.3">
+<h3 data-number="3.3" class="anchored" data-anchor-id="la-non-stationnarité-quand-le-passé-ne-prédit-plus-le-futur"><span class="header-section-number">3.3</span> La non-stationnarité : quand le passé ne prédit plus le futur</h3>
+<p>Toute la statistique hydrologique classique — les courbes IDF, les périodes de retour, les distributions de Gumbel et GEV — repose sur l’hypothèse de <strong>stationnarité</strong> : les propriétés statistiques des précipitations et des débits ne changent pas dans le temps. Un événement centennal estimé à partir de 50 ans de données restera centennal dans 50 ans.</p>
+<p>Cette hypothèse est de plus en plus contestée. L’urbanisation croissante (imperméabilisation) modifie le comportement hydrologique des bassins versants. Le changement climatique modifie l’intensité et la fréquence des événements extrêmes. Un modèle calé sur des données historiques et appliqué à des projections futures opère dans un contexte qui a changé — et ses prédictions sont biaisées dans une direction qu’on ne peut pas corriger sans hypothèses supplémentaires sur l’évolution future du système.</p>
+<hr>
+</section>
+</section>
+<section id="le-changement-climatique-et-la-non-stationnarité" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="le-changement-climatique-et-la-non-stationnarité"><span class="header-section-number">4</span> Le changement climatique et la non-stationnarité</h2>
+<section id="ce-que-le-changement-climatique-modifie-en-hydraulique" class="level3" data-number="4.1">
+<h3 data-number="4.1" class="anchored" data-anchor-id="ce-que-le-changement-climatique-modifie-en-hydraulique"><span class="header-section-number">4.1</span> Ce que le changement climatique modifie en hydraulique</h3>
+<p>Les projections climatiques (GIEC, Météo-France, projections régionales) suggèrent plusieurs tendances pour la France métropolitaine à l’horizon 2050-2100 :</p>
+<ul>
+<li><strong>Intensification des pluies courtes et intenses</strong> (orages convectifs) : augmentation probable de 10 à 30 % de l’intensité des pluies décennales de courte durée dans certaines régions, notamment le sud-est</li>
+<li><strong>Sécheresses plus fréquentes et plus longues</strong> : réduction des débits d’étiage, assèchement des petits cours d’eau, baisse des nappes phréatiques</li>
+<li><strong>Élévation du niveau marin</strong> : de 20 à 100 cm à l’horizon 2100 selon les scénarios — conséquences directes sur les réseaux d’assainissement littoraux (bousculement aval permanent)</li>
+<li><strong>Modifications du régime nival</strong> : fonte plus précoce du manteau neigeux, réduction des ressources en eau des périmètres irrigués alpins et pyrénéens</li>
+</ul>
+<p>Chacune de ces tendances a des implications directes sur la performance et la durée de vie des infrastructures hydrauliques dimensionnées avec des hypothèses climatiques stationnaires.</p>
+</section>
+<section id="comment-intégrer-le-changement-climatique-dans-la-modélisation" class="level3" data-number="4.2">
+<h3 data-number="4.2" class="anchored" data-anchor-id="comment-intégrer-le-changement-climatique-dans-la-modélisation"><span class="header-section-number">4.2</span> Comment intégrer le changement climatique dans la modélisation</h3>
+<p>Plusieurs approches permettent d’intégrer le changement climatique dans les études hydrauliques, avec des degrés de sophistication croissants :</p>
+<p><strong>L’approche par deltas climatiques</strong> : la plus simple. On applique un facteur multiplicatif (le “delta”) aux pluies de projet actuelles pour obtenir les pluies futures. Par exemple, augmenter les intensités des pluies de projet de 15 % pour tenir compte de l’intensification attendue des orages convectifs. Simple à mettre en œuvre, mais ignore les changements de distribution temporelle et spatiale.</p>
+<p><strong>L’approche par scénarios RCP</strong> (<em>Representative Concentration Pathways</em>) : on utilise les projections climatiques régionalisées (modèles de climat régional, descente d’échelle statistique) pour construire des séries pluviométriques futures sous différents scénarios d’émissions. On simule le modèle hydraulique avec ces séries futures et on compare aux résultats actuels. Plus rigoureuse, mais dépendante de la qualité des projections climatiques régionales — elles-mêmes entachées d’une incertitude significative.</p>
+<p><strong>L’approche par ensembles</strong> : on utilise plusieurs modèles de climat et plusieurs scénarios d’émissions pour produire une distribution de résultats futurs. Cette approche quantifie explicitement l’incertitude liée aux projections climatiques — au prix d’un grand nombre de simulations.</p>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Avertissement</span>Ce que les modèles hydrauliques ne peuvent pas faire avec le changement climatique
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Les modèles hydrauliques peuvent propager des scénarios climatiques vers des impacts hydrauliques — mais ils ne peuvent pas réduire l’incertitude inhérente aux projections climatiques elles-mêmes. Si les modèles de climat prévoient une augmentation de l’intensité des pluies extrêmes comprise entre +5 % et +40 % selon les scénarios, le modèle hydraulique propagera fidèlement cette fourchette — mais ne la réduira pas. L’incertitude climatique est souvent la source d’incertitude dominante dans les études d’adaptation — et elle est irréductible avec les outils hydrauliques.</p>
+</div>
+</div>
+<hr>
+</section>
+</section>
+<section id="les-phénomènes-hors-cadre" class="level2" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="les-phénomènes-hors-cadre"><span class="header-section-number">5</span> Les phénomènes hors-cadre</h2>
+<section id="les-écoulements-polyphasiques" class="level3" data-number="5.1">
+<h3 data-number="5.1" class="anchored" data-anchor-id="les-écoulements-polyphasiques"><span class="header-section-number">5.1</span> Les écoulements polyphasiques</h3>
+<p>Les modèles hydrauliques standards (Saint-Venant, Bernoulli) supposent un fluide monophasique homogène — de l’eau pure, sans air, sans sédiments en suspension, sans corps flottants. Cette hypothèse est raisonnable pour la grande majorité des situations, mais est violée dans plusieurs cas opérationnels importants :</p>
+<p><strong>Poches d’air dans les collecteurs :</strong> lors du remplissage rapide d’un réseau d’assainissement pluvial, des poches d’air peuvent être piégées dans les parties hautes du profil en long. Leur compression par l’eau montante génère des pressions locales très élevées, et leur expulsion brusque par les regards peut projeter les tampons de plusieurs mètres — un phénomène bien documenté mais rarissimement modélisé dans les études courantes.</p>
+<p><strong>Transport de corps flottants :</strong> lors des crues urbaines, les réseaux d’assainissement transportent des déchets, des branches, et parfois des véhicules. Ces corps flottants peuvent obturer des grilles ou des ouvrages de régulation, modifiant brutalement les conditions hydrauliques. Aucun modèle hydraulique standard ne prédit ce phénomène.</p>
+<p><strong>Cavitation :</strong> dans les conduites sous pression à forte vitesse (refoulements de pompage, conduites en aval de vannes à forte chute), la pression peut descendre localement en dessous de la pression de vapeur, formant des bulles de vapeur qui s’effondrent violemment lors de la reprise en pression. Les forces impulsives générées peuvent être destructrices pour les conduites et les ouvrages — et sont totalement absentes des modèles 1D standard.</p>
+</section>
+<section id="les-défaillances-douvrages" class="level3" data-number="5.2">
+<h3 data-number="5.2" class="anchored" data-anchor-id="les-défaillances-douvrages"><span class="header-section-number">5.2</span> Les défaillances d’ouvrages</h3>
+<p>Les modèles hydrauliques sont des modèles de <strong>comportement normal</strong> des ouvrages — ils supposent que les conduites ne rompent pas, que les digues tiennent, que les vannes fonctionnent. Or les événements catastrophiques réels impliquent presque toujours des défaillances d’ouvrages : rupture de digue, effondrement de berge, clapet bloqué, vanne coincée.</p>
+<p>Ces défaillances introduisent des <strong>discontinuités</strong> dans le système hydraulique que les modèles continus ne peuvent pas représenter sans modification explicite de la géométrie ou de la topologie du réseau. En pratique, les études de rupture de digue ou de brèche sont traitées comme des scénarios distincts, pas comme des résultats émergents du modèle — ce qui signifie que la probabilité de défaillance et son interaction avec les conditions hydrauliques sont traitées séparément, au prix d’une simplification importante.</p>
+</section>
+<section id="les-phénomènes-émergents" class="level3" data-number="5.3">
+<h3 data-number="5.3" class="anchored" data-anchor-id="les-phénomènes-émergents"><span class="header-section-number">5.3</span> Les phénomènes émergents</h3>
+<p>Les événements extrêmes font souvent surgir des <strong>comportements émergents</strong> — des interactions non prévues entre ouvrages ou entre phénomènes qui créent des situations que personne n’avait anticipées lors de la conception du modèle.</p>
+<p>Un exemple classique : lors d’une crue exceptionnelle, plusieurs déversoirs d’orage d’un réseau unitaire déversent simultanément. Chaque déversoir a été dimensionné pour fonctionner indépendamment. Mais leurs rejets simultanés dans la rivière réceptrice élèvent son niveau, ce qui noie les déversoirs aval, ce qui reporte la charge vers l’amont, ce qui engorge les collecteurs principaux, ce qui provoque des débordements en des points qui n’avaient jamais été identifiés comme à risque.</p>
+<p>Ce type de phénomène en cascade ne peut pas être prédit par un modèle qui traite chaque ouvrage séparément ou qui a été calé sur des événements où les déversoirs ne fonctionnaient pas simultanément. Il nécessite un modèle systémique du réseau complet — et même ce modèle ne prédit pas les interactions non linéaires entre comportements d’ouvrages en conditions extrêmes.</p>
+<hr>
+</section>
+</section>
+<section id="lincertitude-dans-la-décision" class="level2" data-number="6">
+<h2 data-number="6" class="anchored" data-anchor-id="lincertitude-dans-la-décision"><span class="header-section-number">6</span> L’incertitude dans la décision</h2>
+<section id="la-décision-sous-incertitude-quelques-cadres" class="level3" data-number="6.1">
+<h3 data-number="6.1" class="anchored" data-anchor-id="la-décision-sous-incertitude-quelques-cadres"><span class="header-section-number">6.1</span> La décision sous incertitude : quelques cadres</h3>
+<p>Face à des résultats de modèle incertains, l’ingénieur doit conseiller un maître d’ouvrage qui doit prendre une décision. Plusieurs cadres conceptuels permettent de structurer cette décision sous incertitude :</p>
+<p><strong>L’approche minimax regret :</strong> pour chaque option de décision (construire ou ne pas construire un ouvrage, dimensionner pour une pluie décennale ou centennale), on calcule le “regret” dans chaque scénario futur possible (l’inondation se produit / ne se produit pas). On choisit l’option qui minimise le regret maximal — c’est-à-dire l’option dont la pire conséquence est la moins mauvaise. Cette approche est particulièrement adaptée aux décisions irréversibles (construction d’infrastructure) sous incertitude sur les événements futurs.</p>
+<p><strong>L’approche par scénarios :</strong> plutôt que de chercher un futur “le plus probable”, on définit plusieurs scénarios plausibles (optimiste, médian, pessimiste) et on dimensionne l’ouvrage pour qu’il se comporte correctement dans un ensemble suffisamment large de scénarios. Cette approche explicite les hypothèses de chaque scénario et permet au maître d’ouvrage de choisir en connaissance de cause le niveau de robustesse qu’il souhaite.</p>
+<p><strong>La robustesse comme critère de conception :</strong> un ouvrage robuste est un ouvrage dont les performances se dégradent progressivement avec l’intensité de l’événement, plutôt que de tomber en défaillance brutale au-dessus d’un seuil. En hydraulique, la robustesse se traduit par des marges de sécurité, des systèmes de secours, et une conception qui “fail safe” (qui se dégrade de façon contrôlée plutôt que de façon catastrophique).</p>
+</section>
+<section id="lanalyse-coût-bénéfice-sous-incertitude" class="level3" data-number="6.2">
+<h3 data-number="6.2" class="anchored" data-anchor-id="lanalyse-coût-bénéfice-sous-incertitude"><span class="header-section-number">6.2</span> L’analyse coût-bénéfice sous incertitude</h3>
+<p>L’analyse coût-bénéfice classique d’un ouvrage hydraulique compare le coût d’investissement à l’espérance mathématique des dommages évités. Cette espérance est calculée comme le produit de la probabilité d’occurrence de l’événement redouté par le coût des dommages.</p>
+<p>Sous incertitude, cette espérance est elle-même incertaine — la probabilité d’occurrence est mal connue (incertitude sur la fréquence des pluies extrêmes, aggravée par le changement climatique), et le coût des dommages est difficile à estimer (dommages indirects, pertes humaines non monétisables). L’analyse coût-bénéfice produit alors une fourchette de résultats plutôt qu’un chiffre unique.</p>
+<p>En pratique, les décisions d’investissement en hydraulique urbaine sont rarement prises sur la seule base d’une analyse coût-bénéfice — elles intègrent des considérations réglementaires (obligations de service public, normes), politiques (acceptabilité du risque résiduel) et éthiques (équité territoriale). Le rôle de l’ingénieur est de fournir la base factuelle de cette décision multi-critères, pas de la prendre à la place du maître d’ouvrage.</p>
+<hr>
+</section>
+</section>
+<section id="la-responsabilité-de-lingénieur" class="level2" data-number="7">
+<h2 data-number="7" class="anchored" data-anchor-id="la-responsabilité-de-lingénieur"><span class="header-section-number">7</span> La responsabilité de l’ingénieur</h2>
+<section id="le-modèle-comme-outil-daide-à-la-décision-pas-comme-décideur" class="level3" data-number="7.1">
+<h3 data-number="7.1" class="anchored" data-anchor-id="le-modèle-comme-outil-daide-à-la-décision-pas-comme-décideur"><span class="header-section-number">7.1</span> Le modèle comme outil d’aide à la décision, pas comme décideur</h3>
+<p>Un point qui mérite d’être rappelé avec force en conclusion de cette série : <strong>un modèle hydraulique ne décide rien</strong>. Il calcule des résultats à partir d’hypothèses. Ce sont les ingénieurs qui choisissent les hypothèses, interprètent les résultats, et conseillent les décideurs.</p>
+<p>Cette évidence, souvent oubliée dans la pratique quotidienne, a une implication directe sur la responsabilité professionnelle : lorsqu’un modèle hydraulique est utilisé pour justifier une décision d’investissement, un zonage réglementaire, ou une évaluation de risque, c’est l’ingénieur qui a construit et interprété ce modèle qui est responsable de la qualité de cette justification — pas le logiciel.</p>
+</section>
+<section id="lobligation-de-transparence" class="level3" data-number="7.2">
+<h3 data-number="7.2" class="anchored" data-anchor-id="lobligation-de-transparence"><span class="header-section-number">7.2</span> L’obligation de transparence</h3>
+<p>La transparence sur les hypothèses, les limites et les incertitudes d’un modèle n’est pas une option — c’est une <strong>obligation professionnelle</strong>. Un rapport d’étude hydraulique qui présente des résultats sans mentionner leurs incertitudes, sans documenter les hypothèses de calage, sans préciser le domaine de validité du modèle, est un rapport incomplet — et potentiellement trompeur pour le maître d’ouvrage.</p>
+<p>Les éléments minimaux de transparence dans tout rapport de modélisation hydraulique :</p>
+<ul>
+<li><strong>Les hypothèses structurelles</strong> : quel type de modèle ? quelles simplifications physiques ? quelles situations ne sont pas représentées ?</li>
+<li><strong>Le protocole de calage</strong> : quelles données ? sur quelle période ? quels paramètres ont été ajustés ?</li>
+<li><strong>Les indicateurs de qualité</strong> : NSE, RMSE, biais — avec les valeurs obtenues, pas seulement la mention “le modèle a été calé”</li>
+<li><strong>Le domaine de validité</strong> : pour quels événements le modèle est-il fiable ? quelles conditions le sortent de son domaine de calage ?</li>
+<li><strong>L’incertitude des résultats</strong> : fourchette de valeurs, sensibilité aux paramètres clés, scénarios alternatifs</li>
+</ul>
+</section>
+<section id="la-tentation-de-la-fausse-précision" class="level3" data-number="7.3">
+<h3 data-number="7.3" class="anchored" data-anchor-id="la-tentation-de-la-fausse-précision"><span class="header-section-number">7.3</span> La tentation de la fausse précision</h3>
+<p>La <strong>fausse précision</strong> est l’un des travers les plus courants de la modélisation hydraulique en bureau d’études. Elle se manifeste de plusieurs façons :</p>
+<ul>
+<li>Présenter des résultats avec trois chiffres significatifs alors que l’incertitude est de l’ordre de 20 à 30 %</li>
+<li>Cartographier des zones inondées avec une précision de quelques mètres alors que le MNT utilisé a une précision de 20 à 50 cm et que les résultats du modèle sont incertains de plusieurs décimètres</li>
+<li>Annoncer une “période de retour de 47 ans” pour un événement alors que l’incertitude sur la fréquence est d’un facteur 2 à 3</li>
+</ul>
+<p>Pourquoi cette tentation ? Parce que la précision inspire confiance — un résultat précis semble plus solide qu’une fourchette incertaine. Parce que les logiciels produisent des résultats avec autant de décimales qu’on le souhaite, et que la précision numérique du calcul n’a aucun rapport avec la précision physique du modèle. Et parce que les maîtres d’ouvrage et les élus attendent souvent des réponses précises et univoques.</p>
+<p>Résister à cette tentation est une marque de maturité professionnelle. Un ingénieur qui présente honnêtement l’incertitude de ses résultats ne perd pas en crédibilité — il en gagne, aux yeux des interlocuteurs capables de comprendre ce que signifie l’incertitude.</p>
+</section>
+<section id="le-dialogue-avec-le-maître-douvrage" class="level3" data-number="7.4">
+<h3 data-number="7.4" class="anchored" data-anchor-id="le-dialogue-avec-le-maître-douvrage"><span class="header-section-number">7.4</span> Le dialogue avec le maître d’ouvrage</h3>
+<p>Expliquer l’incertitude à un maître d’ouvrage non technique sans perdre sa crédibilité est un exercice difficile — mais pas impossible. Quelques principes pratiques :</p>
+<p><strong>Traduire l’incertitude en termes de décision :</strong> “Le modèle prédit entre 200 et 400 maisons inondées selon les hypothèses de pluie. Dans les deux cas, l’ouvrage de rétention est justifié économiquement — la décision est robuste à l’incertitude.” C’est plus utile que de s’arrêter à “l’incertitude est de ±50 %”.</p>
+<p><strong>Nommer les sources d’incertitude dominantes :</strong> “La principale source d’incertitude n’est pas le modèle hydraulique mais la méconnaissance de la pluie réelle sur le bassin versant. Un réseau de pluviographes supplémentaires réduirait cette incertitude.” Cela oriente les investissements vers ce qui compte vraiment.</p>
+<p><strong>Distinguer ce qu’on sait bien de ce qu’on sait mal :</strong> “Sur les événements décennaux, le modèle est fiable à ±15 %. Sur les événements centennaux, l’incertitude dépasse 50 % — nous sommes dans le domaine de l’estimation grossière, pas du calcul précis.”</p>
+</section>
+<section id="la-mise-en-cause-professionnelle" class="level3" data-number="7.5">
+<h3 data-number="7.5" class="anchored" data-anchor-id="la-mise-en-cause-professionnelle"><span class="header-section-number">7.5</span> La mise en cause professionnelle</h3>
+<p>La question de la responsabilité juridique de l’ingénieur hydraulicien en cas de sinistre lié à un modèle défaillant est un sujet sensible que cette série ne peut pas traiter en profondeur — c’est l’affaire de juristes spécialisés. Quelques observations pratiques néanmoins :</p>
+<p>La jurisprudence distingue généralement entre <strong>l’erreur</strong> (résultat incorrect malgré une démarche correcte, dans les limites de l’état de l’art) et la <strong>faute</strong> (démarche incorrecte, non-respect des bonnes pratiques, dissimulation des limites du modèle). Un ingénieur qui a correctement documenté ses hypothèses, conduit son calage selon les bonnes pratiques, et communiqué honnêtement les incertitudes de ses résultats est dans une position très différente de celui qui a présenté des résultats sans hypothèses documentées ni incertitudes quantifiées.</p>
+<p>La documentation rigoureuse du processus de modélisation — hypothèses, données, calage, limites — est donc une protection professionnelle autant qu’une obligation déontologique.</p>
+<hr>
+</section>
+</section>
+<section id="ce-que-cette-série-vous-a-donné-et-ce-quelle-ne-peut-pas-vous-donner" class="level2" data-number="8">
+<h2 data-number="8" class="anchored" data-anchor-id="ce-que-cette-série-vous-a-donné-et-ce-quelle-ne-peut-pas-vous-donner"><span class="header-section-number">8</span> Ce que cette série vous a donné — et ce qu’elle ne peut pas vous donner</h2>
+<section id="un-bilan-honnête" class="level3" data-number="8.1">
+<h3 data-number="8.1" class="anchored" data-anchor-id="un-bilan-honnête"><span class="header-section-number">8.1</span> Un bilan honnête</h3>
+<p>Cette série de notes a tenté de couvrir la modélisation hydraulique appliquée de façon structurée, honnête et pédagogique : des équations de Navier-Stokes aux applications opérationnelles en AEP, assainissement et irrigation, du régime permanent au transitoire, du 1D au 3D, du calage à la communication de l’incertitude.</p>
+<p>Ce qu’elle vous a donné, si vous l’avez suivie attentivement :</p>
+<ul>
+<li>Un <strong>cadre conceptuel unifié</strong> : comprendre que tous les modèles hydrauliques dérivent de Navier-Stokes par une cascade d’hypothèses, et que chaque hypothèse a un domaine de validité</li>
+<li>Les <strong>équations fondamentales</strong> commentées et contextualisées, pas seulement listées</li>
+<li>Les <strong>critères de choix</strong> entre modèles : quand le permanent suffit, quand le transitoire est indispensable, quand le 1D atteint ses limites</li>
+<li>Les <strong>bonnes pratiques</strong> de calage, validation et communication de l’incertitude</li>
+<li>Une <strong>vision honnête des limites</strong> : ce que les modèles ne peuvent pas faire, et pourquoi</li>
+</ul>
+<p>Ce qu’une série de notes ne peut pas vous donner :</p>
+<ul>
+<li><strong>L’expérience terrain.</strong> Aucun cours, aucun blog, aucun manuel ne remplace les heures passées sur le terrain à mesurer des pressions, à observer des débordements, à confronter un modèle à une réalité qui ne se comporte pas comme prévu. La modélisation hydraulique s’apprend autant sur les chantiers et dans les stations d’épuration que sur les ordinateurs.</li>
+<li><strong>L’intuition physique.</strong> Savoir “sentir” si un résultat de modèle est physiquement plausible avant même de le valider — cette intuition s’acquiert avec l’expérience, pas avec la lecture.</li>
+<li><strong>La maîtrise des logiciels.</strong> Les interfaces, les options de paramétrage, les messages d’erreur, les comportements pathologiques des solveurs — cela s’apprend par la pratique, pas par la théorie.</li>
+<li><strong>Le jugement d’ingénieur.</strong> Savoir quand un modèle est “assez bon” pour la décision à prendre, quand il faut investir dans plus de données, quand il faut dire “nous ne savons pas” — ce jugement est le produit de l’expérience et de la réflexion, pas de la connaissance des équations.</li>
+</ul>
+</section>
+<section id="lingénieur-hydraulicien-comme-interprète-de-la-physique" class="level3" data-number="8.2">
+<h3 data-number="8.2" class="anchored" data-anchor-id="lingénieur-hydraulicien-comme-interprète-de-la-physique"><span class="header-section-number">8.2</span> L’ingénieur hydraulicien comme interprète de la physique</h3>
+<p>La compétence centrale de l’ingénieur hydraulicien n’est pas de savoir utiliser un logiciel — c’est de <strong>savoir interpréter les résultats d’un modèle en les replaçant dans leur contexte physique, leurs hypothèses, et leurs limites</strong>. C’est cette compétence qui fait la différence entre un opérateur de logiciel et un ingénieur.</p>
+<p>Cette interprétation requiert trois capacités simultanées : comprendre la physique suffisamment bien pour détecter les résultats aberrants, comprendre les hypothèses du modèle suffisamment bien pour savoir quand elles sont violées, et comprendre les besoins du maître d’ouvrage suffisamment bien pour traduire les résultats en termes utiles à la décision.</p>
+<p>Aucune de ces trois capacités ne s’apprend en lisant des équations. Elles s’acquièrent en pratiquant — en se trompant, en corrigeant, en observant, en dialoguant avec des praticiens expérimentés.</p>
+</section>
+<section id="la-modélisation-hydraulique-comme-discipline-vivante" class="level3" data-number="8.3">
+<h3 data-number="8.3" class="anchored" data-anchor-id="la-modélisation-hydraulique-comme-discipline-vivante"><span class="header-section-number">8.3</span> La modélisation hydraulique comme discipline vivante</h3>
+<p>La modélisation hydraulique n’est pas un corpus de connaissances figées. Elle évolue avec les puissances de calcul disponibles (ce qui était réservé à la recherche en 2000 est courant en bureau d’études en 2026), avec les données disponibles (le LiDAR centimétrique par drone a transformé la modélisation 2D en quelques années), avec les méthodes numériques (les solveurs adaptatifs et les algorithmes d’optimisation ont profondément modifié la pratique du calage), et avec les défis posés par la société (le changement climatique ouvre des questions nouvelles auxquelles les méthodes classiques ne répondent qu’imparfaitement).</p>
+<p>Rester à jour dans ce domaine requiert une veille active — lectures de revues spécialisées (La Houille Blanche, Journal of Hydrology, Water Resources Research), participation aux conférences (SHF, NOVATECH, IAHR), et surtout échanges avec des praticiens confrontés à des problèmes réels.</p>
+<p>Cette série est un point de départ — pas un point d’arrivée.</p>
+<hr>
+</section>
+</section>
+<section id="conclusion" class="level2" data-number="9">
+<h2 data-number="9" class="anchored" data-anchor-id="conclusion"><span class="header-section-number">9</span> Conclusion</h2>
+<p>Quatre convictions traversent l’ensemble de cette série et méritent d’être répétées en conclusion :</p>
+<p><strong>Un modèle n’est pas la réalité.</strong> C’est une approximation utile dans un domaine de validité défini. Confondre le modèle et la réalité — en présentant ses résultats comme des faits plutôt que comme des estimations — est la faute professionnelle la plus grave en modélisation.</p>
+<p><strong>L’incertitude n’est pas un aveu de faiblesse.</strong> C’est une information. Un résultat présenté avec son incertitude est plus honnête et plus utile qu’un résultat présenté sans. Les décideurs capables de travailler avec l’incertitude prennent de meilleures décisions que ceux qui exigent des certitudes que la physique ne peut pas fournir.</p>
+<p><strong>Les limites d’un modèle ne sont pas ses défauts.</strong> Ce sont les frontières de son domaine de validité. Un ingénieur qui connaît les limites de son modèle et les communique clairement est plus compétent — pas moins — que celui qui les ignore ou les dissimule.</p>
+<p><strong>Le logiciel est au service de la physique, pas l’inverse.</strong> La compréhension physique des phénomènes doit précéder et guider l’utilisation des outils numériques. Un ingénieur qui comprend pourquoi son modèle donne tel résultat est en position de le valider, de le corriger, et de le défendre. Un ingénieur qui ne comprend pas les équations derrière son logiciel est un opérateur — compétent peut-être, mais vulnérable dès que le résultat est surprenant.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copié");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copié");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<script src="../site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

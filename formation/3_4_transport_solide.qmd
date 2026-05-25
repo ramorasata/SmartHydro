@@ -1,0 +1,865 @@
+---
+title: "Transport solide et morphodynamique"
+subtitle: "Charriage, suspension, seuil de Shields et évolution du lit"
+date: "2026-05-17"
+author: ""
+categories: [Hydraulique, Transport solide, Morphodynamique, Modélisation, Ingénierie]
+page-layout: article
+toc: true
+toc-title: "Sommaire"
+toc-depth: 3
+number-sections: true
+lang: fr
+format:
+  html:
+    embed-resources: true
+    html-math-method: katex
+    theme: cosmo
+execute:
+  echo: false
+  warning: false
+  fig-format: svg
+  fig-responsive: true
+  fig-width: 8
+  fig-height: 4.5
+jupyter: python3
+---
+
+::: {.callout-note}
+## Note transversale de la série — La note jumelle de 3.3 : quand le fond bouge
+
+Cette note est la jumelle de la **note 3.3** (transport d'un scalaire dissous). La différence fondamentale : ici le « scalaire transporté » est une **phase solide** qui modifie le fond, lequel rétroagit à son tour sur l'écoulement. Le couplage n'est plus une option — il est intrinsèque. Elle s'appuie sur les bilans d'énergie de la **note 0.2** (contrainte au fond, dissipation), les ouvrages de la **note 0.3**, et les nombres sans dimension de la **note 0.4** (Shields et Rouse sont ici les cousins de Reynolds et Froude). Elle alimente les notes **1.B/1.C**, **2.B1/2.B3** et **2.C1**.
+
+**Ce que cette note traite** : transport de sédiments par charriage et suspension, seuil de mise en mouvement, lois de débit solide, équation d'Exner et évolution du lit en 1D, applications fluvial / assainissement / retenues.
+
+**Ce que cette note ne traite pas** : géotechnique des berges, transport de polluants dissous (→ 3.3), modélisation 2D/3D du fond mobile (→ 3.2), schémas numériques couplés en détail (→ 3.5), chimie des sédiments contaminés (mention seulement).
+
+---
+
+**Équation pivot — fil rouge de toute la note :**
+
+$$\boxed{(1-p)\,\frac{\partial z_f}{\partial t} + \frac{\partial q_s}{\partial x} = 0}$$
+
+L'**équation d'Exner** est le bilan de masse de la phase solide sur le fond : si le flux solide $q_s$ augmente vers l'aval ($\partial q_s/\partial x > 0$), le fond s'érode ($\partial z_f/\partial t < 0$) ; s'il diminue ($\partial q_s/\partial x < 0$), le fond monte (dépôt). La porosité $p \approx 0{,}35$–$0{,}40$ convertit le volume de sédiment en place en volume mobilisé.
+
+::: {.callout-important}
+**Message à retenir dès l'ouverture.** En transport solide, les formules donnent des **ordres de grandeur**, jamais des prédictions précises. La dispersion entre lois établies (Meyer-Peter-Müller, Einstein, Van Rijn, Engelund-Hansen) atteint couramment un **facteur 2 à 10** sur le débit solide, dans des conditions identiques. Cette incertitude structurelle n'est pas un défaut de la discipline : elle reflète la complexité des interactions grain–fluide–fond. La documenter est une exigence professionnelle, non une option.
+:::
+:::
+
+**Fil rouge de la note.** Un cours d'eau de plaine à fond sableux ($d_{50} = 0{,}5$ mm, $\rho_s = 2\,650$ kg/m³) coule en régime uniforme sur une pente $J = 5 \times 10^{-4}$, tirant $h = 1{,}2$ m, largeur $B = 15$ m. Le tronçon est immédiatement en aval d'un petit barrage de dérivation. On suivra successivement le seuil de mise en mouvement, le mode de transport, le débit solide et l'évolution morphologique après arasement du barrage.
+
+---
+
+## Du fond fixe au fond mobile
+
+### Le sédiment : caractérisation physique
+
+Trois grandeurs gouvernent le comportement hydraulique d'un sédiment :
+
+**Le diamètre caractéristique** $d_{50}$ et l'étendue granulométrique ($d_{84}/d_{16}$). Un sédiment bien trié se comporte différemment d'un mélange étendu — le masquage des fines par les grossiers modifie le seuil de mise en mouvement.
+
+**La vitesse de chute** $w_s$ — grandeur clé qui sépare charriage et suspension. En régime visqueux ($Re_p \ll 1$, loi de Stokes) :
+
+$$w_s = \frac{(\rho_s - \rho)\,g\,d^{2}}{18\,\mu}$$
+
+En régime turbulent (grains grossiers) :
+
+$$w_s = \sqrt{\frac{4}{3}\,\frac{(\rho_s-\rho)}{\rho}\,\frac{g\,d}{C_D}}$$
+
+Le **diamètre adimensionnel** $d_*$ positionne le grain dans l'espace des régimes (cousin de Reynolds, pont note 0.4) :
+
+$$d_{*} = d\left[\frac{(s-1)\,g}{\nu^{2}}\right]^{1/3}, \qquad s = \frac{\rho_s}{\rho}$$
+
+```{python}
+#| label: fig-vitesse-chute
+#| fig-cap: "Vitesse de chute $w_s$ en fonction du diamètre $d$ pour un grain de quartz ($\\rho_s = 2\\,650$ kg/m³) dans l'eau à 20 °C. La transition entre la loi de Stokes (régime visqueux, pente 2 en log-log) et le régime turbulent (pente 0,5) se produit autour de $d \\approx 0{,}1$ mm. Les bandes verticales délimitent les classes texturales usuelles. Pour le fil rouge ($d_{50} = 0{,}5$ mm, sable moyen), $w_s \\approx 65$ mm/s — régime de transition vers le turbulent."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+rho_s = 2650.0; rho = 1000.0; mu = 1e-3; nu = 1e-6; g = 9.81
+
+d_arr = np.logspace(-6, -1, 500)
+
+ws_stokes = (rho_s - rho) * g * d_arr**2 / (18 * mu)
+
+def ws_turb(d):
+    ws = np.sqrt(4/3 * (rho_s/rho - 1) * g * d / 0.44)
+    for _ in range(20):
+        Rep = ws * d / nu
+        CD = np.where(Rep < 1, 24/Rep,
+             np.where(Rep < 1000, 24/Rep + 6/(1+np.sqrt(Rep)) + 0.4, 0.44))
+        ws = np.sqrt(4/3 * (rho_s/rho - 1) * g * d / np.maximum(CD, 0.01))
+    return ws
+
+ws_t   = ws_turb(d_arr)
+ws_eff = np.minimum(ws_stokes, ws_t)
+
+fig, ax = plt.subplots(figsize=(8, 4.2))
+ax.loglog(d_arr*1000, ws_stokes*1000, color="#aaa", lw=1.5, ls="--", label="Stokes (visceux)")
+ax.loglog(d_arr*1000, ws_t*1000,      color="#aaa", lw=1.5, ls=":",  label="Turbulent")
+ax.loglog(d_arr*1000, ws_eff*1000,    color=C_CHARGE, lw=2.5, label="$w_s$ effective")
+
+bands = [(0.001, 0.004, "#e8d5f5", "Argiles"),
+         (0.004, 0.063, "#d5e8d4", "Silts"),
+         (0.063, 2.0,   "#dae8fc", "Sables"),
+         (2.0,   64.,   "#ffe6cc", "Graviers")]
+for x0, x1, col, lbl in bands:
+    ax.axvspan(x0, x1, alpha=0.30, color=col)
+    ax.text(np.sqrt(x0*x1), 0.003, lbl, ha="center", fontsize=8, color="#555")
+
+d_fr  = 0.5
+ws_fr = ws_turb(np.array([d_fr*1e-3]))[0]*1000
+ax.scatter([d_fr], [ws_fr], color=C_ACCENT, s=80, zorder=6,
+           label=f"Fil rouge $d_{{50}}=0{{,}}5$ mm → $w_s\\approx{ws_fr:.0f}$ mm/s")
+
+ax.set_xlabel("Diamètre $d$ (mm)", fontsize=9)
+ax.set_ylabel("Vitesse de chute $w_s$ (mm/s)", fontsize=9)
+ax.set_title("Vitesse de chute — Du régime de Stokes au régime turbulent", fontsize=10)
+ax.legend(fontsize=8, loc="upper left")
+ax.set_xlim(0.001, 100); ax.set_ylim(0.001, 2000)
+ax.grid(alpha=0.2, which="both")
+ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-important}
+## Piège — Sédiment cohésif ≠ sédiment non cohésif
+
+Toutes les formules de charriage classiques (MPM, Van Rijn, Engelund-Hansen) ont été établies pour des **sédiments non cohésifs** (sables, graviers). Les **argiles et vases** (collecteurs d'assainissement, retenues) sont gouvernées par des forces de cohésion et électrostatiques absentes de ces formules. Leur érosion dépend de la consolidation et obéit à un critère de contrainte critique très différent. Appliquer MPM à une vase de collecteur est une erreur de catégorie, pas une approximation.
+:::
+
+### Charriage et suspension : deux modes de transport
+
+Le **nombre de Rouse** $Ro$ classe le mode de transport comme Reynolds ou Froude classent les régimes hydrauliques (pont explicite note 0.4) :
+
+$$Ro = \frac{w_s}{\kappa\,u_{*}} \qquad ; \qquad u_{*} = \sqrt{\frac{\tau_0}{\rho}} = \sqrt{g\,R_h\,J}$$
+
+où $\kappa = 0{,}41$ est la constante de von Kármán. Les régimes :
+
+- $Ro > 2{,}5$ : **charriage** — roulement, glissement, saltation au contact du fond
+- $0{,}8 < Ro < 2{,}5$ : **suspension** — porté par la turbulence, mais décante encore
+- $Ro < 0{,}8$ : **charge de lavage** (*wash load*) — quasi-indéfiniment en suspension
+
+**Application fil rouge :** $u_* = \sqrt{9{,}81 \times 1{,}2 \times 5\times10^{-4}} \approx 0{,}077$ m/s, $Ro = 0{,}065/(0{,}41 \times 0{,}077) \approx 2{,}06$ → **suspension active**.
+
+```{python}
+#| label: fig-modes-transport
+#| fig-cap: "Profils verticaux de concentration de Rouse $C(z)/C_a$ pour trois nombres de Rouse représentant les modes de transport (charriage $Ro=3$, suspension $Ro=1{,}5$, wash load $Ro=0{,}5$). Le niveau de référence est $a = 0{,}05h$. Plus $Ro$ est élevé, plus la concentration est concentrée près du fond. Le fil rouge ($Ro \\approx 2{,}1$) correspond à une suspension active avec gradient marqué — la concentration au niveau de référence est environ 10 fois celle à mi-hauteur."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+fig, ax = plt.subplots(figsize=(6, 4.5))
+
+z_norm = np.linspace(0.06, 1.0, 300)
+a_norm = 0.05
+
+configs = [(0.5, C_ACCENT, "-.",  "Wash load ($Ro=0{,}5$)"),
+           (1.5, C_PIEZO,  "--",  "Suspension ($Ro=1{,}5$)"),
+           (2.1, C_CHARGE, "-",   "Fil rouge ($Ro=2{,}1$)"),
+           (3.0, "#8e44ad", ":",  "Charriage ($Ro=3{,}0$)")]
+
+for Ro, col, ls, lbl in configs:
+    C_r = np.clip(((1-z_norm)*a_norm / (z_norm*(1-a_norm)))**Ro, 0, 60)
+    ax.plot(C_r, z_norm, color=col, lw=2.2, ls=ls, label=lbl)
+
+ax.axhline(a_norm, color="#bbb", lw=1, ls=":")
+ax.text(22, a_norm+0.03, f"$a/h={a_norm}$", fontsize=8, color="#888")
+ax.set_xlabel("$C(z)/C_a$", fontsize=9)
+ax.set_ylabel("Hauteur relative $z/h$", fontsize=9)
+ax.set_title("Profils de Rouse — Modes de transport", fontsize=10)
+ax.legend(fontsize=8.5, loc="upper right")
+ax.set_xlim(0, 30); ax.set_ylim(0, 1)
+ax.grid(alpha=0.2)
+ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-warning}
+## Alerte modélisation — La charge de lavage ne contribue pas à la morphodynamique
+
+La *wash load* traverse le système sans se déposer en conditions normales — elle ne participe pas à l'évolution du fond. Elle domine pourtant la turbidité et le colmatage (qualité, lien note 3.3). Confondre wash load et suspension de lit conduit à surestimer le transport morphogène et sous-estimer la charge fine dans les bilans qualité.
+:::
+
+---
+
+## Le seuil de mise en mouvement : le diagramme de Shields
+
+### La contrainte de cisaillement au fond
+
+La contrainte de cisaillement exercée par l'écoulement sur le fond, en régime uniforme (bilan de quantité de mouvement, note 0.2) :
+
+$$\tau_0 = \rho\,g\,R_h\,J \qquad ; \qquad \tau_0 = \rho\,\frac{f}{8}\,U^{2}$$
+
+**Application fil rouge :** $\tau_0 = 1\,000 \times 9{,}81 \times 1{,}2 \times 5\times10^{-4} \approx 5{,}9$ Pa.
+
+```{python}
+#| label: fig-contrainte-decomposition
+#| fig-cap: "Décomposition de la contrainte au fond sur un lit à dunes. La contrainte totale $\\tau_0$ se répartit en contrainte de peau $\\tau'$ (agissant sur les grains individuels, morphogène) et contrainte de forme $\\tau''$ (agissant sur les dunes, non morphogène). En régime de dunes développées, $\\tau' \\approx \\tau_0/3$ à $\\tau_0/2$. Utiliser $\\tau_0$ dans les formules de débit solide peut surévaluer le transport d'un facteur 2 à 5."
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import FancyBboxPatch
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+fig, ax = plt.subplots(figsize=(9, 3.5))
+ax.set_xlim(0, 12); ax.set_ylim(0, 5); ax.axis("off")
+
+x = np.linspace(0, 12, 300)
+z_bed = 0.9 + 0.45 * np.maximum(np.sin(2*np.pi*x/3.2), 0)**1.5
+ax.fill_between(x, 0, z_bed, color=C_PIEZO, alpha=0.4)
+ax.plot(x, z_bed, color=C_PIEZO, lw=1.5)
+ax.plot([0,12],[4.3, 4.2], color=C_CHARGE, lw=2.0)
+ax.text(6, 4.55, "Surface libre — pente $J$", ha="center", fontsize=8.5, color=C_CHARGE)
+
+ax.annotate("", xy=(3.0,1.9), xytext=(3.0,4.1),
+            arrowprops=dict(arrowstyle="->", color="#555", lw=2.0))
+ax.text(3.25, 3.0, r"$\tau_0 = \rho g R_h J$"+"\n(totale)", fontsize=8, color="#555")
+
+ax.scatter([5.5],[1.1], s=200, color="#e67e22", zorder=6)
+ax.annotate("", xy=(5.5,1.65), xytext=(5.5,1.15),
+            arrowprops=dict(arrowstyle="->", color="#e67e22", lw=1.8))
+ax.text(5.7, 1.4, r"$\tau'$ (peau, morphogène)", fontsize=8, color="#e67e22")
+
+ax.annotate("", xy=(8.0,2.5), xytext=(8.0,1.0),
+            arrowprops=dict(arrowstyle="->", color=C_ACCENT, lw=1.8))
+ax.text(8.2,1.75, r"$\tau''$ (forme, non morphogène)", fontsize=8, color=C_ACCENT)
+
+ax.text(6, 0.3, r"$\tau_0 = \tau' + \tau''$", ha="center", fontsize=10)
+ax.set_title("Décomposition contrainte de peau / contrainte de forme", fontsize=10, y=0.98)
+fig.tight_layout()
+plt.show()
+```
+
+### Le nombre de Shields et le diagramme critique
+
+La **contrainte adimensionnelle de Shields** $\theta$ est le rapport entre la force motrice de l'écoulement et le poids déjaugé du grain :
+
+$$\theta = \frac{\tau_0}{(\rho_s - \rho)\,g\,d} \qquad ; \qquad Re_{*} = \frac{u_{*}\,d}{\nu}$$
+
+Comme Reynolds et Froude classent les régimes hydrauliques, **Shields classe le régime de transport**. La courbe critique $\theta_{cr}(Re_*)$ délimite mouvement et repos. En régime rugueux ($Re_* > 70$) :
+
+$$\theta_{cr} \approx 0{,}047\ \text{à}\ 0{,}06$$
+
+**Application fil rouge :** $\theta = 5{,}9 / (1\,650 \times 9{,}81 \times 5\times10^{-4}) \approx 0{,}73$ — très largement en zone de transport.
+
+```{python}
+#| label: fig-shields
+#| fig-cap: "Diagramme de Shields : contrainte adimensionnelle critique $\\theta_{cr}$ en fonction du diamètre adimensionnel $d_*$. La zone ombrée représente l'incertitude expérimentale du seuil (notion de zone, pas de ligne). Le fil rouge (sable 0,5 mm, $\\theta \\approx 0{,}73$) est très largement en zone de transport actif. Un gravier de 20 mm à faible débit est positionné proche du seuil. Le contraste illustre la sensibilité au diamètre et à la contrainte."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+rho_s=2650; rho=1000; nu=1e-6; g=9.81
+s = rho_s/rho
+
+d_star = np.logspace(0.1, 3, 300)
+theta_cr = 0.30/(1+1.2*d_star) + 0.055*(1-np.exp(-0.02*d_star))
+
+fig, ax = plt.subplots(figsize=(8, 4.5))
+ax.fill_between(d_star, theta_cr*0.85, theta_cr*1.20,
+                alpha=0.22, color="#888", label="Zone d'incertitude expérimentale")
+ax.loglog(d_star, theta_cr, color=C_CHARGE, lw=2.5, label="Courbe critique $\\theta_{cr}(d_*)$")
+ax.text(3,  0.007, "Pas de mouvement", fontsize=9, color=C_PIEZO, style="italic")
+ax.text(3,  0.35,  "Transport actif",  fontsize=9, color=C_ACCENT, style="italic")
+
+d50_fr  = 0.5e-3
+tau0_fr = 5.9
+theta_fr = tau0_fr / ((rho_s-rho)*g*d50_fr)
+d_star_fr = d50_fr * ((s-1)*g/nu**2)**(1/3)
+ax.scatter([d_star_fr],[theta_fr], color=C_ACCENT, s=100, zorder=7,
+           label=f"Fil rouge : sable 0,5 mm ($\\theta={theta_fr:.2f}$)")
+ax.annotate(f"Fil rouge\n$\\theta={theta_fr:.2f}$", (d_star_fr, theta_fr),
+            xytext=(18, 0.55), arrowprops=dict(arrowstyle="->", color=C_ACCENT),
+            fontsize=8, color=C_ACCENT)
+
+d_grav = 20e-3; u_star_grav = 0.05
+tau_grav  = rho*u_star_grav**2
+theta_grav = tau_grav/((rho_s-rho)*g*d_grav)
+d_star_grav = d_grav*((s-1)*g/nu**2)**(1/3)
+ax.scatter([d_star_grav],[theta_grav], color=C_PIEZO, s=80, zorder=7, marker="s",
+           label=f"Gravier 20 mm ($\\theta={theta_grav:.3f}$) — proche seuil")
+
+ax.set_xlabel("Diamètre adimensionnel $d_*$", fontsize=9)
+ax.set_ylabel("Paramètre de Shields $\\theta$", fontsize=9)
+ax.set_title("Diagramme de Shields — Seuil de mise en mouvement", fontsize=10)
+ax.legend(fontsize=8.5, loc="lower right")
+ax.set_xlim(1,1000); ax.set_ylim(0.003,2)
+ax.grid(alpha=0.2, which="both")
+ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-important}
+## Piège — $\theta_{cr} = 0{,}047$ n'est pas une constante universelle
+
+Cette valeur est une **valeur centrale** en régime rugueux sur un lit plan à granulométrie uniforme. Elle est modifiée par la pente du lit, l'imbrication des grains, la granulométrie étendue (masquage des fines), et la forme des grains. Prendre 0,047 sans justification est une faute fréquente — le seuil est une **zone** couvrant un facteur 2 sur $\theta_{cr}$.
+:::
+
+### Application : vitesse critique et auto-curage en assainissement
+
+En assainissement, le critère de Shields se traduit en contrainte minimale d'auto-curage :
+
+$$\tau_{0,min} \approx 1\ \text{à}\ 2\ \text{Pa} \qquad ; \qquad J_{min} = \frac{\tau_{0,min}}{\rho\,g\,R_h}$$
+
+```{python}
+#| label: fig-autocurage
+#| fig-cap: "Contrainte au fond $\\tau_0$ et vitesse $V$ en fonction du taux de remplissage $y/D$ d'une conduite circulaire DN 400 (pente $J = 3 \\times 10^{-3}$, Manning $n = 0{,}013$). La contrainte atteint un maximum pour un remplissage intermédiaire (~80 %) et chute aux faibles remplissages, même si la vitesse reste notable. Le seuil d'auto-curage de 1 Pa n'est pas atteint en dessous de $y/D \\approx 0{,}08$ — zone de formation de dépôts nocturnes dans les collecteurs à faible débit, malgré une vitesse apparemment suffisante."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+D=0.40; J=3e-3; n=0.013; rho=1000; g=9.81
+y_D = np.linspace(0.02, 0.99, 200)
+theta_ang = 2*np.arccos(1-2*y_D)
+A  = D**2/8*(theta_ang - np.sin(theta_ang))
+P  = D/2*theta_ang
+Rh = A/P
+V  = Rh**(2/3)*J**0.5/n
+tau = rho*g*Rh*J
+
+fig, ax1 = plt.subplots(figsize=(7.5,4.2))
+ax1.plot(y_D, tau, color=C_CHARGE, lw=2.5, label="$\\tau_0$ (Pa)")
+ax1.axhline(1.0, color=C_ACCENT, lw=1.8, ls="--", label="Seuil auto-curage 1 Pa")
+ax1.axhline(2.0, color=C_ACCENT, lw=1.2, ls=":",  label="Seuil auto-curage 2 Pa")
+ax2 = ax1.twinx()
+ax2.plot(y_D, V, color=C_PIEZO, lw=2.0, ls="-.", label="Vitesse $V$ (m/s)")
+ax2.set_ylabel("Vitesse $V$ (m/s)", color=C_PIEZO, fontsize=9)
+ax2.tick_params(axis="y", labelcolor=C_PIEZO, labelsize=8.5)
+ax2.set_ylim(0,3)
+ax1.set_xlabel("Taux de remplissage $y/D$", fontsize=9)
+ax1.set_ylabel("Contrainte $\\tau_0$ (Pa)", fontsize=9)
+ax1.set_title("Auto-curage DN 400 — $\\tau_0$ et $V$ vs taux de remplissage", fontsize=10)
+lines1,labs1 = ax1.get_legend_handles_labels()
+lines2,labs2 = ax2.get_legend_handles_labels()
+ax1.legend(lines1+lines2, labs1+labs2, fontsize=8.5, loc="upper left")
+ax1.set_xlim(0,1); ax1.set_ylim(0,5)
+ax1.grid(alpha=0.2); ax1.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-warning}
+## Alerte modélisation — Le critère en vitesse est trompeur à faible remplissage
+
+À faible taux de remplissage, $R_h$ est petit et $\tau_0 = \rho g R_h J$ reste faible même si $V$ est élevée. Le critère physiquement correct est **toujours la contrainte**, évaluée sur l'hydrogramme réel (débit de pointe, pas débit moyen) — renvoi note 2.B1.
+:::
+
+---
+
+## Les lois de transport solide
+
+### Le débit solide par charriage : Meyer-Peter-Müller — Fil rouge §1
+
+Le débit solide par charriage s'exprime en **excès de Shields** au-dessus du seuil :
+
+$$\Phi = \frac{q_s}{\sqrt{(s-1)\,g\,d^{3}}} \qquad \text{(débit solide adimensionnel)}$$
+
+$$\Phi = 8\,(\theta' - \theta_{cr})^{3/2} \qquad \text{(Meyer-Peter-Müller)}$$
+
+**Application fil rouge :** $\Phi = 8\,(0{,}73 - 0{,}047)^{3/2} \approx 4{,}54$, soit $q_s \approx 7{,}2\times10^{-4}$ m²/s.
+
+```{python}
+#| label: fig-formules-charriage
+#| fig-cap: "Débit solide adimensionnel $\\Phi$ en fonction du paramètre de Shields $\\theta$ pour trois formules de charriage classiques : Meyer-Peter-Müller, Einstein-Brown et Van Rijn. La bande grise matérialise la dispersion inter-formules, qui atteint un facteur 3 à 5 pour les valeurs courantes. Le fil rouge ($\\theta = 0{,}73$, trait pointillé rouge) illustre cette incertitude : les trois formules divergent d'un facteur ~2. Calculer avec une seule formule sans fourchette est une faute méthodologique."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+theta    = np.linspace(0.047, 1.5, 300)
+theta_cr = 0.047
+
+def MPM(th): return 8*np.maximum(th-theta_cr,0)**1.5
+def EB(th):
+    phi = np.zeros_like(th)
+    m = th > theta_cr
+    phi[m] = 2.15*np.exp(-0.391/np.maximum(th[m],0.01))
+    return phi
+def VR(th):
+    T = np.maximum((th-theta_cr)/theta_cr, 0)
+    return 0.053*T**2.1/12.5**0.3
+
+phi_mpm = MPM(theta); phi_eb = EB(theta); phi_vr = VR(theta)
+phi_min = np.minimum(np.minimum(phi_mpm,phi_eb),phi_vr)
+phi_max = np.maximum(np.maximum(phi_mpm,phi_eb),phi_vr)
+
+fig, ax = plt.subplots(figsize=(7.5,4.2))
+ax.fill_between(theta, phi_min, phi_max, alpha=0.15, color="#888",
+                label="Dispersion inter-formules")
+ax.semilogy(theta, phi_mpm, color=C_CHARGE, lw=2.2, label="Meyer-Peter-Müller")
+ax.semilogy(theta, phi_eb,  color=C_PIEZO,  lw=2.2, ls="--", label="Einstein-Brown")
+ax.semilogy(theta, phi_vr,  color="#8e44ad", lw=2.0, ls="-.", label="Van Rijn")
+theta_fr = 0.73
+ax.axvline(theta_fr, color=C_ACCENT, lw=1.5, ls=":", label=f"Fil rouge $\\theta={theta_fr}$")
+for phi_f, col in [(MPM(np.array([theta_fr]))[0], C_CHARGE),
+                   (EB(np.array([theta_fr]))[0],  C_PIEZO),
+                   (VR(np.array([theta_fr]))[0],  "#8e44ad")]:
+    ax.scatter([theta_fr],[phi_f], color=col, s=60, zorder=6)
+ax.axvline(theta_cr, color="#aaa", lw=1, ls=":")
+ax.text(theta_cr+0.02, 3, r"$\theta_{cr}$", fontsize=8.5, color="#555")
+ax.set_xlabel("Paramètre de Shields $\\theta$", fontsize=9)
+ax.set_ylabel("Débit solide adimensionnel $\\Phi$", fontsize=9)
+ax.set_title("Formules de charriage — Dispersion inter-formules", fontsize=10)
+ax.legend(fontsize=8.5, loc="upper left")
+ax.set_xlim(0,1.5); ax.set_ylim(0.001,50)
+ax.grid(alpha=0.2, which="both"); ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-warning}
+## Alerte modélisation — L'exposant 3/2 amplifie toutes les erreurs
+
+Une erreur de 20 % sur $\tau_0$ donne ~35 % d'erreur sur $q_s$. Combinée à l'incertitude sur $\theta_{cr}$ et à la dispersion inter-formules, l'incertitude totale sur $q_s$ peut atteindre un ordre de grandeur. Calculer avec au minimum deux formules et présenter une fourchette est une obligation méthodologique.
+:::
+
+### Le transport en suspension : profil de Rouse — Fil rouge §2
+
+En suspension, l'équilibre entre chute gravitaire et diffusion turbulente produit le **profil de Rouse** :
+
+$$\frac{C(z)}{C_a} = \left[\frac{(h-z)\,a}{z\,(h-a)}\right]^{Ro}$$
+
+Le débit solide en suspension est obtenu par intégration sur la hauteur :
+
+$$q_{s,susp} = \int_{a}^{h} u(z)\,C(z)\,dz$$
+
+::: {.callout-note}
+## Le coin du puriste — Le niveau de référence $a$ : paramètre de calage de premier ordre
+
+Le profil de Rouse diverge mathématiquement quand $z \to 0$. On introduit un niveau de référence $a$ (typiquement $2d_{50}$ ou $0{,}05h$) au-dessous duquel on applique la formule de charriage. La concentration $C_a$ à ce niveau (calculée par Van Rijn, Smith-McLean...) est le vrai paramètre de calage — plus important que le choix de la formule de charriage elle-même.
+:::
+
+### Débit solide total et la grande incertitude
+
+$$q_{s,tot} = q_{s,charriage} + q_{s,susp} \qquad ; \qquad \frac{q_{s,max}}{q_{s,min}} \sim 2\text{–}10 \ \text{selon les formules}$$
+
+::: {.callout-warning}
+## Alerte modélisation — Hiérarchie de l'incertitude en transport solide
+
+| Source d'incertitude | Facteur typique sur $q_s$ |
+|---|---|
+| Apport solide amont (condition limite) | 2 à 10 |
+| Granulométrie et $\theta_{cr}$ | 2 à 5 |
+| Choix de la formule de débit solide | 2 à 5 |
+| Contrainte de peau vs totale | 2 à 10 |
+| Modèle hydraulique (erreur sur $\tau_0$) | 1,5 à 3 |
+
+Présenter un débit solide comme une valeur unique est une faute méthodologique. Renvoi note 3.6.
+:::
+
+---
+
+## La morphodynamique : l'équation d'Exner
+
+### Le bilan sédimentaire et l'équation d'Exner
+
+Bilan de masse de la phase solide sur un tronçon de lit (méthode identique au bilan de masse d'eau de la note 0.2) :
+
+$$\boxed{(1-p)\,\frac{\partial z_f}{\partial t} + \frac{\partial q_s}{\partial x} = 0}$$
+
+$\partial q_s/\partial x > 0$ → érosion ($\partial z_f/\partial t < 0$) ; $\partial q_s/\partial x < 0$ → dépôt ($\partial z_f/\partial t > 0$).
+
+::: {.callout-note}
+## Le coin du puriste — Dérivation d'Exner et hypothèse d'équilibre local
+
+**Dérivation.** Conservation du volume solide (grains + vides) sur un volume de contrôle de largeur unitaire, longueur $\Delta x$ :
+
+$$\frac{\partial [(1-p)\,z_f\,\Delta x]}{\partial t} + q_s(x+\Delta x) - q_s(x) = 0$$
+
+Division par $\Delta x$ et limite $\Delta x \to 0$ → équation d'Exner.
+
+**Hypothèse d'équilibre local.** Exner suppose que $q_s$ s'adapte instantanément à la contrainte locale. En réalité, une **longueur d'adaptation** sépare une perturbation hydraulique de la réponse du transport — près d'un ouvrage ou lors d'une crue rapide, ce délai rend l'hypothèse fausse. Les modèles de non-équilibre (terme source proportionnel à $q_s - q_{s,eq}$) sont requis dans ces zones.
+:::
+
+### Couplage hydraulique ↔ fond mobile
+
+$$\underbrace{\text{Saint-Venant}}_{\text{rapide, }T_{hydro} \sim \text{heures}} \;\xleftrightarrow{\;q_s(\tau_0)\;}\; \underbrace{\text{Exner : } \partial_t z_f}_{\text{lent, }T_{morpho} \sim \text{jours–années}}$$
+
+Le découplage temporel (résoudre l'hydraulique à fond figé, puis avancer Exner) est admissible si $T_{hydro}/T_{morpho} \ll 1$.
+
+```{python}
+#| label: fig-boucle-couplage
+#| fig-cap: "Boucle de couplage morphodynamique. Le module Saint-Venant (bleu) opère sur des pas courts et fournit $\\tau_0(x,t)$ au module transport (violet) qui calcule $q_s(x)$. L'équation d'Exner (vert) met à jour le fond $z_f$ sur un pas morphologique long. La géométrie actualisée est renvoyée à l'hydraulique — c'est la rétroaction absente du transport dissous (note 3.3). Le découplage temporel est valide tant que $T_{hydro}/T_{morpho} \\ll 1$."
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import FancyBboxPatch
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+fig, ax = plt.subplots(figsize=(9, 3.8))
+ax.set_xlim(0,12); ax.set_ylim(0,5); ax.axis("off")
+
+def box(ax, x, y, w, h, col, txt):
+    b = FancyBboxPatch((x-w/2,y-h/2), w, h,
+        boxstyle="round,pad=0.12", fc=col+"22", ec=col, lw=2)
+    ax.add_patch(b)
+    ax.text(x, y, txt, ha="center", va="center", fontsize=8.5,
+            color=col, fontweight="bold")
+
+box(ax, 2.2, 3.5, 3.2, 1.0, C_CHARGE,
+    "Saint-Venant\n(hydraulique)\n$\\partial_t Q,\\ \\partial_x(\\ldots)$")
+box(ax, 6.5, 3.5, 2.8, 1.0, "#8e44ad",
+    "Transport\n$q_s = f(\\tau_0, \\theta, d)$")
+box(ax, 6.5, 1.6, 2.8, 1.0, C_PIEZO,
+    "Exner\n$(1-p)\\partial_t z_f + \\partial_x q_s = 0$")
+box(ax, 2.2, 1.6, 3.2, 1.0, C_ACCENT,
+    "Mise à jour géométrie\n$z_f \\to R_h, A$")
+
+kw = dict(arrowstyle="->", lw=2.0)
+ax.annotate("", xy=(5.1,3.5), xytext=(3.8,3.5),
+            arrowprops=dict(**kw, color=C_CHARGE))
+ax.text(4.45, 3.75, r"$\tau_0(x,t)$", fontsize=8, color=C_CHARGE, ha="center")
+ax.annotate("", xy=(6.5,3.0), xytext=(6.5,2.1),
+            arrowprops=dict(**kw, color="#8e44ad"))
+ax.text(6.75,2.55, r"$q_s(x)$", fontsize=8, color="#8e44ad")
+ax.annotate("", xy=(3.8,1.6), xytext=(5.1,1.6),
+            arrowprops=dict(**kw, color=C_PIEZO))
+ax.text(4.45,1.85, r"$z_f(x,t+\Delta t)$", fontsize=8, color=C_PIEZO, ha="center")
+ax.annotate("", xy=(2.2,3.0), xytext=(2.2,2.1),
+            arrowprops=dict(**kw, color=C_ACCENT))
+ax.text(2.45,2.55,"Géométrie\nmise à jour", fontsize=7.5, color=C_ACCENT)
+
+ax.text(9.8,4.6, "$T_{hydro}/T_{morpho} \\ll 1$\n→ découplage OK", ha="center",
+        fontsize=8, bbox=dict(boxstyle="round,pad=0.3",fc="#f8f9fa",ec="#aaa"))
+ax.set_title("Boucle morphodynamique couplée — Saint-Venant ↔ Exner", fontsize=10)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-warning}
+## Alerte modélisation — Le découplage temporel échoue lors des crues morphogènes
+
+Lors d'une **crue morphogène** ou d'une **chasse de barrage**, $T_{morpho} \sim T_{hydro}$ : le fond évolue à l'échelle de l'événement. Un schéma fond fixe ne voit ni l'affouillement, ni la mobilisation des stocks, ni le dépôt en décélération. C'est le symétrique exact du piège « scalaire actif » de la note 3.3 §7.2.
+:::
+
+### Nature des évolutions du lit : érosion régressive — Fil rouge §3
+
+La célérité de propagation d'une perturbation du lit :
+
+$$c_{lit} = \frac{1}{1-p}\,\frac{\partial q_s}{\partial z_f}\bigg|_{Q}$$
+
+**Cas fil rouge — arasement du barrage.** En $t=0$ le barrage est supprimé. La pente locale augmente, la contrainte augmente, le flux solide augmente, le fond s'érode. Cette érosion remonte vers l'amont : c'est l'**érosion régressive**.
+
+```{python}
+#| label: fig-erosion-regressive
+#| fig-cap: "Profil en long du lit à plusieurs instants après arasement du barrage (fil rouge, $x=0$). L'érosion démarre à l'ouvrage et remonte progressivement vers l'amont (érosion régressive, flèche rouge). Les profils successifs (dégradé bleu clair → bleu foncé) montrent l'incision s'approfondissant sur plusieurs kilomètres en quelques années. En aval, un léger dépôt compense l'apport solide supplémentaire. Ce type d'évolution est systématiquement sous-estimé car il se développe hors de l'emprise du projet."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+fig, ax = plt.subplots(figsize=(9, 4.2))
+x = np.linspace(-5000, 3000, 500)
+x_km = x/1000
+z_init = np.where(x<=0, 0.0005*(-x), 0.0)
+
+colors_t = ["#d6eaf8","#85c1e9","#2980b9",C_CHARGE,"#1a5276"]
+t_labels = ["$t=0$","$t=1$ an","$t=3$ ans","$t=7$ ans","$t=15$ ans"]
+reach_up = [-500,-1200,-2500,-4000,-4800]
+depths   = [0.0, 0.30, 0.55, 0.75, 0.90]
+
+ax.plot(x_km, z_init, color="#c8a96e", lw=2.5, label="Fond initial", zorder=5)
+for col, lbl, r_up, d in zip(colors_t, t_labels, reach_up, depths):
+    z = z_init.copy()
+    mask = (x >= r_up) & (x <= 0)
+    x_seg = x[mask]
+    z[mask] -= d * ((x_seg - r_up) / (-r_up))**0.6
+    mask_av = (x > 0) & (x < 2000)
+    z[mask_av] += 0.05*d*np.exp(-x[mask_av]/800)
+    ax.plot(x_km, z, color=col, lw=2.0, label=lbl, zorder=4)
+
+ax.axvline(0, color=C_ACCENT, lw=2.5, ls="--", label="Barrage arasé")
+ax.annotate("", xy=(-1.5,-0.65), xytext=(-0.3,-0.1),
+            arrowprops=dict(arrowstyle="->", color=C_ACCENT, lw=2.0))
+ax.text(-2.2,-0.72,"Érosion\nrégressive", color=C_ACCENT, fontsize=8.5, ha="center")
+ax.set_xlabel("Distance depuis le barrage (km)", fontsize=9)
+ax.set_ylabel("Cote du fond (m, relatif)", fontsize=9)
+ax.set_title("Érosion régressive après arasement de barrage", fontsize=10)
+ax.legend(fontsize=8.5, loc="upper right", ncol=2)
+ax.set_xlim(-5,3); ax.set_ylim(-1.1,2.8)
+ax.grid(alpha=0.2); ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-warning}
+## Alerte modélisation — L'érosion régressive déborde le domaine d'étude
+
+Une érosion régressive peut remonter de plusieurs kilomètres en quelques années — bien au-delà de l'emprise du projet. Un modèle dont le domaine s'arrête à quelques centaines de mètres de l'ouvrage ne la verra pas. La définition du domaine doit inclure une estimation préalable de la portée (renvoi note 3.6).
+:::
+
+---
+
+## Applications métier
+
+### Fluvial : profil en long, équilibre et déséquilibre
+
+La **balance de Lane** résume qualitativement l'équilibre morphodynamique :
+
+$$Q_s\,d \;\propto\; Q_l\,J$$
+
+Toute perturbation (barrage piégeant les sédiments → $Q_s$ chute à l'aval → incision ; extraction de granulats → idem ; imperméabilisation → $Q_l$ augmente → incision) rompt cet équilibre.
+
+```{python}
+#| label: fig-lane-balance
+#| fig-cap: "Balance de Lane — fléau d'équilibre morphologique. Le plateau gauche porte $Q_l \\times J$ (force hydraulique), le plateau droit $Q_s \\times d$ (résistance sédimentaire). L'équilibre dynamique est atteint quand les deux sont égaux. Les exemples d'ingénierie fluviale illustrent les déséquilibres les plus fréquents : barrage (déficit solide aval → érosion), urbanisation (surplus hydraulique → érosion), épandage amont de sédiments ou recalibrage (surplus solide → dépôt)."
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import FancyBboxPatch
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+fig, ax = plt.subplots(figsize=(9,4.0))
+ax.set_xlim(0,12); ax.set_ylim(0,5.5); ax.axis("off")
+
+ax.plot([2,10],[3,3], color="#555", lw=4)
+ax.plot([6,6],[1,3], color="#555", lw=3)
+ax.scatter([6],[1], s=200, color="#555", zorder=6)
+
+def plateau(ax, x, y, w, h, col, txt):
+    ax.add_patch(FancyBboxPatch((x-w/2,y-h/2),w,h,
+        boxstyle="round,pad=0.1", fc=col+"33", ec=col, lw=2))
+    ax.text(x,y,txt,ha="center",fontsize=11,color=col,fontweight="bold")
+
+plateau(ax,2.25,2.4,2.5,0.8,C_CHARGE,r"$Q_l \times J$")
+plateau(ax,9.75,2.4,2.5,0.8,C_PIEZO, r"$Q_s \times d$")
+
+ax.text(6,5.0,"ÉQUILIBRE DYNAMIQUE",ha="center",fontsize=10,color="#555",fontweight="bold")
+ax.text(6,4.4,r"$Q_s\,d\ \propto\ Q_l\,J$",ha="center",fontsize=10,color="#555")
+
+ax.text(2,1.4,"↑ $Q_l$ (imperméabilisation)\n↑ $J$ (incision aval)\n→ Érosion",
+        fontsize=7.5,color=C_ACCENT,ha="center")
+ax.text(2,0.4,"↓ $Q_s$ (barrage amont)\n→ Érosion régressive",
+        fontsize=7.5,color=C_ACCENT,ha="center")
+ax.text(10,1.4,"↑ $Q_s$ (apport amont)\n→ Dépôt, exhaussement",
+        fontsize=7.5,color=C_PIEZO,ha="center")
+ax.text(10,0.4,"↓ $d$ (fines, colmatage)\n→ Envasement retenue",
+        fontsize=7.5,color=C_PIEZO,ha="center")
+
+ax.set_title("Balance de Lane — Équilibre morphologique d'un cours d'eau", fontsize=10)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-warning}
+## Alerte modélisation — Un modèle 1D ne prédit pas la stabilité des berges
+
+Un modèle 1D calcule un bilan sédimentaire longitudinal moyen — il ne voit pas la divagation latérale, le tri granulométrique transversal ni les bancs alternés. Conclure sur la stabilité d'une berge à partir d'un modèle 1D est une extrapolation non justifiée. Renvoi note 3.2 pour la modélisation 2D.
+:::
+
+### Assainissement : dépôts, auto-curage et mise en charge
+
+En réseau d'assainissement, la contrainte critique doit être évaluée **sur l'hydrogramme**, pas sur le débit moyen :
+
+$$\tau_0(t) = \rho\,g\,R_h(t)\,J \quad \gtrless \quad \tau_{0,cr}$$
+
+L'accumulation de dépôts réduit la section hydraulique, augmente la rugosité équivalente et anticipe les mises en charge (renvoi note 2.B3).
+
+::: {.callout-tip}
+## Bon sens de l'ingénieur — Le piège de la rugosité de calage
+
+Un collecteur avec dépôt permanent de 10 % de la hauteur peut perdre 15 à 25 % de sa capacité. Certains modèles « avalent » cet effet en sur-calant le coefficient de Manning — masquant le dépôt réel. La bonne pratique : caler la géométrie réelle (mesurée par inspection) et le Manning de la paroi seule.
+:::
+
+### Retenues et barrages : envasement, chasses et courants de turbidité
+
+L'efficacité de piégeage d'une retenue dépend du rapport capacité/apport annuel :
+
+$$\eta_{piégeage} = f\!\left(\frac{V_{retenue}}{V_{apport\ annuel}}\right) \qquad \text{(abaque de Brune)}$$
+
+Le **courant de turbidité** est l'exact pendant solide du scalaire actif de la note 3.3 §7.2 : les sédiments fins en suspension augmentent la densité de l'eau ($\Delta\rho/\rho \sim 0{,}5$ à 2 %), créant un courant de densité plongeant gouverné par :
+
+$$Fr_d = \frac{U}{\sqrt{\dfrac{\Delta\rho}{\rho}\,g\,h}}$$
+
+```{python}
+#| label: fig-envasement-retenue
+#| fig-cap: "Coupe longitudinale schématique d'une retenue en cours d'envasement. Le courant de turbidité (trait rouge pointillé) plonge à l'entrée, charrie les sédiments fins vers le barrage et les dépose au fond. Le delta sédimentaire (brun) progresse vers l'aval, réduisant le volume utile. La cote utile (trait bleu pointillé) diminue année après année. Une chasse mal pilotée mobilise ces vases vers l'aval avec un impact qualité majeur sur l'écosystème et les captages (lien note 3.3)."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+fig, ax = plt.subplots(figsize=(10,4.2))
+x = np.linspace(0,12,300)
+z_rock = 0.5 + 0.3*np.sin(np.pi*x/12)
+ax.fill_between(x, 0, z_rock, color="#888", alpha=0.5)
+ax.fill_between([11.0,12.0],[0,0],[5.0,5.0], color="#555", alpha=0.9)
+ax.text(11.5,5.2,"Barrage",ha="center",fontsize=8.5,color="#333")
+
+# 1. Delta (les 100 premiers points de x, soit de x=0 à x=4)
+x_delta = x[:100]
+z_d0 = z_rock[:100]
+z_delta = z_d0 + 0.8*np.maximum(1-x_delta/4, 0)**0.5
+ax.fill_between(x_delta, z_d0, z_delta, color="#c8a96e", alpha=0.85,
+                label="Delta (sables/graviers)")
+
+# 2. Vases fines (les 180 points suivants, de x=4 à x=11.2)
+x_vase = x[100:280]
+z_v0 = z_rock[100:280]
+# Création d'une géométrie de vase cohérente sur cette zone
+z_vase = z_v0 + 0.4 * np.maximum(1 - np.abs(x_vase - 7.5)/3.5, 0)
+ax.fill_between(x_vase, z_v0, z_vase, color="#aaa", alpha=0.6,
+                label="Vases fines (argiles/silts)")
+
+# 3. Création du profil global du fond (Sédiments + Lit rocheux là où il n'y a pas de sédiment)
+z_fond = z_rock.copy()
+z_fond[:100] = z_delta
+z_fond[100:280] = np.maximum(z_fond[100:280], z_vase)
+
+# Surface libre et remplissage de l'eau (jusqu'au barrage à x=11)
+ax.axhline(4.5, color=C_CHARGE, lw=2.0, label="Surface libre")
+ax.fill_between(x[:275], z_fond[:275], 4.5, alpha=0.10, color=C_CHARGE)
+ax.axhline(3.7, color=C_CHARGE, lw=1.5, ls="--", label="Cote utile (après envasement)")
+
+# Courant de turbidité
+x_turb = np.linspace(0.5,9,80)
+# On reconstruit une courbe de turbidité fluide qui descend vers le fond
+z_turb = 1.5 + 0.5*np.exp(-x_turb/4)
+ax.plot(x_turb, z_turb, color=C_ACCENT, lw=2.5, ls="--",
+        label="Courant de turbidité")
+ax.annotate("", xy=(8.5, z_fond[210]+0.1), xytext=(6.0, z_turb[50]),
+            arrowprops=dict(arrowstyle="->", color=C_ACCENT, lw=1.8))
+
+ax.annotate("", xy=(1.0,2.5), xytext=(0.0,2.5),
+            arrowprops=dict(arrowstyle="->", color=C_PIEZO, lw=2.0))
+ax.text(-0.1,2.5,"Rivière\n$Q_s^{entrant}$",ha="right",fontsize=8,color=C_PIEZO)
+
+ax.set_xlabel("Distance longitudinale (normalisée)", fontsize=9)
+ax.set_ylabel("Cote (m, schématique)", fontsize=9)
+ax.set_title("Envasement d'une retenue — Courant de turbidité, delta et vases fines", fontsize=10)
+ax.legend(fontsize=8, loc="upper left", ncol=2)
+ax.set_xlim(0,12); ax.set_ylim(0,5.8)
+ax.grid(alpha=0.15); ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-warning}
+## Alerte modélisation — Le courant de turbidité est un couplage fort : le 1D le rate
+
+Un modèle 1D ADR ne capte pas le courant de turbidité — écoulement de densité 2D/3D plongeant, gouverné par la flottabilité. C'est exactement le même piège que le biseau salin en estuaire (note 3.3 §7.2), appliqué ici à la phase solide. Renvoi note 3.2 pour la modélisation 2D/3D.
+:::
+
+---
+
+## Modélisation numérique et calage
+
+La boucle morphodynamique (§4.2) est résolue en trois étapes séquentielles : (1) résoudre l'hydraulique à fond figé sur $\Delta t_{hydro}$ ; (2) calculer $\tau_0(x)$ puis $q_s(x)$ via la formule choisie (contrainte de peau) ; (3) avancer Exner sur $\Delta t_{morpho} \gg \Delta t_{hydro}$ et mettre à jour la géométrie.
+
+La condition de stabilité impose que la célérité de l'onde de fond reste bornée : $c_{lit}\,\Delta t_{morpho}/\Delta x \lesssim 1$.
+
+::: {.callout-warning}
+## Alerte modélisation — Instabilité numérique vs instabilité physique
+
+Les modèles morphodynamiques produisent naturellement des structures ondulées du fond. Distinguer (1) une instabilité **physique** réelle (rides, dunes, bancs — longueur d'onde et croissance conformes à la théorie) à paramétrer, et (2) une instabilité **numérique** ($2\Delta x$, croissance exponentielle) à supprimer. Les confondre conduit à lisser un phénomène réel ou à diverger. Renvoi note 3.5.
+:::
+
+::: {.callout-tip}
+## Bon sens de l'ingénieur — Hiérarchie du calage morphodynamique
+
+1. **Caler l'hydraulique fond fixe** sur mesures terrain — avant d'introduire le transport
+2. **Vérifier le seuil de Shields** sur la granulométrie mesurée — ne pas imposer 0,047 par défaut
+3. **Tester ≥ 2 formules** de débit solide — présenter une fourchette
+4. **Valider par bilan bathymétrique** entre deux levés : $\Delta V_{lit}^{mesuré} \stackrel{?}{=} \iint \partial_t z_f\,dx\,dt$
+5. **Identifier la condition amont** comme source dominante d'incertitude
+
+Outils métier : HEC-RAS Sediment, TELEMAC-SISYPHE, Iber, Delft3D — renvoi notes 3.1, 3.6.
+:::
+
+---
+
+## Synthèse : modéliser le transport solide dans une étude
+
+### Tableau de synthèse : domaine, mode dominant, formule, note associée
+
+Les trois relations pivots à retenir :
+
+$$\theta = \frac{\tau_0}{(\rho_s-\rho)\,g\,d} \qquad ; \qquad \Phi = 8\,(\theta'-\theta_{cr})^{3/2} \qquad ; \qquad (1-p)\,\frac{\partial z_f}{\partial t} + \frac{\partial q_s}{\partial x} = 0$$
+
+| Domaine | Sédiment type | Mode dominant | Grandeur clé | Hypothèse critique | Note associée |
+|---|---|---|---|---|---|
+| Rivière à gravier | Gravier $d_{50} > 5$ mm | Charriage | $\theta'$, $\theta_{cr}$ | Contrainte de peau ; seuil ≠ 0,047 | 0.2, 0.4 |
+| Rivière à sable | Sable 0,1–2 mm | Suspension + charriage | $Ro$, $q_{s,tot}$ | Formule total load ; calage $C_a$ | 3.1, 3.5 |
+| Collecteur EU | Organique/cohésif | Dépôt/remobilisation | $\tau_0(t)$ hydrogramme | Sédiment cohésif ≠ MPM | 2.B1, 2.B3 |
+| Retenue | Silt/argile | Piégeage, turbidité | $\eta_{piégeage}$, $Fr_d$ | Modèle 1D invalide (turbidité) | 3.2, 3.3 |
+| Courant de turbidité | Fin en suspension | Densité (couplage fort) | $Fr_d$, $\Delta\rho/\rho$ | Couplage fort — 2D/3D requis | 3.2, 3.3 |
+
+: Synthèse du transport solide par domaine d'application {#tbl-synthese-transport-solide}
+
+### Check-list du modélisateur transport solide
+
+::: {.callout-tip}
+## Bon sens de l'ingénieur — Check-list avant validation d'un modèle morphodynamique
+
+- [ ] **Sédiment cohésif ou non cohésif identifié** — ne jamais appliquer MPM à une vase
+- [ ] **Contrainte de peau $\tau'$ utilisée** dans les formules — estimer $\tau''$ si formes du lit présentes
+- [ ] **Seuil de Shields $\theta_{cr}$ justifié** — ne pas imposer 0,047 sans vérification
+- [ ] **Fourchette de $q_s$ calculée avec ≥ 2 formules** — jamais une valeur unique
+- [ ] **Découplage temporel fondé** — évaluer les crues morphogènes et les chasses
+- [ ] **Domaine étendu en amont** pour capturer l'érosion régressive potentielle
+- [ ] **Condition amont (apport solide entrant) identifiée** — source dominante d'incertitude
+- [ ] **Validation par bilan bathymétrique** entre deux levés disponibles
+- [ ] **Courant de turbidité signalé** si retenue ou estuaire — modèle 2D/3D si $Fr_d \lesssim 1$
+:::
+
+---
+
+## Conclusion
+
+Le transport solide et la morphodynamique referment le couple 3.3/3.4. En note 3.3, un scalaire dissous est **porté** par l'hydraulique sans la modifier. En note 3.4, un sédiment est **porté** par l'hydraulique et **la modifie** : l'équation d'Exner est le prix de cette rétroaction — c'est la différence entre un passager et un conducteur.
+
+Trois idées-force structurent cette note :
+
+**1. Shields décide du mouvement, Rouse du mode.** Comme Reynolds classe les régimes visqueux/turbulents et Froude les régimes fluvial/torrentiel, Shields classe le régime de transport (mouvement ou pas) et Rouse le mode (charriage, suspension, wash load). Ces deux nombres sont les outils de diagnostic de premier niveau — avant toute formule de débit solide.
+
+**2. Les lois de débit solide donnent des fourchettes, jamais des valeurs.** La dispersion inter-formules (facteur 2 à 10) est une propriété structurelle du domaine. Toute étude sérieuse présente une fourchette, identifie la formule utilisée, et documente la source dominante d'incertitude — qui est presque toujours la condition amont, pas la formule.
+
+**3. Le fond fixe est commode mais conditionnel.** Lors des crues morphogènes et des chasses, le fond évolue à l'échelle de l'événement hydraulique — le découplage temporel tombe, exactement comme le découplage faible tombe pour le scalaire actif en note 3.3.
+
+En transport solide, **l'humilité quantitative n'est pas une option mais une exigence professionnelle**. L'incertitude se documente, elle ne se cache pas — renvoi note 3.6.
+
+---
+
+## Pour aller plus loin dans cette série
+
+- **Note 0.2** — *Bilans et conservation* : la contrainte au fond $\tau_0 = \rho g R_h J$ comme dissipation d'énergie — fondement du critère de Shields et de la vitesse de frottement $u_*$
+- **Note 0.4** — *Analyse dimensionnelle et similitude* : Shields, Rouse et Froude densimétrique comme nombres sans dimension du transport solide, cousins de Reynolds et Froude pour l'hydraulique
+- **Note 0.3** — *Ouvrages et conditions aux limites* : affouillement aux ouvrages (piles, culées, seuils), conditions aux limites du fond mobile, chasse de barrage
+- **Note 1.B / 1.C** — *Enjeux assainissement / irrigation* : dépôts en collecteur, auto-curage, colmatage de drains — application directe des critères de Shields
+- **Note 2.B1** — *Auto-curage et pente minimale* : application opérationnelle du critère de Shields aux réseaux d'assainissement
+- **Note 2.B3** — *Mises en charge par dépôt* : conséquence hydraulique des dépôts non mobilisés — lien direct avec §5.2 de cette note
+- **Note 2.C1** — *Canaux d'irrigation* : dépôts et envasement, critère de non-dépôt en irrigation gravitaire
+- **Note 3.2** — *Quand le 1D ne suffit plus* : divagation latérale, bancs alternés, courant de turbidité 2D/3D, fond mobile multidimensionnel
+- **Note 3.3** — *Transport d'un scalaire dissous* : note jumelle — le courant de turbidité y est décrit comme couplage fort « scalaire actif » (§7.2) ; les deux notes se répondent sur §5.3 (3.4) ↔ §7.2 (3.3)
+- **Note 3.5** — *Méthodes numériques* : schémas couplés Saint-Venant–Exner, stabilité morphologique, distinction instabilités physiques / numériques
+- **Note 3.6** — *Limites et responsabilité du modélisateur* : documenter l'incertitude du débit solide, la portée de l'érosion régressive, et les obligations de traçabilité en études d'impact fluvial

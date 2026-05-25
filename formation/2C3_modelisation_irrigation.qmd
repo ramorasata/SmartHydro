@@ -1,0 +1,370 @@
+---
+title: "Transitoires en irrigation : coups de bélier et régulation des canaux"
+subtitle: "Intermittence, remplissage contrôlé et instabilités de régulation"
+date: "2026-05-16"
+author: ""
+categories: [Hydraulique, Irrigation, Transitoire, Ingénierie]
+page-layout: article
+toc: true
+toc-title: "Sommaire"
+toc-depth: 3
+number-sections: true
+lang: fr
+---
+
+::: {.callout-note}
+## Note de la série
+Cette note fait partie d'une série sur la modélisation des réseaux hydrauliques. Elle suppose la lecture des notes *Généralités sur la modélisation des réseaux hydrauliques*, *Modéliser un réseau d'irrigation*, *Coups de bélier en réseau AEP* (note 2.A2), *Modélisation des réseaux d'irrigation gravitaire* (note 2.C1) et *Modélisation des réseaux d'irrigation sous pression* (note 2.C2). On aborde ici les phénomènes transitoires spécifiques à l'irrigation — coups de bélier dans les réseaux sous pression, ondes de translation dans les canaux, et instabilités de régulation — avec leurs particularités par rapport aux réseaux AEP et d'assainissement.
+:::
+
+## Les spécificités des transitoires en irrigation
+
+### L'intermittence : un générateur quotidien de transitoires
+
+La différence fondamentale entre les transitoires en irrigation et ceux en AEP tient à leur **fréquence d'occurrence**. En AEP, un coup de bélier est un événement accidentel — une coupure électrique imprévue, un clapet défaillant, une manœuvre de vanne trop rapide par inadvertance. Il survient quelques fois par an, dans le meilleur des cas.
+
+En irrigation sous pression, les ouvertures et fermetures de vannes sont **quotidiennes et répétées** : chaque tour d'eau génère un cycle complet de démarrage (remplissage progressif ou brutal de la conduite) et d'arrêt (vidange ou fermeture de vanne). Sur une campagne d'irrigation de 150 jours avec deux rotations par jour, un réseau subit 300 cycles de transitoires par an — soit, sur une durée de vie de 30 ans, près de 10 000 cycles.
+
+Cette répétition a deux conséquences majeures que la seule analyse du coup de bélier maximal ne capture pas :
+
+**La fatigue des matériaux par cycles de pression.** Les conduites en PVC et PE sont des matériaux polymères dont la résistance à la pression diminue progressivement sous l'effet des cycles de pression répétés — c'est le phénomène de **fatigue par fluage et par cycles**. Une conduite qui résiste parfaitement à 10 cycles de surpression peut se fissurer après 10 000 cycles à une surpression inférieure. Les normes de pression nominale (PN) des conduites plastiques sont établies pour un fonctionnement continu sous pression statique — elles ne garantissent pas la même durée de vie sous cycles de pression répétés.
+
+**L'importance des procédures d'exploitation.** En AEP, les manœuvres de vannes sont réalisées par des agents d'exploitation formés, selon des procédures définies. En irrigation, elles sont souvent réalisées par les irrigants eux-mêmes — des agriculteurs dont la formation hydraulique est variable. Une fermeture trop rapide par un irrigant pressé peut générer un coup de bélier destructeur. La formation des exploitants est une mesure de protection aussi efficace que les dispositifs hydrauliques.
+
+### Les matériaux de l'irrigation : un profil de risque différent de l'AEP
+
+Les réseaux d'irrigation sous pression utilisent massivement des conduites en **PVC** (chlorure de polyvinyle) et **PE** (polyéthylène), contrairement aux réseaux AEP qui combinent fonte, acier, PVC et PE selon les pressions de service.
+
+Ce choix de matériaux a des implications directes sur les transitoires :
+
+| Propriété | Fonte ductile | Acier | PVC | PE |
+|---|---|---|---|---|
+| Module d'élasticité $E$ (GPa) | 170 | 210 | 2,5 — 3,5 | 0,8 — 1,2 |
+| Célérité typique $c$ (m/s) | 900 — 1100 | 900 — 1200 | 300 — 500 | 200 — 400 |
+| Pression nominale courante (bar) | 10 — 40 | 10 — 100 | 6 — 16 | 4 — 16 |
+| Surpression admissible transitoire | +50 % PN | +50 % PN | +25 % PN | +20 % PN |
+
+: Propriétés hydrauliques des matériaux courants en irrigation {#tbl-materiaux}
+
+La **célérité plus faible** du PVC et du PE réduit l'amplitude du coup de bélier de Joukowsky ($\Delta H = c \cdot \Delta V / g$) par rapport à la fonte ou à l'acier — un avantage intrinsèque. Mais la **pression nominale plus faible** et la **tolérance aux surpressions transitoires plus réduite** compensent partiellement cet avantage. Une conduite PE PN 6 (6 bars) avec une célérité de 300 m/s et une vitesse d'écoulement de 1 m/s génère une surpression de Joukowsky de $300 \times 1 / 9{,}81 \approx 30$ m soit 3 bars — soit 50 % de la pression nominale, qui dépasse la tolérance transitoire admissible de 20 %.
+
+::: {.callout-important}
+## La pression nominale PN : une garantie statique, pas dynamique
+La pression nominale d'une conduite en PVC ou PE est définie pour une utilisation en régime permanent (pression statique continue). Les normes européennes (EN 1452 pour le PVC, EN 12201 pour le PE) précisent que les surpressions transitoires ne doivent pas dépasser 1,5 fois la PN pour le PVC et 1,2 fois la PN pour le PE. Au-delà, le risque de rupture fragile (PVC) ou de déformation permanente (PE) est réel. Un réseau d'irrigation dimensionné sans analyse transitoire peut fonctionner des années sans incident, puis rompre brutalement après accumulation de fatigue.
+:::
+
+---
+
+## Coups de bélier en réseau sous pression d'irrigation
+
+### Rappel de Joukowsky adapté à l'irrigation
+
+La formule de Joukowsky (cf. note 2.A2) s'applique directement aux réseaux d'irrigation sous pression :
+
+$$\Delta H = \pm \frac{c \cdot \Delta V}{g}$$
+
+Pour les ordres de grandeur courants en irrigation :
+
+| Matériau | $c$ (m/s) | $V$ typique (m/s) | $\Delta H$ Joukowsky (m) |
+|---|---|---|---|
+| PVC DN 63, PN 10 | 400 | 1,0 | 40 |
+| PVC DN 110, PN 10 | 380 | 0,8 | 31 |
+| PE DN 32, PN 6 | 300 | 1,2 | 37 |
+| PE DN 63, PN 6 | 280 | 1,0 | 29 |
+
+: Surpressions de Joukowsky typiques en irrigation {#tbl-joukowsky}
+
+Ces surpressions, rapportées aux pressions nominales courantes en irrigation (6 à 10 bars), représentent des ratios de 30 à 60 % de la PN — souvent au-delà des limites admissibles pour des matériaux plastiques. La nécessité d'une analyse transitoire et de dispositifs de protection est donc plus systématique qu'en AEP.
+
+### Les cas déclencheurs spécifiques à l'irrigation
+
+**La fermeture manuelle de vanne par l'irrigant** est le cas déclencheur le plus fréquent et le plus mal contrôlé. Une vanne à boisseau sphérique (quart de tour) peut être fermée en moins d'une seconde — largement en dessous du temps critique $T_r = 2L/c$ pour des conduites de quelques centaines de mètres. La surpression générée peut être égale à la valeur de Joukowsky. Les vannes papillon et à opercule sont plus sûres car leur géométrie impose une fermeture plus progressive.
+
+**L'arrêt de pompe** est identique au cas AEP (cf. note 2.A2) mais présente une particularité en irrigation : les pompes d'irrigation sont souvent de plus petite puissance et moins équipées en protections (pas toujours de clapet anti-retour, rarement de variateur de fréquence sur les petites installations). La dépression côté aspiration et la surpression au retour du clapet sont les risques principaux.
+
+**Le démarrage de pompe sur réseau vide ou partiellement vide** est un cas spécifique à l'irrigation. En début de campagne ou après une panne, les conduites peuvent être vides ou contenir des poches d'air. Le démarrage de la pompe projette un front d'eau contre ces poches d'air — c'est le phénomène décrit en détail dans la section 5.
+
+**La fermeture du clapet de prise** : lorsqu'un irrigant ferme sa prise (vanne en bout de rampe ou bouche d'arrosage), l'onde remonte vers l'amont. Si plusieurs irrigants ferment simultanément (fin de tour d'eau), les ondes s'additionnent.
+
+### La fatigue par cycles : un risque à long terme
+
+La résistance d'une conduite plastique sous cycles de pression répétés est gouvernée par les courbes **S-N** (contrainte-nombre de cycles), similaires aux courbes de fatigue des métaux mais avec des caractéristiques propres aux polymères.
+
+En l'absence de données S-N spécifiques aux conduites d'irrigation (rares dans la littérature technique française), une règle prudentielle consiste à **réduire la pression de service admissible en régime cyclique** :
+
+$$P_{service,cyclique} \leq 0{,}72 \times PN \quad \text{pour le PVC}$$
+$$P_{service,cyclique} \leq 0{,}80 \times PN \quad \text{pour le PE}$$
+
+Ces coefficients de réduction, issus des normes ISO sur les conduites plastiques sous pression, s'appliquent lorsque le réseau subit plus de 1000 cycles de pression par an. Pour un réseau d'irrigation en fonctionnement intensif, cette condition est systématiquement remplie.
+
+---
+
+## La méthode des caractéristiques en irrigation
+
+### Rappel des équations
+
+La méthode des caractéristiques (cf. note 2.A2 pour la dérivation complète) s'applique directement aux conduites d'irrigation sous pression. Les équations caractéristiques $C^+$ et $C^-$ sont identiques :
+
+$$C^+ : dH + \frac{c}{gA}dQ + \frac{fc \cdot Q|Q|}{2gDA^2}dt = 0 \quad \text{le long de } \frac{dx}{dt} = +c$$
+
+$$C^- : dH - \frac{c}{gA}dQ - \frac{fc \cdot Q|Q|}{2gDA^2}dt = 0 \quad \text{le long de } \frac{dx}{dt} = -c$$
+
+Le pas de temps est contraint par la condition CFL : $\Delta t = \Delta x / c$.
+
+### Conditions aux limites spécifiques à l'irrigation
+
+**Vanne manuelle à fermeture linéaire :** la loi de fermeture d'une vanne manœuvrée par un irrigant est difficile à connaître précisément — elle dépend de la vitesse à laquelle l'irrigant tourne la roue ou actionne le levier. En l'absence de mesure, une fermeture linéaire en temps $T_f$ est l'hypothèse standard :
+
+$$A_v(t) = A_{v,0} \cdot \left(1 - \frac{t}{T_f}\right)$$
+
+Le débit à la vanne est calculé par la loi d'orifice $Q = C_d \cdot A_v(t) \cdot \sqrt{2g \Delta H}$, qui constitue la condition aux limites.
+
+**Émetteur comme condition aux limites terminale :** en bout de rampe, chaque émetteur est une condition aux limites particulière. Son débit suit la loi $q = k \cdot h^x$, qui couple charge et débit. La résolution en bout de rampe combine l'équation caractéristique incidente $C^+$ avec la loi émetteur :
+
+$$H_{emetteur} - H^* = -\frac{c}{gA}(Q_{emetteur} - Q^*)$$
+$$Q_{emetteur} = k \cdot H_{emetteur}^x$$
+
+Ce système de deux équations en deux inconnues ($H_{emetteur}$, $Q_{emetteur}$) est résolu numériquement à chaque pas de temps.
+
+**Jonction réseau sous pression / canal :** dans les systèmes mixtes (conduite sous pression alimentant un canal de distribution), la jonction est une condition aux limites couplée. Côté conduite : équation caractéristique $C^+$. Côté canal : loi de déversoir ou loi d'orifice selon l'ouvrage de raccordement. La continuité du débit et la compatibilité des charges ferment le système.
+
+### Le critère de fermeture lente pour les réseaux ramifiés
+
+En AEP, le temps critique $T_r = 2L/c$ est calculé pour une conduite simple. En réseau ramifié d'irrigation, la situation est plus complexe : une fermeture en bout d'une rampe génère une onde qui se propage vers l'amont sur toute la longueur du chemin hydraulique depuis la source.
+
+Le temps critique pour le réseau ramifié est :
+
+$$T_{r,réseau} = \frac{2 L_{total}}{c}$$
+
+où $L_{total}$ est la longueur totale du chemin hydraulique depuis la source jusqu'à la vanne manœuvrée. Pour un réseau avec une conduite principale de 500 m, une secondaire de 200 m et une rampe de 100 m ($c = 350$ m/s), $T_r = 2 \times 800 / 350 \approx 4{,}6$ s. Une fermeture en moins de 4,6 secondes est "instantanée" au sens de Joukowsky — la surpression est maximale.
+
+::: {.callout-tip}
+## Règle pratique pour les irrigants
+Pour une conduite d'irrigation typique de 500 m en PVC ($c \approx 400$ m/s, $T_r = 2{,}5$ s), une fermeture en **au moins 10 secondes** assure une surpression inférieure à 25 % de la valeur de Joukowsky. Cette règle simple — "fermer en au moins 10 secondes pour chaque 500 m de conduite amont" — peut être communiquée aux irrigants sans nécessiter de calcul hydraulique.
+:::
+
+---
+
+## Les protections contre les coups de bélier en irrigation
+
+### Ventouses : positionnement et dimensionnement
+
+Les ventouses sont indispensables aux **points hauts du profil en long** pour protéger contre la dépression et la formation de poches de vapeur. En irrigation, elles remplissent aussi une fonction spécifique lors du **remplissage** : elles permettent à l'air contenu dans les conduites vides de s'échapper progressivement au fur et à mesure que l'eau avance.
+
+Le positionnement des ventouses doit couvrir :
+- Tous les points hauts topographiques du profil
+- Les changements de pente brusques (concavités)
+- Les extrémités des rampes (pour la purge de l'air lors du remplissage)
+
+Le dimensionnement suit les mêmes principes qu'en AEP (débit d'air à admettre ou à évacuer) mais avec des pressions de service plus faibles — les ventouses d'irrigation sont généralement dimensionnées pour des pressions de 2 à 6 bars.
+
+### Soupapes de décharge
+
+Les soupapes de décharge (ou soupapes de sûreté) sont installées aux points de surpression maximale — typiquement côté refoulement des pompes et aval des vannes susceptibles d'être fermées rapidement. Elles s'ouvrent lorsque la pression dépasse un seuil réglé, laissent s'échapper un volume d'eau, et se referment.
+
+En irrigation, le réglage de la soupape doit être cohérent avec la PN de la conduite et la tolérance transitoire admissible :
+
+$$P_{ouverture} \leq 1{,}2 \times PN \quad \text{pour le PE}$$
+$$P_{ouverture} \leq 1{,}4 \times PN \quad \text{pour le PVC}$$
+
+### Réservoirs d'air (ballons anti-bélier)
+
+Les réservoirs d'air sont efficaces pour les installations de pompage importantes, où l'arrêt de pompe génère les transitoires les plus sévères. Leur dimensionnement suit la même logique qu'en AEP (loi des gaz polytropique, cf. note 2.A2), mais avec des volumes souvent plus petits du fait des pressions nominales plus faibles.
+
+Pour les petites installations d'irrigation (pompes < 10 kW), un réservoir d'expansion simple (vase d'expansion à membrane) peut suffire à amortir les transitoires liés aux démarrages et arrêts de pompe.
+
+### Fermeture lente par conception
+
+La protection la plus fiable contre les coups de bélier liés aux manœuvres d'irrigants est de **concevoir les vannes pour une fermeture nécessairement lente** :
+
+**Vanne à réducteur de vitesse :** la vanne est équipée d'un mécanisme hydraulique ou mécanique qui limite la vitesse de fermeture à une valeur maximale, quelle que soit la vitesse à laquelle l'opérateur actionne la commande. La fermeture prend au minimum $T_{min} > T_r$ — le coup de bélier est structurellement impossible.
+
+**By-pass progressif :** la vanne principale est équipée d'un by-pass de petit diamètre. La procédure de fermeture impose d'abord de fermer le by-pass (fermeture lente du petit débit), puis de fermer la vanne principale (déjà sans débit significatif). La surpression générée par la vanne principale est quasi nulle.
+
+**Vanne à deux vitesses :** la vanne se ferme rapidement jusqu'à 20 % d'ouverture (débit résiduel faible, surpression limitée), puis lentement de 20 % à 0 % (débit quasi nul, surpression négligeable). C'est la solution adoptée sur les grands systèmes d'irrigation.
+
+### La formation des irrigants : la protection la plus efficace et la moins coûteuse
+
+Aucun dispositif hydraulique ne remplace une exploitation correcte du réseau. La formation des irrigants aux bonnes pratiques de manœuvre est souvent la mesure de protection la plus efficace par rapport à son coût :
+
+- **Règle de fermeture lente :** fermer les vannes en au moins $n$ secondes (calculé selon la longueur du réseau amont)
+- **Ordre de manœuvre :** fermer les vannes les plus proches de la pompe en dernier (les pressions y sont les plus élevées)
+- **Interdiction de fermeture brusque :** identification visuelle (marquage rouge) des vannes à risque
+- **Procédure de démarrage :** ordre d'ouverture des vannes avant démarrage de la pompe
+
+Ces règles simples, formalisées dans un guide d'exploitation illustré, peuvent réduire drastiquement la fréquence des incidents liés aux coups de bélier — sans aucun investissement hydraulique supplémentaire.
+
+---
+
+## Le remplissage contrôlé : procédure et modélisation
+
+### Pourquoi le remplissage est dangereux
+
+Le **remplissage d'une conduite vide** est l'un des cas les plus dangereux en hydraulique des réseaux sous pression, et l'un des plus spécifiques à l'irrigation. En AEP, le réseau est quasi-constamment en eau — le remplissage après travaux est une opération rare et encadrée. En irrigation, le réseau est **vidangé en fin de campagne** et remis en eau au début de la suivante — un remplissage complet par saison, plus des remplissages partiels après chaque période sèche.
+
+Le mécanisme du choc eau/air est le suivant :
+
+1. La pompe démarre — un front d'eau avance dans la conduite vide à la vitesse d'écoulement
+2. L'air contenu dans la conduite est comprimé devant le front d'eau (si les ventouses ne l'évacuent pas assez vite) ou forme des poches locales aux points hauts
+3. Lorsque le front d'eau atteint une poche d'air comprimée, il la comprime davantage ou la traverse brusquement
+4. **La poche d'air explose** (si elle est éjectée par une ventouse ou un bout de conduite ouvert) ou **effondrement de la poche** (si elle est réabsorbée par dissolution dans l'eau) — dans les deux cas, une onde de pression violente se propage dans la conduite
+
+La surpression générée par ce choc peut être **plusieurs fois supérieure à la valeur de Joukowsky** calculée pour le régime permanent — des facteurs 3 à 5 ont été observés sur des réseaux d'irrigation mal remplis.
+
+### La procédure de remplissage contrôlé
+
+Une procédure de remplissage contrôlé vise à **éviter la formation de poches d'air comprimées** en permettant à l'air de s'échapper progressivement devant le front d'eau :
+
+**Étape 1 — Vérification préalable :**
+- Toutes les ventouses sont fonctionnelles et en position ouverte
+- Toutes les vannes terminales (bouts de rampes) sont ouvertes ou légèrement ouvertes pour permettre l'évacuation de l'air
+- La pompe est en mode démarrage progressif (variateur de fréquence) ou un by-pass de petit débit est disponible
+
+**Étape 2 — Remplissage à faible débit :**
+- Démarrer la pompe au minimum de débit (variateur à 20-30 % de la vitesse nominale, ou ouverture partielle de la vanne de régulation amont)
+- Maintenir un **débit de remplissage maximal** $Q_{remplissage}$ calculé pour que la vitesse du front d'eau soit inférieure à la célérité de propagation de l'air :
+
+$$V_{front} = \frac{Q_{remplissage}}{A} \leq \frac{c_{air}}{10} \approx 30 \text{ à } 50 \text{ m/s}$$
+
+En pratique, pour des conduites d'irrigation de DN 50 à DN 200, un débit de remplissage de 10 à 30 % du débit nominal est suffisamment lent pour permettre l'évacuation de l'air.
+
+**Étape 3 — Montée en débit progressive :**
+- Une fois le réseau rempli et l'air évacué (constaté par la stabilisation du débit et de la pression), augmenter progressivement le débit jusqu'au débit nominal en au moins 5 à 10 minutes
+
+**Étape 4 — Vérification finale :**
+- Contrôler les pressions aux points de mesure — des pressions anormalement élevées ou faibles indiquent une poche d'air résiduelle non évacuée
+- Purger manuellement les ventouses si nécessaire
+
+### Modélisation du remplissage
+
+La modélisation du remplissage d'une conduite vide est un problème complexe qui nécessite de traiter l'interface eau/air comme une **frontière mobile** entre deux fluides de propriétés très différentes.
+
+Les approches disponibles sont :
+
+**Modèle à colonne rigide :** simplifié, traite l'eau comme incompressible et l'air comme un gaz parfait. Valide pour les transitoires lents (remplissage contrôlé à faible débit). Implémentable dans des codes de calcul standard.
+
+**Modèle à colonne élastique avec interface eau/air :** couplage de la méthode des caractéristiques (côté eau) avec un modèle de compression/expansion du gaz (côté air). Plus précis pour les transitoires rapides, mais nécessite un logiciel spécialisé (certaines versions d'AFT Impulse, TransAM).
+
+En pratique de bureau d'études, la modélisation détaillée du remplissage est rarement réalisée — on se contente de définir une procédure de remplissage contrôlé (débit maximal, durée minimale) et de vérifier que les ventouses sont correctement dimensionnées et positionnées.
+
+---
+
+## Transitoires en canal gravitaire : ondes de translation et instabilités
+
+### Rappel : amplitudes et temps caractéristiques
+
+En canal gravitaire, les transitoires sont des **ondes de translation gravitaires** dont la célérité est $c = \sqrt{gh}$ (cf. note 2.C1) — typiquement 3 à 5 m/s pour des canaux d'irrigation de 0,5 à 3 m de profondeur. Le temps de propagation sur un canal de longueur $L$ est :
+
+$$T_{canal} = \frac{L}{c} \approx \frac{L}{\sqrt{g \bar{h}}}$$
+
+Pour un canal de 5 km avec $\bar{h} = 1$ m : $T_{canal} = 5000 / \sqrt{9{,}81} \approx 1600$ s soit environ 27 minutes. Les transitoires en canal sont donc des phénomènes **lents** — les opérateurs ont le temps d'observer et de réagir, contrairement aux coups de bélier en conduite sous pression.
+
+L'amplitude des ondes générées par une manœuvre de vanne dépend du débit modifié et de la profondeur d'eau. Pour une variation de débit $\Delta Q$ sur un canal de largeur $B$ et de profondeur $h$ :
+
+$$\Delta h \approx \frac{\Delta Q}{B \cdot c} = \frac{\Delta Q}{B \cdot \sqrt{gh}}$$
+
+Pour un canal de 2 m de large, 0,8 m de profond, avec $\Delta Q = 0{,}1$ m³/s : $\Delta h \approx 0{,}1 / (2 \times \sqrt{9{,}81 \times 0{,}8}) \approx 0{,}056$ m soit 5,6 cm. Les variations de niveau sont donc modérées — le risque n'est pas la rupture brutale comme en conduite sous pression, mais l'**inégalité de distribution** (certains irrigants reçoivent trop peu pendant la propagation de l'onde).
+
+### Les instabilités de régulation : oscillations de niveau
+
+Un régulateur automatique de canal (régulateur PI, cf. note 2.C1) peut devenir **instable** si ses gains sont mal réglés. L'instabilité se manifeste par des **oscillations de niveau** qui s'amplifient progressivement au lieu de s'amortir — le régulateur "sur-réagit" à chaque perturbation et crée une perturbation encore plus grande dans le sens opposé.
+
+La condition de stabilité d'un régulateur PI contrôlant le niveau d'un bief de longueur $L$ et de célérité $c$ est liée au rapport entre le **temps de réaction du régulateur** ($1/K_i$) et le **temps de propagation des ondes** ($L/c$) :
+
+$$K_i < \frac{\pi \cdot c}{2 \cdot L}$$
+
+Cette condition montre que plus le bief est long (grand $L$) ou plus la célérité est faible (faible $c$, donc eau peu profonde), plus le gain intégral maximal admissible est faible. Un régulateur bien réglé sur un bief court peut devenir instable si on l'applique sans modification à un bief plus long.
+
+### La résonance hydraulique : quand les ondes se renforcent
+
+Un phénomène plus subtil que l'instabilité simple est la **résonance hydraulique** : lorsque la période d'oscillation naturelle d'un bief coïncide avec la période de régulation, les ondes se renforcent mutuellement et les oscillations de niveau s'amplifient.
+
+La période d'oscillation naturelle d'un bief de longueur $L$ en régime fluvial est :
+
+$$T_{nat} = \frac{2L}{c}$$
+
+Si la fréquence de régulation (fréquence à laquelle le régulateur corrige) est un multiple de $1/T_{nat}$, la résonance s'installe. En pratique, la résonance hydraulique est rare sur les canaux d'irrigation (les régulateurs PI bien réglés ont des fréquences de correction bien inférieures à $1/T_{nat}$), mais elle a été observée sur des canaux longs avec des régulateurs trop agressifs.
+
+### Le critère de stabilité des régulateurs PI
+
+Le critère de stabilité d'un système de régulation hydraulique en canal peut être analysé par la théorie du contrôle classique (diagramme de Bode, critère de Nyquist). Pour un régulateur PI simple sur un bief de longueur $L$, la marge de stabilité est caractérisée par :
+
+**Marge de gain :** le gain $K_p$ peut être augmenté d'un facteur $M_g$ avant d'atteindre l'instabilité. Pour un bief typique, $M_g$ est de 3 à 6 — une marge confortable si les gains sont correctement calés.
+
+**Marge de phase :** le déphasage admissible avant instabilité. Pour les canaux d'irrigation, une marge de phase de 30 à 45° est recommandée — elle assure une réponse stable même lors de perturbations importantes (variation brusque de la demande).
+
+Le calage des gains $K_p$ et $K_i$ pour respecter ces marges est réalisé par simulation avec le logiciel SIC, qui dispose d'outils d'analyse de stabilité intégrés.
+
+---
+
+## Démarche pratique et outils
+
+### Quand déclencher une étude transitoire en irrigation ?
+
+**Pour les réseaux sous pression :**
+- Conduite principale de longueur $L > 200$ m avec $c > 200$ m/s (soit $T_r > 2$ s)
+- Vitesse d'écoulement $V > 1$ m/s sur les tronçons principaux
+- Présence de points hauts sur le profil en long (risque de dépression)
+- Matériaux à faible tolérance transitoire (PE PN 4 ou PN 6)
+- Installation sans variateur de fréquence sur la pompe
+
+En dessous de ces seuils, la formule de Joukowsky suffit à vérifier que la surpression maximale reste dans les limites de la PN, et les mesures de protection se limitent à la formation des irrigants et à l'installation de ventouses aux points hauts.
+
+**Pour les canaux gravitaires :**
+- Bief long ($L > 5$ km) avec régulateurs automatiques
+- Système de régulation automatique nouveau (avant la mise en service)
+- Modification des gains de régulateurs sur un système existant
+- Problèmes d'oscillations de niveau constatés sur un canal en exploitation
+
+### Les données nécessaires
+
+**Pour les réseaux sous pression :**
+- Profil en long avec cotes altimétriques précises
+- Matériaux, diamètres et épaisseurs de paroi (pour le calcul des célérités)
+- Courbe caractéristique de la pompe et moment d'inertie du groupe
+- Lois de fermeture des vannes (temps de manœuvre)
+- Paramètres des dispositifs de protection existants
+
+**Pour les canaux gravitaires :**
+- Géométrie des biefs (longueur, section, pente)
+- Coefficient de Strickler (calé sur mesures)
+- Lois de fonctionnement des ouvrages de régulation
+- Gains actuels des régulateurs (si existants)
+- Plages de variation de la demande (tours d'eau, débits min/max)
+
+### Les outils
+
+**Pour les réseaux sous pression d'irrigation :**
+Les mêmes outils qu'en AEP (Hammer/Bentley, AFT Impulse) s'appliquent, avec les adaptations pour les conditions aux limites spécifiques à l'irrigation (émetteurs, vannes manuelles). EPANET ne dispose pas de module transitoire natif — des extensions comme EPANET-MSX ou des couplages Python sont nécessaires pour les études avancées.
+
+**Pour les canaux gravitaires :**
+**SIC** (INRAE) est le logiciel de référence — il intègre nativement la simulation transitoire en canal, la modélisation des régulateurs automatiques (PI et autres), et des outils d'analyse de stabilité. HEC-RAS peut être utilisé pour les simulations transitoires en canal sans régulateur automatique complexe.
+
+### Interprétation des résultats
+
+**Réseaux sous pression :** construire les enveloppes de pression maximale et minimale sur le profil en long. Vérifier que :
+- $H_{max}(x) \leq z(x) + PN/(\rho g) \times$ (facteur de tolérance transitoire)
+- $H_{min}(x) \geq z(x) + H_{vapeur}$ (pas de cavitation)
+
+**Canaux gravitaires :** tracer l'évolution temporelle du niveau en des nœuds représentatifs. Vérifier que :
+- Les oscillations de niveau s'amortissent après une perturbation (stabilité)
+- L'amplitude maximale des oscillations ne provoque pas de débordement (revanche suffisante)
+- Le temps de stabilisation est compatible avec le calendrier d'exploitation (les irrigants n'ouvrent pas leurs prises avant que le niveau se soit stabilisé)
+
+---
+
+## Conclusion
+
+Les transitoires en irrigation présentent trois spécificités que les approches développées pour l'AEP ou l'assainissement ne couvrent pas entièrement : la fréquence élevée des cycles liée à l'intermittence, le risque spécifique du remplissage de conduites vides, et les instabilités de régulation propres aux canaux gravitaires automatisés.
+
+La gestion des transitoires en irrigation est autant un problème **d'exploitation** qu'un problème **de conception**. Les meilleurs dispositifs hydrauliques (ventouses, soupapes, réservoirs d'air) peuvent être rendus inefficaces par des pratiques d'exploitation incorrectes — et inversement, une formation efficace des irrigants peut compenser l'absence de certains dispositifs de protection sur des installations modestes.
+
+La modélisation transitoire en irrigation a donc deux débouchés complémentaires : le **dimensionnement des protections** (ventouses, soupapes, ballons) et la **définition des protocoles d'exploitation** (vitesses de manœuvre, procédures de remplissage, réglage des régulateurs). Les deux sont nécessaires pour une exploitation sûre et durable du réseau.
+
+---
+
+## Pour aller plus loin dans cette série
+
+- **Note 3.1** — *Calage et validation de modèles hydrauliques* : indicateurs de performance, analyse de sensibilité, gestion de l'incertitude
+- **Note 3.2** — *Quand le 1D ne suffit plus* : introduction aux modèles 2D et 3D, critères de passage, aperçu des outils
+- **Note 3.3** — *Données et modèles : SIG, capteurs, vers le jumeau numérique hydraulique* : acquisition de données, intégration SIG, IoT réseau

@@ -1,0 +1,691 @@
+---
+title: "Modéliser un réseau d'assainissement"
+subtitle: "Spécificités physiques et enjeux métier"
+date: "2026-05-17"
+author: ""
+categories: [Hydraulique, Assainissement, Modélisation, Ingénierie]
+page-layout: article
+toc: true
+toc-title: "Sommaire"
+toc-depth: 3
+number-sections: true
+lang: fr
+format:
+  html:
+    embed-resources: true
+    html-math-method: katex
+    theme: cosmo
+execute:
+  echo: false
+  warning: false
+  fig-format: svg
+  fig-responsive: true
+  fig-width: 8
+  fig-height: 4.5
+jupyter: python3
+---
+
+::: {.callout-note}
+## Note de la série
+Cette note fait partie d'une série sur la modélisation des réseaux hydrauliques. Elle suppose la lecture de la note introductive **0.1** (*Généralités sur la modélisation des réseaux hydrauliques*), qui pose les fondements communs (Navier-Stokes, cascade dimensionnelle, régimes permanent et transitoire). Les concepts de base n'y sont pas redéfinis — on se concentre ici sur ce qui est **spécifique à l'assainissement**.
+:::
+
+---
+
+## Un réseau d'assainissement vu par l'hydraulicien
+
+### Séparatif ou unitaire : un choix qui structure tout
+
+Avant même d'ouvrir un logiciel, la première question à poser sur un réseau d'assainissement est celle de sa **conception** : est-il séparatif ou unitaire ? Ce choix architectural, souvent hérité de l'histoire de l'urbanisation, conditionne profondément la nature des flux à modéliser.
+
+**Le réseau séparatif** distingue deux collecteurs distincts : l'un pour les **eaux usées domestiques** (EU), l'autre pour les **eaux pluviales** (EP). Le réseau EU est alimenté par des débits faibles et réguliers ; le réseau EP est soumis à des débits de pointe élevés et très intermittents.
+
+**Le réseau unitaire** collecte tous les flux dans un collecteur commun, dimensionné pour les événements pluvieux mais devant aussi assurer l'auto-curage en temps sec. Cette dualité crée une contrainte hydraulique permanente : le même ouvrage doit fonctionner correctement dans des conditions très différentes.
+
+::: {.callout-tip}
+## Un héritage urbain difficile à effacer
+La plupart des centres-villes français anciens sont équipés en unitaire. La séparation des réseaux est coûteuse et longue. En pratique, les réseaux « séparatifs » de première génération comportent souvent 20 à 40 % d'eaux claires parasites dans le collecteur EU — une réalité que le modèle doit intégrer, pas ignorer.
+:::
+
+### Une topologie arborescente — en théorie
+
+Contrairement au réseau AEP qui est maillé, le réseau d'assainissement gravitaire est **arborescent** : chaque tronçon a un sens d'écoulement unique, de l'amont vers l'aval. Cette topologie simplifie en apparence la résolution hydraulique.
+
+Mais cette simplicité est trompeuse pour deux raisons. D'abord, les **ouvrages de régulation** (déversoirs d'orage, bassins de rétention, siphons — renvoi note **0.3** pour les conditions aux limites associées) introduisent des bifurcations et des conditions aux limites internes. Ensuite, lorsqu'un collecteur s'engorge, l'écoulement peut temporairement **remonter** dans des tronçons latéraux — la topologie arborescente devient momentanément non respectée.
+
+### Les trois flux à distinguer
+
+Un réseau d'assainissement gère simultanément trois types d'apports aux comportements très différents :
+
+**Les eaux usées domestiques (EU)** : produites en continu, avec des pointes matinales et vespérales prévisibles. Le flux dominant en réseau séparatif ou en temps sec unitaire.
+
+**Les eaux pluviales (EP)** : imprévisibles, très variables spatialement, pouvant dépasser de plusieurs ordres de grandeur le débit EU. Le flux dimensionnant pour les ouvrages.
+
+**Les eaux claires parasites (ECP)** : eaux souterraines s'infiltrant par les joints défectueux (infiltration permanente) et eaux de ruissellement pénétrant par les regards (infiltration pluviale). Elles peuvent représenter 30 à 60 % du débit mesuré à l'entrée de la station d'épuration sur les réseaux anciens.
+
+```{python}
+#| label: fig-synoptique-assainissement
+#| fig-cap: "Synoptique d'un système d'assainissement urbain mixte, du bassin versant à la station d'épuration. Les trois flux (EU en bleu, EP en vert, ECP en orange) sont représentés avec leur logique hydraulique. La couleur rouge signale les ouvrages critiques de transition de régime (déversoir d'orage, poste de refoulement). Le réseau gravitaire (surface libre) coexiste avec des tronçons en charge (refoulements). L'exutoire final — milieu naturel ou STEP — est soumis à la réglementation environnementale."
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+from matplotlib.patches import FancyBboxPatch
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+C_ECP    = "#e67e22"
+
+fig, ax = plt.subplots(figsize=(12, 4.5))
+ax.set_xlim(0, 15); ax.set_ylim(0, 5); ax.axis("off")
+
+def box(ax, x, y, w, h, col, txt, fsz=8.5):
+    b = FancyBboxPatch((x, y), w, h,
+        boxstyle="round,pad=0.10", fc=col+"22", ec=col, lw=1.8)
+    ax.add_patch(b)
+    ax.text(x+w/2, y+h/2, txt, ha="center", va="center",
+            fontsize=fsz, color=col, fontweight="bold")
+
+def arr(ax, x0, y0, x1, y1, col, lbl=""):
+    ax.annotate("", xy=(x1,y1), xytext=(x0,y0),
+                arrowprops=dict(arrowstyle="->", color=col, lw=1.8))
+    if lbl:
+        ax.text((x0+x1)/2, (y0+y1)/2+0.15, lbl, ha="center", fontsize=7, color=col)
+
+# Bassin versant
+box(ax, 0.2, 3.2, 1.6, 1.2, C_PIEZO, "Bassin\nversant\nurbain")
+box(ax, 0.2, 1.8, 1.6, 1.1, C_CHARGE, "Habitat /\nActivités\n(EU)")
+box(ax, 0.2, 0.4, 1.6, 1.1, C_ECP,   "Infiltrations\n(ECP)")
+
+# Collecteurs
+box(ax, 2.4, 3.2, 2.0, 1.2, C_PIEZO, "Collecteur EP\n(surface libre)")
+box(ax, 2.4, 1.8, 2.0, 1.1, C_CHARGE, "Collecteur EU\n(surface libre)")
+box(ax, 2.4, 0.4, 2.0, 1.1, C_ECP,   "ECP infiltrées\n(nuit/pluie)")
+
+# Déversoir / Jonction
+box(ax, 5.2, 2.2, 1.8, 1.2, C_ACCENT, "Déversoir\nd'orage\n(seuil)", fsz=8)
+box(ax, 7.4, 2.5, 1.8, 1.0, C_CHARGE, "Collecteur\nunitaire\n(tronc commun)")
+
+# Bassin rétention
+box(ax, 5.2, 0.4, 1.8, 1.2, C_PIEZO,  "Bassin de\nrétention\n(écrêtement)")
+
+# Poste refoulement
+box(ax, 9.6, 2.5, 1.8, 1.0, C_ACCENT, "Poste de\nrefoulement\n(EN CHARGE)", fsz=8)
+
+# STEP + milieu naturel
+box(ax, 11.8, 3.2, 2.5, 1.2, C_CHARGE, "STEP\n(épuration)")
+box(ax, 11.8, 1.5, 2.5, 1.2, C_ACCENT, "Milieu naturel\n(exutoire EP /\ndéversement DO)")
+
+# Flèches
+arr(ax, 1.8, 3.8, 2.4, 3.8, C_PIEZO)
+arr(ax, 1.8, 2.35, 2.4, 2.35, C_CHARGE)
+arr(ax, 1.8, 0.95, 2.4, 0.95, C_ECP)
+arr(ax, 4.4, 2.35, 5.2, 2.65, C_CHARGE)
+arr(ax, 4.4, 3.5,  5.3, 3.1,  C_PIEZO)
+arr(ax, 4.4, 0.95, 5.2, 0.95, C_ECP)
+arr(ax, 6.0, 0.95, 7.5, 2.5,  C_PIEZO, "stockage")
+arr(ax, 7.0, 2.8,  7.4, 2.9,  C_ACCENT, "déverst.")
+arr(ax, 7.0, 3.4,  11.8, 3.8, C_ACCENT)
+arr(ax, 9.2, 3.0,  9.6, 3.0,  C_CHARGE)
+arr(ax, 11.4, 3.0, 11.8, 3.6, C_CHARGE)
+arr(ax, 11.4, 3.0, 11.8, 2.1, C_ACCENT)
+
+ax.set_title("Synoptique d'assainissement — Trois flux, dualité de régimes, ouvrages critiques",
+             fontsize=10.5)
+fig.tight_layout()
+plt.show()
+```
+
+---
+
+## La physique dominante : surface libre, mais avec des exceptions majeures
+
+### Pourquoi la gravité domine
+
+Le choix de l'écoulement gravitaire à surface libre est avant tout **économique** : pas d'énergie de pompage, pas de surpression à maintenir, entretien plus simple. La grandeur centrale n'est plus la **pression** (comme en AEP) mais le **taux de remplissage** $\tau = h/D$.
+
+En régime permanent, la relation débit–hauteur–vitesse est donnée par Manning-Strickler appliqué à la section partielle (renvoi note **0.2** pour la dérivation énergétique, note **2.B1** pour les profils en long) :
+
+$$Q = K_s \cdot A(h) \cdot R_h(h)^{2/3} \cdot J^{1/2}$$
+
+où $A(h)$ et $R_h(h)$ dépendent de la hauteur $h$ et de la géométrie de la section (circulaire, ovoïde, etc.).
+
+### Manning-Strickler ferme Saint-Venant — pourquoi $K_s$ n'est pas une donnée physique
+
+Cette formule est si universellement utilisée en assainissement qu'on oublie ce qu'elle est *vraiment*. Ce n'est pas une équation de conservation parallèle à Saint-Venant : c'est la **relation de fermeture** qui donne la valeur du terme de frottement $S_f$ dans l'équation de quantité de mouvement de Saint-Venant (cf. note **0.1**, section « Qui conserve quoi ? Qui ferme quoi ? »). La pente de frottement $S_f$ de Saint-Venant et la pente $J$ ci-dessus sont **le même objet** :
+
+$$S_f = \frac{Q^{2}}{K_s^{2}\,A^{2}\,R_h^{4/3}} \qquad \xrightarrow[\text{permanent uniforme}]{S_f = S_0 = J} \qquad Q = K_s\,A\,R_h^{2/3}\,J^{1/2}$$
+
+La formule d'exploitation que l'on manipule au quotidien est donc Saint-Venant **fermé par Manning et dégénéré au cas permanent uniforme** — pas une théorie distincte. Trois conséquences pratiques en découlent directement :
+
+- **$K_s$ n'est pas mesurable.** Contrairement à la rugosité physique $\varepsilon$ de Darcy-Weisbach (hauteur d'aspérité), $K_s$ agrège rugosité de paroi, dépôts, biofilm, joints, sinuosité et défauts de pose en un seul coefficient global. On ne le mesure pas : on le **cale**. Une valeur de catalogue ($K_s = 70$–$90$ pour du béton) est une valeur de départ, pas une donnée d'entrée fiable.
+- **L'exposant $2/3$ n'est pas physique.** Il provient d'un ajustement historique sur canaux uniformes, pas d'une dérivation depuis Navier-Stokes. C'est pourquoi Manning perd en représentativité aux très faibles tirants (auto-curage de temps sec, $\tau < 0{,}2$) — précisément la zone critique de l'assainissement.
+- **Caler $K_s$, c'est caler une fermeture, pas corriger une géométrie.** Si le modèle reproduit mal les niveaux observés, abaisser $K_s$ peut masquer une erreur de cote de radier ou une section envasée. Le triptyque conservation / géométrie / fermeture (note **0.1**) est l'outil de diagnostic : vérifier la géométrie *avant* de toucher à $K_s$.
+
+::: {.callout-important}
+## La pente de frottement $S_f$ et la pente du radier $S_0$ ne sont pas la même chose
+
+L'égalité $S_f = S_0 = J$ n'est valable qu'en régime **permanent uniforme**. Dès qu'il y a remous, mise en charge ou transitoire pluvial, $S_f \neq S_0$ et c'est Saint-Venant complet qui doit être résolu — Manning n'y intervient plus que comme fermeture *locale* du terme $S_f$, jamais comme loi débit-hauteur globale. Utiliser $Q = K_s A R_h^{2/3} S_0^{1/2}$ en présence d'influence aval est une erreur classique : on applique une forme dégénérée hors de son domaine. Renvoi note **0.1** (approximations de Saint-Venant).
+:::
+
+| Taux de remplissage $\tau$ | Interprétation | Implication |
+|---|---|---|
+| $\tau < 0{,}3$ | Débit faible, risque de dépôt | Vérifier la vitesse d'auto-curage |
+| $0{,}3 \leq \tau \leq 0{,}7$ | Fonctionnement nominal | Zone de confort hydraulique |
+| $0{,}7 < \tau \leq 1{,}0$ | Capacité résiduelle faible | Surveiller en événement pluvieux |
+| $\tau > 1{,}0$ | Mise en charge | Risque de refoulement, inondation |
+
+: Interprétation du taux de remplissage {#tbl-remplissage}
+
+```{python}
+#| label: fig-section-circulaire
+#| fig-cap: "Courbes adimensionnelles d'une conduite circulaire de diamètre $D$ : débit relatif $Q/Q_{plein}$ (bleu) et vitesse relative $V/V_{plein}$ (vert) en fonction du taux de remplissage $\\tau = h/D$. La vitesse atteint son maximum pour $\\tau \\approx 0{,}81$ (et non à pleine section), ce qui explique pourquoi un collecteur légèrement sous-rempli peut avoir une vitesse plus élevée qu'à pleine section. Le débit maximum est atteint pour $\\tau \\approx 0{,}94$. Ces propriétés contre-intuitives sont importantes pour le dimensionnement de l'auto-curage et la vérification des taux de remplissage."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+tau = np.linspace(0.01, 1.0, 300)
+theta = 2 * np.arccos(1 - 2*tau)
+
+A_rel  = (theta - np.sin(theta)) / (2*np.pi)       # A(h)/A_plein
+P_rel  = theta / (2*np.pi)                          # P(h)/P_plein
+Rh_rel = A_rel / P_rel                              # Rh(h)/Rh_plein
+
+Q_rel  = A_rel * Rh_rel**(2/3)                      # Q/Q_plein (Manning)
+V_rel  = Q_rel / A_rel                              # V/V_plein
+
+fig, ax = plt.subplots(figsize=(8, 4.2))
+ax.plot(Q_rel, tau, color=C_CHARGE, lw=2.5, label="Débit relatif $Q/Q_{plein}$")
+ax.plot(V_rel, tau, color=C_PIEZO,  lw=2.2, ls="--", label="Vitesse relative $V/V_{plein}$")
+
+# Maxima
+i_Qmax = np.argmax(Q_rel)
+i_Vmax = np.argmax(V_rel)
+ax.scatter([Q_rel[i_Qmax]], [tau[i_Qmax]], color=C_CHARGE, s=80, zorder=6)
+ax.scatter([V_rel[i_Vmax]], [tau[i_Vmax]], color=C_PIEZO,  s=80, zorder=6)
+ax.text(Q_rel[i_Qmax]+0.01, tau[i_Qmax]+0.02,
+        f"$Q_{{max}}$ à $\\tau={tau[i_Qmax]:.2f}$", fontsize=8, color=C_CHARGE)
+ax.text(V_rel[i_Vmax]+0.01, tau[i_Vmax]+0.02,
+        f"$V_{{max}}$ à $\\tau={tau[i_Vmax]:.2f}$", fontsize=8, color=C_PIEZO)
+
+# Bandes τ
+ax.axhspan(0.00, 0.30, alpha=0.10, color=C_ACCENT, label="Risque dépôt ($\\tau < 0{,}3$)")
+ax.axhspan(0.30, 0.70, alpha=0.08, color=C_PIEZO,  label="Zone nominale")
+ax.axhspan(0.70, 1.00, alpha=0.10, color="#e67e22", label="Capacité réduite")
+
+ax.set_xlabel("Valeur relative (—)", fontsize=9)
+ax.set_ylabel("Taux de remplissage $\\tau = h/D$", fontsize=9)
+ax.set_title("Conduite circulaire — Débit et vitesse relatifs vs taux de remplissage", fontsize=10)
+ax.legend(fontsize=8.5, loc="lower right")
+ax.set_xlim(0, 1.15); ax.set_ylim(0, 1)
+ax.grid(alpha=0.2); ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+### L'auto-curage : une contrainte hydraulique fondamentale
+
+En AEP, la vitesse est un critère de confort. En assainissement, c'est une **contrainte de survie du réseau** : si la vitesse est insuffisante, les matières en suspension se déposent, bouchent progressivement la conduite, et réduisent sa capacité hydraulique (renvoi notes **3.4** pour le transport solide en collecteur, **2.B1** pour le dimensionnement).
+
+La condition d'auto-curage impose une vitesse minimale dite **vitesse limite de dépôt** :
+
+$$V_{min} \geq 0{,}6\ \text{m/s} \quad \text{(à taux de remplissage de plein)}$$
+
+::: {.callout-warning}
+## Alerte modélisation — La vitesse à pleine section n'est pas la vitesse à auto-curer
+
+La condition d'auto-curage doit être vérifiée **aux débits de temps sec**, bien inférieurs aux débits pluvieux. Or la vitesse à faible remplissage est différente de la vitesse à pleine section. Comme le montre la figure précédente, la vitesse est parfois *plus élevée* à $\tau \approx 0{,}81$ qu'à $\tau = 1{,}0$, mais peut aussi être très faible pour $\tau < 0{,}2$. Le dimensionnement de l'auto-curage doit utiliser la courbe $V(\tau)$ réelle de la section — pas une approximation à vitesse constante. Renvoi note **3.4** (critère de Shields en contrainte $\tau_0 \geq \tau_{0,cr}$, plus rigoureux que le critère en vitesse).
+:::
+
+### La dualité surface libre / charge : quand le collecteur s'engorge
+
+La surface libre est le régime **nominal** d'un collecteur gravitaire. Lors d'un événement intense, le débit peut dépasser la capacité à pleine section : la conduite se remplit, la pression monte, et si le collecteur aval est aussi en charge, le refoulement se propage vers l'amont jusqu'aux regards — voire jusqu'aux caves des riverains.
+
+Ce changement de régime est le **défi numérique majeur** de la modélisation d'assainissement (renvoi note **0.1**, section « fente de Preissmann »). Les logiciels d'assainissement modernes gèrent cette transition via la fente de Preissmann :
+
+$$P = \rho g (h - D) \quad \text{pour } h > D \qquad \text{(mise en charge simulée)}$$
+
+::: {.callout-important}
+## Mise en charge ≠ débordement
+
+Un collecteur mis en charge n'est pas forcément un collecteur qui déborde. La mise en charge signifie que la conduite est pleine et que la pression monte au-dessus du sommet de la conduite. Le débordement survient lorsque cette pression dépasse la cote du regard ou de la bouche d'égout. Entre les deux, il y a une marge — et c'est précisément cette marge que le modèle permet de quantifier.
+:::
+
+---
+
+## Les régimes temporels : le transitoire souvent incontournable
+
+C'est ici que l'assainissement diverge le plus radicalement de l'AEP. Alors qu'un réseau AEP fonctionne quasi toujours en régime quasi-permanent, l'assainissement **vit dans le transitoire** dès qu'il pleut.
+
+### Eaux usées en temps sec : le permanent suffit
+
+En l'absence de pluie, le réseau EU se comporte de façon relativement stable. Une simulation en **régime étendu** est généralement suffisante pour vérifier les taux de remplissage en pointe, contrôler la condition d'auto-curage, et dimensionner les ouvrages de refoulement.
+
+La séparation d'échelles de temps qui justifie le quasi-permanent (renvoi note **0.1**) :
+
+$$\frac{T_{onde}}{T_{sollicitation}} = \frac{L/c_{SV}}{T_{EU}} \ll 1 \qquad c_{SV} = \sqrt{g\,h} \approx 1\text{–}5\ \text{m/s} \quad \text{(célérité en surface libre)}$$
+
+Pour un collecteur de $L = 2$ km et $c_{SV} \approx 2$ m/s → $T_{onde} \approx 1\,000$ s $\approx 17$ min. Les variations EU se développent sur plusieurs heures : rapport $\sim 10^{-2}$, quasi-permanent bien justifié.
+
+### Eaux pluviales : le transitoire est indispensable
+
+Un événement pluvieux génère une **onde de crue** qui se propage dans le réseau avec une dynamique rapide : montée en quelques minutes pour les petits bassins versants urbains. La hauteur d'eau dans un collecteur peut passer de 20 % à 100 % du remplissage en moins d'un quart d'heure.
+
+Les **équations de Saint-Venant transitoires** (avec les termes $\partial/\partial t$, renvoi note **0.1**) sont indispensables pour capturer la forme et l'amplitude du pic de débit, le temps de réponse du réseau, la propagation de la mise en charge de l'aval vers l'amont, et l'effet des ouvrages de stockage sur l'écrêtement des pointes.
+
+```{python}
+#| label: fig-hydrogramme-amont-aval
+#| fig-cap: "Propagation d'un hydrogramme de crue dans un réseau d'assainissement : débit à l'amont (noir) et à l'aval (bleu, après 800 m de collecteur DN 600, pente 0,3 %). L'onde transitoire (Saint-Venant complet) produit un déphasage temporel, une atténuation du pic et un étalement de l'hydrogramme. Le taux de remplissage (vert, axe droit) dépasse 0,7 en pointe et frôle la mise en charge ($\\tau = 1{,}0$). Cette figure illustre pourquoi le régime transitoire est indispensable en assainissement pluvial : le régime permanent sous-estimerait la montée en charge et ne prédirait pas la propagation aval du phénomène."
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.ndimage import gaussian_filter1d
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+t = np.linspace(0, 90, 500)  # minutes
+
+# Hydrogramme amont (réponse à pluie 30 min)
+Q_up = np.where(t < 5, 0.05,
+       np.where(t < 35, 0.05 + 0.95*(t-5)/30 * np.exp(-((t-5)/12)**1.5),
+       0.05 * np.exp(-(t-35)/25)))
+Q_up = gaussian_filter1d(Q_up, sigma=5) * 1.8  # m3/s
+
+# Hydrogramme aval : déphasé + atténué
+Q_dn = gaussian_filter1d(np.interp(t - 8, t, Q_up, left=Q_up[0], right=Q_up[-1]), 20) * 0.88
+
+# Taux de remplissage approximatif (aval)
+D = 0.60
+A_plein = np.pi*D**2/4
+Ks = 75; J = 0.003
+V_plein = Ks * (D/4)**(2/3) * J**0.5
+Q_plein = A_plein * V_plein
+tau_dn = np.minimum(Q_dn / Q_plein * 1.08, 1.02)
+
+fig, ax1 = plt.subplots(figsize=(9, 4.2))
+ax1.plot(t, Q_up, color="k",       lw=2.0, ls=":", label="Débit amont (entrée)")
+ax1.plot(t, Q_dn, color=C_CHARGE,  lw=2.5,         label="Débit aval (800 m)")
+ax1.axhline(Q_plein, color=C_ACCENT, lw=1.5, ls="--",
+            label=f"Capacité pleine section ({Q_plein:.2f} m³/s)")
+ax1.set_xlabel("Temps (min)", fontsize=9)
+ax1.set_ylabel("Débit (m³/s)", fontsize=9)
+ax1.set_xlim(0, 90); ax1.set_ylim(0, 2.1)
+
+ax2 = ax1.twinx()
+ax2.fill_between(t, 0, tau_dn, alpha=0.20, color=C_PIEZO)
+ax2.plot(t, tau_dn, color=C_PIEZO, lw=2.0, ls="-.", label="Taux de remplissage aval $\\tau$")
+ax2.axhline(1.0, color=C_ACCENT, lw=1.2, ls=":", alpha=0.7)
+ax2.axhline(0.7, color="#e67e22", lw=1.0, ls=":", alpha=0.6)
+ax2.set_ylabel("Taux de remplissage $\\tau$", color=C_PIEZO, fontsize=9)
+ax2.tick_params(axis="y", labelcolor=C_PIEZO, labelsize=8.5)
+ax2.set_ylim(0, 1.3)
+
+lines1, labs1 = ax1.get_legend_handles_labels()
+lines2, labs2 = ax2.get_legend_handles_labels()
+ax1.legend(lines1+lines2, labs1+labs2, fontsize=8.5, loc="upper right", ncol=2)
+ax1.set_title("Propagation d'un hydrogramme — Déphasage, atténuation et mise en charge", fontsize=10)
+ax1.grid(alpha=0.2); ax1.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+### Le réseau unitaire : superposition et déversement
+
+Le réseau unitaire cumule les deux régimes : temps sec (EU, permanent suffisant) et temps de pluie (EU + EP, transitoire indispensable). S'y ajoute la gestion des **déversoirs d'orage** : leur seuil de déclenchement, leur coefficient de déversement, et la répartition des débits entre la branche « station » et la branche « milieu naturel » ont un impact direct sur les volumes déversés — grandeur encadrée par la Directive Cadre sur l'Eau.
+
+---
+
+## Les contraintes métier qui pilotent le modèle
+
+### Capacité résiduelle et mise en charge
+
+L'objectif premier d'un modèle d'assainissement est de vérifier que le réseau peut évacuer les débits de projet sans mise en charge inacceptable :
+
+- **Taux de remplissage maximal admissible** : $\tau \leq 0{,}7$ en fonctionnement nominal, $\tau \leq 1{,}0$ pour la pluie de projet décennale
+- **Fréquence de mise en charge acceptable** : définie dans le règlement de service ou l'étude de zonage pluvial
+- **Fréquence de débordement inacceptable** : le débordement en domaine privé est le scénario à éviter absolument
+
+### Les déversoirs d'orage et la réglementation environnementale
+
+Les déversoirs d'orage sont à la fois des ouvrages de sécurité hydraulique et des points de rejet potentiellement polluants. La réglementation (arrêtés préfectoraux, DCE) impose des **taux de déversement annuels** maximaux. Le modèle permet de calculer ces indicateurs sur une longue série pluviométrique (10 à 30 ans).
+
+### L'auto-curage revisité : une contrainte de conception
+
+La vérification de l'auto-curage est systématique dans toute étude de réseau gravitaire. Elle s'effectue pour le débit de temps sec le plus défavorable pour la vitesse — et conduit parfois à imposer un diamètre minimal supérieur à ce que le débit seul justifierait. Le critère physiquement correct est la **contrainte au fond** plutôt que la vitesse (renvoi note **3.4**, §2.3) :
+
+$$\tau_0 = \rho\,g\,R_h\,J \geq \tau_{0,min} \approx 1\ \text{à}\ 2\ \text{Pa}$$
+
+```{python}
+#| label: fig-contrainte-remplissage
+#| fig-cap: "Contrainte au fond $\\tau_0$ (Pa) et vitesse $V$ (m/s) en fonction du taux de remplissage $\\tau = h/D$ pour une conduite circulaire DN 400 à pente $J = 3 \\times 10^{-3}$ et Manning $K_s = 75$ m$^{1/3}$/s. La contrainte atteint un maximum vers $\\tau \\approx 0{,}9$ puis décroît légèrement à pleine section. En dessous de $\\tau \\approx 0{,}08$, la contrainte tombe sous 1 Pa et les dépôts s'accumulent — même si la vitesse peut sembler non nulle. C'est pourquoi le critère en contrainte est plus rigoureux que le critère en vitesse pour l'auto-curage en assainissement."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+D = 0.40; J = 3e-3; Ks = 75; rho = 1000; g = 9.81
+tau_arr = np.linspace(0.02, 0.99, 300)
+theta   = 2*np.arccos(1 - 2*tau_arr)
+A  = D**2/8 * (theta - np.sin(theta))
+P  = D/2 * theta
+Rh = A/P
+V  = Ks * Rh**(2/3) * J**0.5
+tau0 = rho * g * Rh * J
+
+fig, ax1 = plt.subplots(figsize=(8, 4.2))
+ax1.plot(tau_arr, tau0, color=C_CHARGE, lw=2.5, label="Contrainte $\\tau_0$ (Pa)")
+ax1.axhline(1.0, color=C_ACCENT, lw=1.8, ls="--", label="Seuil auto-curage 1 Pa")
+ax1.axhline(2.0, color=C_ACCENT, lw=1.2, ls=":",  label="Seuil auto-curage 2 Pa")
+ax1.set_xlabel("Taux de remplissage $\\tau = h/D$", fontsize=9)
+ax1.set_ylabel("Contrainte au fond $\\tau_0$ (Pa)", color=C_CHARGE, fontsize=9)
+ax1.tick_params(axis="y", labelcolor=C_CHARGE, labelsize=8.5)
+ax1.set_xlim(0, 1); ax1.set_ylim(0, 6)
+
+ax2 = ax1.twinx()
+ax2.plot(tau_arr, V, color=C_PIEZO, lw=2.0, ls="-.", label="Vitesse $V$ (m/s)")
+ax2.set_ylabel("Vitesse $V$ (m/s)", color=C_PIEZO, fontsize=9)
+ax2.tick_params(axis="y", labelcolor=C_PIEZO, labelsize=8.5)
+ax2.set_ylim(0, 3)
+
+# Zone dépôt
+ax1.axvspan(0, tau_arr[tau0 >= 1.0][0], alpha=0.12, color=C_ACCENT, label="Zone dépôt")
+
+lines1, labs1 = ax1.get_legend_handles_labels()
+lines2, labs2 = ax2.get_legend_handles_labels()
+ax1.legend(lines1+lines2, labs1+labs2, fontsize=8.5, loc="upper left")
+ax1.set_title("Auto-curage DN 400 — Contrainte $\\tau_0$ et vitesse vs taux de remplissage", fontsize=10)
+ax1.grid(alpha=0.2); ax1.tick_params(axis="x", labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+---
+
+## La donnée d'entrée : la pluie comme principale source d'incertitude
+
+### Les eaux usées : une entrée relativement maîtrisée
+
+Le débit EU s'estime par un **coefficient de rejet** (typiquement 0,8) appliqué à la consommation d'eau potable. Les ECP viennent brouiller cette estimation : un réseau ancien peut présenter des débits nocturnes (quasi-exclusivement ECP) supérieurs aux débits de pointe théoriques des eaux usées. Les quantifier est un exercice de terrain indispensable avant toute modélisation sérieuse.
+
+### La pluie : l'incertitude fondamentale
+
+Pour la modélisation pluviale, c'est la **pluie** qui porte la principale incertitude. Deux approches coexistent :
+
+**La pluie de projet** : synthétique, construite à partir des statistiques de fréquence locales (formule de Montana, courbes IDF) :
+
+$$i = a \cdot t^{-b}$$
+
+où $i$ est l'intensité moyenne (mm/h), $t$ la durée (min), $a$ et $b$ les coefficients de Montana locaux. Simple à utiliser, adaptée au dimensionnement, mais ne représentant pas la variabilité réelle des événements.
+
+**La pluie observée** (radar ou pluviographe) : indispensable pour le calage et pour les simulations longues séries destinées à l'évaluation réglementaire des déversoirs d'orage.
+
+```{python}
+#| label: fig-courbe-idf
+#| fig-cap: "Courbes Intensité-Durée-Fréquence (IDF) pour une station pluviométrique française de type atlantique (coefficients de Montana indicatifs). Chaque courbe correspond à une période de retour (2, 5, 10, 30, 100 ans). Pour une pluie de 30 minutes de période de retour décennale, l'intensité est ici d'environ 40 mm/h — soit environ 20 mm de pluie nette. Cette figure est l'outil de sélection de la pluie de projet pour le dimensionnement d'un réseau : la période de retour choisie dépend du risque acceptable (réseau de lotissement : 10 ans ; collecteur structurant : 30 à 100 ans)."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+t_min = np.linspace(5, 180, 300)
+
+# Coefficients Montana indicatifs pour différentes périodes de retour
+params = {
+    "T = 2 ans":   (6.0, 0.58),
+    "T = 5 ans":   (8.5, 0.58),
+    "T = 10 ans":  (11.0, 0.58),
+    "T = 30 ans":  (15.5, 0.58),
+    "T = 100 ans": (21.0, 0.58),
+}
+colors_t = ["#aed6f1", "#5dade2", C_CHARGE, "#8e44ad", C_ACCENT]
+
+fig, ax = plt.subplots(figsize=(8, 4.2))
+for (lbl, (a_m, b_m)), col in zip(params.items(), colors_t):
+    i = a_m * t_min**(-b_m) * 60  # mm/h
+    ax.plot(t_min, i, color=col, lw=2.0, label=lbl)
+
+# Marqueur pluie 30 min, T10 ans
+a10, b10 = 11.0, 0.58
+i_30_10 = a10 * 30**(-b10) * 60
+ax.scatter([30], [i_30_10], color=C_ACCENT, s=80, zorder=6)
+ax.annotate(f"{i_30_10:.0f} mm/h\n(30 min, T10)", (30, i_30_10),
+            xytext=(50, i_30_10+8), arrowprops=dict(arrowstyle="->", color=C_ACCENT),
+            fontsize=8, color=C_ACCENT)
+
+ax.set_xlabel("Durée $t$ (min)", fontsize=9)
+ax.set_ylabel("Intensité moyenne $i$ (mm/h)", fontsize=9)
+ax.set_title("Courbes IDF — Intensité-Durée-Fréquence (coefficients Montana indicatifs)", fontsize=10)
+ax.legend(fontsize=8.5)
+ax.set_xlim(5, 180); ax.set_ylim(0, None)
+ax.grid(alpha=0.2); ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+### Du débit de pluie au débit dans le réseau : le modèle pluie-débit
+
+La pluie ne se transforme pas intégralement en débit. La fraction ruisselée est caractérisée par :
+
+- **Le coefficient d'imperméabilisation** $C$ : toiture $C \approx 0{,}9$ ; voirie bitumée $C \approx 0{,}85$ ; espace vert $C \approx 0{,}15$
+- **Le temps de concentration** $t_c$ : temps de parcours du chemin hydraulique le plus long
+- **L'hydrogramme unitaire** : forme temporelle de la réponse du bassin versant (triangulaire, SCS, Desbordes)
+
+```{python}
+#| label: fig-transformation-pluie-debit
+#| fig-cap: "Transformation pluie-débit pour un bassin versant urbain de 20 ha (coefficient d'imperméabilisation $C = 0{,}55$, temps de concentration $t_c = 20$ min). Pluie brute (bleu, axe droit, décroissante en IDF Montana) et pluie nette (vert, fraction ruisselée $= C \\times i$). L'hydrogramme résultant à l'exutoire (rouge, axe gauche) est obtenu par convolution de la pluie nette avec la fonction de transfert du bassin. Le débit de pointe est atteint environ $t_c$ après le début de la pluie efficace. L'incertitude sur $C$ (±0,1) se traduit par une incertitude de ±18 % sur le débit de pointe."
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.ndimage import gaussian_filter1d
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+t = np.linspace(0, 90, 400)  # minutes
+A_ha = 20.0  # ha
+C_imp = 0.55
+
+# Pluie brute (Montana T10)
+a_m, b_m = 11.0, 0.58
+duree = 30  # min
+i_brute = np.where((t >= 5) & (t < 5+duree), a_m * duree**(-b_m) * 60, 0.0)  # mm/h
+i_nette = i_brute * C_imp
+
+# Hydrogramme : convolution avec triangle (tc=20 min)
+tc = 20
+kernel_len = int(tc * 400/90)
+kernel = np.zeros(kernel_len)
+for i_k in range(kernel_len):
+    kernel[i_k] = 2*(i_k/kernel_len)*(1 - i_k/kernel_len) + 0.1
+kernel /= kernel.sum()
+Q_raw = np.convolve(i_nette * A_ha * 1e4 / 3600 / 1000, kernel, mode="full")[:len(t)]
+Q_m3s = gaussian_filter1d(Q_raw, sigma=8)
+
+fig, ax1 = plt.subplots(figsize=(9, 4.2))
+ax2 = ax1.twinx()
+
+ax2.fill_between(t, 0, i_brute, alpha=0.25, color=C_CHARGE, label="Pluie brute (mm/h)")
+ax2.fill_between(t, 0, i_nette, alpha=0.40, color=C_PIEZO,  label="Pluie nette ($C \\times i$)")
+ax2.plot(t, i_brute, color=C_CHARGE, lw=1.5)
+ax2.plot(t, i_nette, color=C_PIEZO,  lw=1.5)
+ax2.set_ylabel("Intensité (mm/h)", color=C_CHARGE, fontsize=9)
+ax2.tick_params(axis="y", labelcolor=C_CHARGE, labelsize=8.5)
+ax2.set_ylim(0, 80); ax2.invert_yaxis()
+
+ax1.plot(t, Q_m3s, color=C_ACCENT, lw=2.5, label="Hydrogramme exutoire (m³/s)")
+ax1.set_xlabel("Temps (min)", fontsize=9)
+ax1.set_ylabel("Débit (m³/s)", color=C_ACCENT, fontsize=9)
+ax1.tick_params(axis="y", labelcolor=C_ACCENT, labelsize=8.5)
+ax1.set_xlim(0, 90); ax1.set_ylim(0, None)
+
+lines1, labs1 = ax1.get_legend_handles_labels()
+lines2, labs2 = ax2.get_legend_handles_labels()
+ax1.legend(lines1+lines2, labs1+labs2, fontsize=8.5, loc="upper right")
+ax1.set_title("Transformation pluie-débit — Bassin versant urbain (20 ha, $C=0{,}55$)", fontsize=10)
+ax1.grid(alpha=0.2); ax1.tick_params(axis="x", labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-warning}
+## L'imperméabilisation : une donnée qui évolue
+
+Le coefficient d'imperméabilisation d'un bassin versant urbain n'est pas figé. La densification urbaine, les nouvelles constructions, ou au contraire la végétalisation des toitures et la création de noues modifient la réponse hydrologique. Un modèle calé sur des données de 2010 peut sous-estimer les débits d'un bassin qui s'est densifié depuis. La mise à jour régulière des données d'occupation du sol est un prérequis à la fiabilité du modèle.
+:::
+
+---
+
+## Les données réseau : les spécificités de l'assainissement
+
+### La tyrannie du fil d'eau
+
+En AEP, une erreur de quelques centimètres sur la cote d'un nœud a un impact limité (les pressions varient de plusieurs mètres). En assainissement gravitaire, une erreur de **5 centimètres sur une cote de radier** peut inverser le sens d'écoulement d'un tronçon à faible pente ou fausser complètement le taux de remplissage calculé.
+
+C'est pourquoi les levés altimétriques exigent une précision centimétrique, et pourquoi le SIG doit impérativement distinguer la **cote de tampon** (niveau de la plaque de regard) de la **cote de radier** (fond de la cunette) — deux valeurs souvent confondues dans les bases de données patrimoniales.
+
+### Les sections non circulaires
+
+Les grands collecteurs utilisent fréquemment des sections **ovoïdes** (meilleures propriétés hydrauliques à faible remplissage), **rectangulaires** ou **en fer à cheval**. Leur modélisation nécessite le calcul de $A(h)$ et $P(h)$ pour chaque géométrie.
+
+```{python}
+#| label: fig-sections-collecteurs
+#| fig-cap: "Comparaison des courbes $Q/Q_{plein}$ vs $\\tau = h/D$ pour trois sections courantes de collecteurs : circulaire (bleu), ovoïde standard (vert, $1D \\times 1{,}5D$) et rectangulaire (rouge, rapport H/B=1). La section ovoïde présente un meilleur maintien du débit relatif aux faibles taux de remplissage ($\\tau < 0{,}4$), ce qui explique son usage préférentiel pour les collecteurs à fonctionnement mixte temps sec / temps de pluie. La section rectangulaire a un comportement différent, avec un débit relatif croissant quasi linéairement jusqu'à la pleine section."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+tau_v = np.linspace(0.02, 1.0, 300)
+
+# Circulaire
+theta_c = 2*np.arccos(1 - 2*tau_v)
+A_c  = (theta_c - np.sin(theta_c)) / (2*np.pi)
+P_c  = theta_c / (2*np.pi)
+Rh_c = A_c / P_c
+Q_c  = A_c * Rh_c**(2/3)
+
+# Ovoïde (approximation : hauteur réduite par rapport au rayon plus grand en bas)
+# On approxime par un cercle déformé
+A_o  = A_c * (1 + 0.15*np.sin(np.pi*tau_v))
+P_o  = P_c * (1 + 0.08*np.sin(np.pi*tau_v))
+Rh_o = A_o / P_o
+Q_o  = A_o * Rh_o**(2/3)
+Q_o  = Q_o / Q_o[-1]  # normaliser
+
+# Rectangulaire (rapport H/B = 1) — section complète approximée
+A_r  = tau_v                        # A/A_plein = tau pour section rectangulaire
+P_r  = (2*tau_v + 1) / 3           # approximation normalisée
+Rh_r = A_r / P_r
+Q_r  = A_r * Rh_r**(2/3)
+Q_r  = Q_r / Q_r[-1]
+
+Q_c_norm = Q_c / Q_c[-1]
+
+fig, ax = plt.subplots(figsize=(7.5, 4.0))
+ax.plot(Q_c_norm, tau_v, color=C_CHARGE, lw=2.5, label="Circulaire")
+ax.plot(Q_o,      tau_v, color=C_PIEZO,  lw=2.2, ls="--", label="Ovoïde")
+ax.plot(Q_r,      tau_v, color=C_ACCENT, lw=2.0, ls="-.", label="Rectangulaire (H/B=1)")
+
+ax.axhspan(0, 0.3,  alpha=0.08, color=C_ACCENT)
+ax.axvline(0.5, color="#aaa", lw=0.8, ls=":")
+ax.text(0.51, 0.1, "Avantage\novoïde", fontsize=8, color=C_PIEZO, style="italic")
+
+ax.set_xlabel("Débit relatif $Q/Q_{plein}$", fontsize=9)
+ax.set_ylabel("Taux de remplissage $\\tau = h/D$", fontsize=9)
+ax.set_title("Sections courantes de collecteurs — Courbes $Q/Q_{plein}$", fontsize=10)
+ax.legend(fontsize=8.5)
+ax.set_xlim(0, 1.1); ax.set_ylim(0, 1)
+ax.grid(alpha=0.2); ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+### Les ouvrages spéciaux : points critiques du modèle
+
+**Les déversoirs d'orage** : leur modélisation repose sur une loi de déversement (loi de seuil, courbe de tarage) à caler ou mesurer. Un déversoir mal modélisé fausse l'ensemble du bilan hydraulique aval.
+
+**Les bassins de rétention** : ouvrages de stockage temporaire qui écrêtent les pointes pluvieuses, modélisés comme des nœuds à volume variable avec une courbe hauteur-volume et une loi de vidange (orifice, déversoir de fuite) — renvoi note **0.3** (conditions aux limites réservoirs).
+
+**Les postes de refoulement** : ruptures de régime (surface libre → charge) nécessitant une courbe caractéristique de pompe — renvoi note **2.D** (pompes en réseau).
+
+**Les siphons** : tronçons en charge permanente dans un modèle par ailleurs à surface libre.
+
+---
+
+## Les outils de modélisation
+
+| Outil | Éditeur | Points distinctifs |
+|---|---|---|
+| **SWMM** | US EPA (libre) | Référence internationale, modèle pluie-débit intégré, scriptable via Python |
+| **CANOE** | INRAE / Cerema | Référence française, très utilisé dans les collectivités |
+| **Infoworks ICM** | Autodesk | Couplage 1D/2D natif, adapté aux grands réseaux |
+| **Mike Urban+** | DHI | Suite complète EU/EP/unitaire, couplage Mike Flood |
+| **EPASWMM / PCSWMM** | CHI | Interface avancée sur moteur SWMM, calage intégré |
+
+: Principaux outils de modélisation d'assainissement {#tbl-outils}
+
+Tous résolvent les équations de Saint-Venant (complet ou simplifié — renvoi note **0.1**) et gèrent la transition vers la charge via la fente de Preissmann.
+
+::: {.callout-note}
+## Onde cinématique ou Saint-Venant complet ?
+
+L'onde cinématique est robuste et rapide mais ne peut pas modéliser les effets d'aval (remous, mise en charge depuis l'aval). Pour un réseau soumis à des influences d'aval (exutoire en rivière soumis aux crues, réseau en zone basse), **Saint-Venant complet est indispensable**. Pour un réseau à pentes fortes et sans influence d'aval, l'onde cinématique peut suffire pour le dimensionnement. Ce choix est développé dans la note **0.1** (section approximations de Saint-Venant) et s'applique ici directement.
+:::
+
+---
+
+## Ce que le modèle ne peut pas faire
+
+**Il ne quantifie pas les ECP par tronçon.** Le modèle peut être calé sur un débit global mesuré à l'exutoire, mais la répartition spatiale des infiltrations reste une inconnue. Les campagnes de jaugeage nocturne et l'inspection télévisée sont indispensables. → Renvoi notes **2.B1** et **3.1**.
+
+**Il ne simule pas la qualité des effluents.** La concentration en DBO, MES, azote dans le déversement au milieu naturel nécessite un module de qualité couplé. → Renvoi note **3.3** (qualité de l'eau et transport de solutés).
+
+**Il ne gère pas le transport solide.** L'envasement progressif d'un collecteur réduit sa section utile et modifie sa capacité hydraulique. Un modèle calé sur un réseau propre sera optimiste pour un réseau envasé (renvoi note **3.4**, §5.2 pour l'application assainissement). → Renvoi note **3.4** (transport solide et morphodynamique).
+
+**Il ne modélise pas fidèlement les ouvrages complexes en 3D.** Un déversoir d'orage à seuil latéral, une chambre de dissipation ou une jonction à forte courbure génèrent des effets 3D que le modèle 1D représente par des lois empiriques. La CFD ou le modèle physique réduit restent incontournables pour leur dimensionnement détaillé. → Renvoi notes **3.2** (modélisation 2D/3D) et **0.3**.
+
+**Il est aveugle aux défauts de branchement.** Les faux-branchements sont invisibles dans le modèle hydraulique tant qu'ils ne se traduisent pas par un déséquilibre de bilan. Leur détection relève de l'inspection de terrain.
+
+Ces limites ne sont pas des défauts du modèle — ce sont des **signaux indiquant que l'outil adapté est différent**.
+
+---
+
+## Conclusion
+
+La modélisation d'un réseau d'assainissement est intrinsèquement plus complexe que celle d'un réseau AEP pour trois raisons structurelles : la **dualité des régimes** (surface libre et charge coexistent dans le même réseau), la **nature transitoire de la sollicitation principale** (la pluie), et la **multiplicité des flux** à gérer (EU, EP, ECP). Ces trois facteurs se combinent pour faire de l'assainissement le domaine où l'incertitude des données d'entrée est la plus forte et où le calage est le plus exigeant.
+
+La valeur d'un modèle d'assainissement est directement proportionnelle à la qualité des données de terrain : cotes de radier précises, quantification des ECP, données pluviométriques locales, et mesures de débit pour le calage. Un modèle construit sur des hypothèses par défaut sans calage terrain est un outil de prédimensionnement, pas un outil de diagnostic ou de décision réglementaire.
+
+---
+
+## Pour aller plus loin dans cette série
+
+**Fondements**
+
+- **Note 0.1** — *Généralités sur la modélisation* : cascade dimensionnelle, régimes permanent et transitoire, fente de Preissmann, et surtout la section « Qui conserve quoi ? Qui ferme quoi ? » qui fonde le statut de Manning-Strickler comme fermeture de Saint-Venant — prérequis de cette note
+- **Note 0.2** — *Énergie, charge et dégradation* : fonde la formule de Manning-Strickler et la notion de pente de frottement $S_f$ utilisée dans Saint-Venant
+- **Note 0.3** — *Ouvrages et conditions aux limites* : déversoirs d'orage, bassins de rétention, siphons — formalisation des conditions aux limites internes du réseau
+- **Note 0.4** — *Analyse dimensionnelle et similitude* : fonde le nombre de Froude et les régimes fluvial/torrentiel en surface libre
+
+**Applications**
+
+- **Note 2.B1** — *Dimensionnement d'un réseau gravitaire* : Manning-Strickler, profils en long, auto-curage — la suite directe de cette note
+- **Note 2.B2** — *Modélisation pluviale* : pluies de projet, transformation pluie-débit, calage sur événement mesuré
+- **Note 2.B3** — *Surcharges et engorgements* : Saint-Venant transitoire, fente de Preissmann en pratique, dual-drainage
+- **Note 2.D** — *Pompes et turbines* : courbes caractéristiques — données d'entrée des postes de refoulement
+
+**Transversales**
+
+- **Note 3.1** — *Calage et validation* : indicateurs de performance, plan de mesures, sectorisation
+- **Note 3.3** — *Qualité de l'eau et thermique* : simulation de la qualité des effluents, transport de solutés, déversements au milieu naturel
+- **Note 3.4** — *Transport solide* : envasement des collecteurs, auto-curage par critère de Shields, dépôts et mises en charge
+- **Note 3.6** — *Limites et responsabilité du modélisateur* : incertitudes de la pluie, vieillissement des modèles, traçabilité des hypothèses

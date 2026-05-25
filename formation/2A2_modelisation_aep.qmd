@@ -1,0 +1,741 @@
+---
+title: "Coups de bélier en réseau AEP"
+subtitle: "Comprendre, calculer, protéger"
+date: "2026-05-17"
+author: ""
+categories: [Hydraulique, AEP, Transitoire, Ingénierie]
+page-layout: article
+toc: true
+toc-title: "Sommaire"
+toc-depth: 3
+number-sections: true
+lang: fr
+format:
+  html:
+    embed-resources: true
+    html-math-method: katex
+    theme: cosmo
+execute:
+  echo: false
+  warning: false
+  fig-format: svg
+  fig-responsive: true
+  fig-width: 8
+  fig-height: 4.5
+jupyter: python3
+---
+
+::: {.callout-note}
+## Note de la série
+Cette note fait partie d'une série sur la modélisation des réseaux hydrauliques. Elle suppose la lecture de la note **0.1** (*Généralités sur la modélisation*) et de la note **2.A1** (*Dimensionnement et diagnostic d'un réseau AEP en régime permanent*). On quitte ici le cadre du régime permanent pour entrer dans le **transitoire en charge** — un phénomène rapide, violent, et souvent sous-estimé. Ce que le modèle EPS de 2.A1 ne voit pas, cette note l'explique et le calcule.
+:::
+
+---
+
+## Le phénomène physique : une onde, pas un choc
+
+### L'intuition erronée et la réalité physique
+
+La première erreur sur le coup de bélier est de le concevoir comme un **choc mécanique** : l'eau stoppée brusquement, son énergie cinétique convertie en surpression. Cette image conduit à des erreurs de dimensionnement.
+
+La réalité est celle d'une **onde de compression** qui se propage dans la conduite à une vitesse finie $c$. Lorsqu'une vanne se ferme brusquement, elle crée une perturbation locale qui remonte vers l'amont à la célérité $c$ : l'eau en amont de l'onde ne sait pas encore que la vanne est fermée et continue d'avancer. C'est exactement le même phénomène que la propagation du son — le coup de bélier **est** une onde acoustique dans le fluide, modifiée par l'élasticité de la paroi.
+
+Ce régime est le symétrique du régime permanent de la note **2.A1** : là où Newton-Raphson résolvait un état d'équilibre statique, les équations de la ligne élastique résolvent une propagation d'onde. L'incompressibilité $\nabla\cdot\mathbf{u}=0$ supposée en permanent (note **0.1**, §2.1) tombe ici — c'est le domaine du **nombre de Mach hydraulique** $Ma = V/c$.
+
+### La célérité de l'onde : formule de Korteweg
+
+La célérité $c$ dans une conduite en charge est donnée par la formule de Korteweg (renvoi note **0.4** pour le fondement dimensionnel — $c$ comme vitesse caractéristique du système élastique fluide-paroi) :
+
+$$c = \sqrt{\frac{K/\rho}{1 + \dfrac{K \cdot D}{E \cdot e}}}$$
+
+où $K \approx 2{,}1 \times 10^9$ Pa est le module de compressibilité de l'eau, $\rho$ sa masse volumique, $D$ le diamètre intérieur, $E$ le module d'élasticité du matériau et $e$ l'épaisseur de paroi. La célérité dans l'eau pure ($c_0 = \sqrt{K/\rho} \approx 1\,450$ m/s) est abaissée par l'élasticité de la paroi : une conduite souple (PVC, PE) absorbe une partie de l'onde en se déformant.
+
+| Matériau | Module $E$ (GPa) | Célérité typique $c$ (m/s) |
+|---|---|---|
+| Acier | 210 | 900 — 1 200 |
+| Fonte ductile | 170 | 900 — 1 100 |
+| Béton armé | 30 — 50 | 700 — 1 000 |
+| PVC | 2,5 — 3,5 | 300 — 500 |
+| Polyéthylène (PE) | 0,8 — 1,2 | 200 — 400 |
+
+: Célérités typiques selon le matériau de conduite {#tbl-celerites}
+
+```{python}
+#| label: fig-celerite-materiau
+#| fig-cap: "Célérité de l'onde de pression $c$ en fonction du rapport diamètre/épaisseur $D/e$ pour quatre matériaux de conduite courants (formule de Korteweg). Pour un même rapport $D/e$, l'acier donne une célérité quatre fois plus élevée que le PE — ce qui signifie une surpression de Joukowsky quatre fois plus grande à vitesse égale. Un réseau en PE est donc naturellement moins exposé aux coups de bélier sévères, mais sa pression nominale PN est aussi plus faible, ce qui réduit partiellement cet avantage."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+K   = 2.1e9   # Pa, eau
+rho = 1000.0
+
+D_e = np.linspace(10, 80, 200)  # D/e
+
+materiaux = {
+    "Acier ($E=210$ GPa)":    (210e9, C_CHARGE, "-"),
+    "Fonte ductile ($E=170$ GPa)": (170e9, "#2980b9", "--"),
+    "PVC ($E=3$ GPa)":        (3e9,   C_PIEZO,  "-."),
+    "PE ($E=1$ GPa)":         (1e9,   C_ACCENT,  ":"),
+}
+
+fig, ax = plt.subplots(figsize=(8, 4.2))
+for lbl, (E, col, ls) in materiaux.items():
+    c = np.sqrt((K/rho) / (1 + K*D_e/E))
+    ax.plot(D_e, c, color=col, lw=2.2, ls=ls, label=lbl)
+
+ax.set_xlabel("Rapport diamètre / épaisseur $D/e$", fontsize=9)
+ax.set_ylabel("Célérité $c$ (m/s)", fontsize=9)
+ax.set_title("Célérité de Korteweg — Influence du matériau et de la géométrie", fontsize=10)
+ax.legend(fontsize=8.5)
+ax.set_xlim(10, 80); ax.set_ylim(0, 1500)
+ax.grid(alpha=0.2); ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+### Le temps de retour de l'onde : notion clé
+
+Une onde de compression se propage de la vanne vers le réservoir amont à la célérité $c$, est réfléchie en onde de détente, et revient vers la vanne. Le **temps de retour** :
+
+$$T_r = \frac{2L}{c}$$
+
+Il définit la frontière entre fermeture **rapide** ($T_f < T_r$ → surpression maximale = Joukowsky) et fermeture **lente** ($T_f > T_r$ → surpression atténuée).
+
+::: {.callout-important}
+## Une conséquence contre-intuitive
+
+Fermer une vanne en 0,5 s au lieu de 1 s sur une conduite de 1 km en fonte ($c \approx 1\,000$ m/s, $T_r = 2$ s) ne change rien à la surpression : les deux fermetures sont « rapides » au sens de Joukowsky. En revanche, passer de 1 s à 3 s de fermeture réduit significativement la surpression. Les vannes à fermeture lente visent à **dépasser $T_r$**, pas simplement à « ralentir ».
+:::
+
+---
+
+## La surpression de Joukowsky : l'estimation de premier ordre
+
+### La formule fondamentale
+
+La surpression générée par un arrêt brusque ($T_f < T_r$) d'un écoulement de vitesse $V_0$ :
+
+$$\Delta H = \pm \frac{c \cdot \Delta V}{g}$$
+
+Le signe $+$ correspond à une surpression (fermeture côté aval) ; le signe $-$ à une dépression (côté amont, ou arrêt de pompe). La surpression **ne dépend ni de la longueur de la conduite ni du profil en long** — seulement de la vitesse initiale et de la célérité.
+
+```{python}
+#| label: fig-joukowsky-abaque
+#| fig-cap: "Abaque de Joukowsky : surpression $\\Delta H$ (m) en fonction de la vitesse initiale $V_0$ (m/s) pour quatre matériaux de conduite (célérités représentatives). La surpression est linéaire en $V_0$ et en $c$. Pour une conduite en acier ($c = 1\\,100$ m/s) à $V_0 = 1$ m/s, $\\Delta H \\approx 112$ m — soit 11 bars, à ajouter à la pression statique de service. Pour une conduite en PE ($c = 300$ m/s) au même débit, $\\Delta H \\approx 31$ m seulement. La règle empirique usuelle : toute conduite à $V > 0{,}5$ m/s en acier/fonte mérite une vérification de Joukowsky avant de supposer que les surpressions sont acceptables."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+V = np.linspace(0, 2.5, 200)
+g = 9.81
+
+configs = [
+    ("Acier ($c=1\\,100$ m/s)",    1100, C_CHARGE, "-"),
+    ("Fonte ($c=1\\,000$ m/s)",    1000, "#2980b9", "--"),
+    ("PVC ($c=450$ m/s)",           450, C_PIEZO,  "-."),
+    ("PE ($c=300$ m/s)",            300, C_ACCENT,  ":"),
+]
+
+fig, ax = plt.subplots(figsize=(8, 4.2))
+for lbl, c, col, ls in configs:
+    dH = c * V / g
+    ax.plot(V, dH, color=col, lw=2.2, ls=ls, label=lbl)
+
+# Seuil PN 10 bar = 102 m, PN 16 = 163 m
+ax.axhline(102, color="#888", lw=1, ls=":", alpha=0.7)
+ax.text(0.02, 104, "PN 10 (102 m)", fontsize=8, color="#888")
+ax.axhline(163, color="#888", lw=1, ls=":", alpha=0.7)
+ax.text(0.02, 165, "PN 16 (163 m)", fontsize=8, color="#888")
+
+ax.set_xlabel("Vitesse initiale $V_0$ (m/s)", fontsize=9)
+ax.set_ylabel("Surpression de Joukowsky $\\Delta H$ (m)", fontsize=9)
+ax.set_title("Abaque de Joukowsky — Surpression vs vitesse et matériau", fontsize=10)
+ax.legend(fontsize=8.5)
+ax.set_xlim(0, 2.5); ax.set_ylim(0, 290)
+ax.grid(alpha=0.2); ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+### Application numérique commentée
+
+Conduite DN 200 en fonte ductile, $L = 800$ m, $Q = 50$ m³/h → $V_0 \approx 0{,}44$ m/s, $c = 1\,000$ m/s, $T_r = 1{,}6$ s.
+
+$$\Delta H_{fermeture} = \frac{1\,000 \times 0{,}44}{9{,}81} \approx 45\ \text{m} \qquad \Rightarrow \qquad p_{max} = p_{service} + 45\ \text{m}$$
+
+$$\Delta H_{arrêt\ pompe} = -\frac{1\,000 \times 0{,}44}{9{,}81} \approx -45\ \text{m} \qquad \Rightarrow \qquad p_{min} = p_{service} - 45\ \text{m}$$
+
+Si la pression statique est de 20 m, la pression minimale atteint $-25$ m — **en dessous de la pression de vapeur** : une poche de vapeur se forme (cavitation), puis s'effondre violemment au retour de l'onde. C'est le **coup de bélier secondaire**, souvent plus destructeur que le premier.
+
+### Ce que Joukowsky ne prédit pas
+
+La formule est valable pour une conduite simple, homogène, sans singularité. Elle ne prédit pas les réflexions multiples aux jonctions et changements de diamètre, l'atténuation par la friction sur les longs parcours, les effets de colonne d'air piégée, ni la géométrie 3D des ouvrages. Joukowsky est l'outil du **pré-dimensionnement** ; la méthode des caractéristiques est l'outil du calcul détaillé.
+
+---
+
+## Les cas déclencheurs en réseau AEP
+
+### Arrêt brusque de pompe : le cas le plus fréquent et le plus dangereux
+
+L'arrêt d'urgence d'une pompe (coupure électrique) se déroule en trois phases :
+
+1. **Dépression côté refoulement** : l'onde de dépression se propage vers l'aval. La pression peut descendre sous la pression de vapeur → risque de cavitation et d'implosion de conduite.
+2. **Retour de l'eau** : si le clapet anti-retour est absent ou défaillant, l'eau reflue et provoque un emballement de la pompe.
+3. **Fermeture du clapet et coup de bélier secondaire** : la fermeture du clapet sur un débit de retour génère une surpression souvent plus violente que le premier choc.
+
+```{python}
+#| label: fig-arret-pompe
+#| fig-cap: "Évolution temporelle de la pression en trois points du profil en long lors d'un arrêt brusque de pompe (simulation schématique) : au refoulement de la pompe (bleu), au point haut du profil (vert) et en aval du clapet anti-retour (rouge). La dépression initiale au refoulement de la pompe (phase 1) peut descendre sous la pression de vapeur au point haut (tiret horizontal rouge, $\\approx -10$ m). Le retour de l'onde et la fermeture du clapet génèrent un pic de surpression secondaire (phase 3) parfois supérieur au pic initial. C'est pourquoi l'enveloppe minimale du profil est aussi critique que l'enveloppe maximale."
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.ndimage import gaussian_filter1d
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+t = np.linspace(0, 10, 500)  # secondes
+
+# Pression au refoulement pompe
+p_ref = (35 - 40*(1-np.exp(-t/0.3))*np.exp(-t/1.5)
+             + 25*np.exp(-((t-3.5)**2)/0.8)
+             + 10*np.exp(-((t-6.0)**2)/1.2))
+p_ref = gaussian_filter1d(p_ref, sigma=5)
+
+# Pression au point haut (plus faible pression statique)
+p_haut = (15 - 28*(1-np.exp(-t/0.5))*np.exp(-t/2.0)
+              + 15*np.exp(-((t-3.8)**2)/0.8))
+p_haut = gaussian_filter1d(p_haut, sigma=5)
+
+# Pression aval clapet (surpression secondaire)
+p_aval = (30 + 0*t)
+p_aval_tr = 30 + 35*np.exp(-((t-4.0)**2)/0.5) + 15*np.exp(-((t-7.0)**2)/0.8)
+p_aval_tr = gaussian_filter1d(p_aval_tr, sigma=4)
+
+fig, ax = plt.subplots(figsize=(9, 4.5))
+ax.plot(t, p_ref,     color=C_CHARGE, lw=2.5,         label="Refoulement pompe")
+ax.plot(t, p_haut,    color=C_PIEZO,  lw=2.2, ls="--", label="Point haut du profil")
+ax.plot(t, p_aval_tr, color=C_ACCENT, lw=2.0, ls="-.", label="Aval clapet anti-retour")
+
+# Pression de vapeur
+ax.axhline(-10, color=C_ACCENT, lw=1.8, ls=":", label="Pression de vapeur ($\\approx -10$ m)")
+ax.axhline(0,   color="#aaa",   lw=1.0, ls=":")
+
+# Phases
+ax.axvspan(0, 1.5, alpha=0.06, color=C_ACCENT, label="Phase 1 : dépression")
+ax.axvspan(1.5, 4.5, alpha=0.06, color="#e67e22", label="Phase 2 : retour eau")
+ax.axvspan(4.5, 7.5, alpha=0.06, color=C_CHARGE, label="Phase 3 : coup sec. clapet")
+
+ax.set_xlabel("Temps (s)", fontsize=9)
+ax.set_ylabel("Pression (m de charge manométrique)", fontsize=9)
+ax.set_title("Arrêt brusque de pompe — Évolution temporelle de la pression", fontsize=10)
+ax.legend(fontsize=8, loc="lower right", ncol=2)
+ax.set_xlim(0, 10); ax.set_ylim(-20, 75)
+ax.grid(alpha=0.2); ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+### Fermeture rapide de vanne
+
+La fermeture manuelle rapide d'une vanne de sectionnement ou la fermeture automatique d'un clapet génère une surpression côté amont et une dépression côté aval. La sévérité dépend de $T_f / T_r$. Les **clapets anti-retour** sont des déclencheurs fréquents et sous-estimés : leur fermeture peut être très rapide si le débit de retour est important.
+
+### Démarrage de pompe
+
+Le démarrage d'une pompe génère une onde de surpression vers l'aval — généralement moins sévère que l'arrêt, sauf en démarrage direct (DOL) sans variateur de fréquence ou sur conduite vide.
+
+### Vidange et poche de vapeur
+
+La situation la plus dangereuse est la formation d'une **poche de vapeur** lorsque la pression descend sous la pression de vapeur saturante ($\approx 0{,}24$ bar absolu à 20 °C, soit $\approx -9{,}8$ m manométrique). La conduite se « casse » localement en deux colonnes séparées par un vide. Quand la pression remonte, les deux colonnes se rejoignent violemment : le choc peut dépasser plusieurs fois la surpression de Joukowsky.
+
+::: {.callout-warning}
+## Le profil en long : une donnée critique
+
+Les points hauts du profil en long sont les premiers exposés à la dépression sous la pression de vapeur — leur pression statique est la plus faible. Un profil en long mal renseigné (cotes altimétriques approximatives) peut conduire à sous-estimer le risque de cavitation. La précision centimétrique des cotes est indispensable pour toute étude transitoire sérieuse.
+:::
+
+```{python}
+#| label: fig-profil-enveloppes
+#| fig-cap: "Profil en long d'une conduite de refoulement AEP (800 m, DN 200 fonte) avec enveloppes de pression maximale (bleu, +Joukowsky) et minimale (rouge, −Joukowsky) lors d'un arrêt brusque de pompe. La zone ombrée verte représente la plage nominale de service [0 ; PN 10 bar]. Le point haut du profil (abscisse 400 m, cote 45 m) est le point critique : l'enveloppe minimale y passe sous la pression de vapeur (tiret rouge horizontal), signalant un risque de cavitation. Ce point justifie l'installation d'une ventouse."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+x = np.linspace(0, 800, 200)
+
+# Profil altimétrique (terrain + conduite)
+z = (20 + 25*np.exp(-((x-400)**2)/(2*150**2))
+       + 5*np.sin(2*np.pi*x/300))
+
+# Charge statique (réservoir à 50 m, perte de charge linéaire)
+H_stat = 50 - 0.02*x
+
+# Enveloppes Joukowsky (c=1000, V=0.44 m/s, dH=45m)
+c = 1000; V0 = 0.44; g = 9.81
+dH = c * V0 / g  # ~45 m
+
+H_max = H_stat + dH * np.exp(-x/1200)
+H_min = H_stat - dH * np.exp(-x/1200)
+
+# Pression manométrique = H - z
+p_max = H_max - z
+p_min = H_min - z
+
+p_vapeur = -10.0  # m manométrique
+p_PN10   = 102.0  # 10 bar = 102 m
+
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(9, 7), sharex=True)
+
+# Profil altimétrique
+ax1.fill_between(x, 0, z, color="#c8a96e", alpha=0.4, label="Terrain")
+ax1.plot(x, z, color="#c8a96e", lw=1.5)
+ax1.plot(x, H_stat, color=C_CHARGE, lw=2.0, ls="--", label="Ligne piézométrique (régime permanent)")
+ax1.plot(x, H_max,  color=C_CHARGE, lw=2.2, label="Enveloppe max (surpression)")
+ax1.plot(x, H_min,  color=C_ACCENT,  lw=2.2, label="Enveloppe min (dépression)")
+ax1.set_ylabel("Charge (m NGF)", fontsize=9)
+ax1.set_title("Profil en long — Enveloppes de pression lors d'un arrêt de pompe", fontsize=10)
+ax1.legend(fontsize=8.5, loc="upper right"); ax1.grid(alpha=0.2)
+ax1.tick_params(labelsize=8.5)
+
+# Pression manométrique
+ax2.fill_between(x, 0, p_max, alpha=0.12, color=C_CHARGE)
+ax2.fill_between(x, p_min, 0, alpha=0.12, color=C_ACCENT)
+ax2.plot(x, p_max, color=C_CHARGE, lw=2.2, label="Pression max (m)")
+ax2.plot(x, p_min, color=C_ACCENT,  lw=2.2, label="Pression min (m)")
+ax2.axhline(p_vapeur, color=C_ACCENT, lw=1.8, ls="--",
+            label=f"Pression de vapeur ({p_vapeur} m)")
+ax2.axhline(p_PN10, color="#aaa", lw=1.2, ls=":",
+            label=f"PN 10 ({p_PN10} m)")
+ax2.axhline(0, color="#888", lw=0.8)
+
+# Point critique
+idx_crit = np.argmin(p_min)
+ax2.scatter([x[idx_crit]], [p_min[idx_crit]], color=C_ACCENT, s=100, zorder=7,
+            label=f"Point critique ($x={x[idx_crit]:.0f}$ m, $p_{{min}}={p_min[idx_crit]:.0f}$ m)")
+
+ax2.set_xlabel("Abscisse (m)", fontsize=9)
+ax2.set_ylabel("Pression manométrique (m)", fontsize=9)
+ax2.legend(fontsize=8.5, loc="lower right"); ax2.grid(alpha=0.2)
+ax2.tick_params(labelsize=8.5)
+
+fig.tight_layout()
+plt.show()
+```
+
+---
+
+## La méthode des caractéristiques : comment on calcule
+
+### Les équations de la ligne élastique
+
+En régime transitoire, Navier-Stokes 1D en conduite sous pression (avec compressibilité du fluide et élasticité de la paroi) donne le système de la **ligne élastique** :
+
+**Continuité (avec compressibilité) :**
+
+$$\frac{\partial H}{\partial t} + \frac{c^2}{gA} \frac{\partial Q}{\partial x} = 0$$
+
+**Dynamique (avec frottement) :**
+
+$$\frac{\partial Q}{\partial t} + gA \frac{\partial H}{\partial x} + \frac{f \cdot Q \cdot |Q|}{2DA} = 0$$
+
+Ces deux EDP hyperboliques remplacent le simple Bernoulli du régime permanent — elles contiennent maintenant les termes $\partial/\partial t$ qui décrivent la propagation des ondes.
+
+### Les deux familles de caractéristiques
+
+Le système admet deux familles de **courbes caractéristiques** dans le plan espace-temps $(x, t)$ :
+
+$$C^+ : \frac{dx}{dt} = +c \qquad \text{(onde vers l'aval)} \qquad C^- : \frac{dx}{dt} = -c \qquad \text{(onde vers l'amont)}$$
+
+Le long de ces courbes, les EDP se réduisent à des équations différentielles ordinaires :
+
+$$C^+ : dH + \frac{c}{gA}\,dQ + \frac{f \cdot c \cdot Q|Q|}{2gDA^2}\,dt = 0$$
+
+$$C^- : dH - \frac{c}{gA}\,dQ - \frac{f \cdot c \cdot Q|Q|}{2gDA^2}\,dt = 0$$
+
+En tout point $(x, t)$, l'état du système est déterminé par **une information venue de l'amont** (via $C^-$) et **une information venue de l'aval** (via $C^+$).
+
+```{python}
+#| label: fig-caracteristiques
+#| fig-cap: "Diagramme espace-temps de la méthode des caractéristiques. Les droites bleues ($C^+$, pente $+1/c$) transportent l'information vers l'aval ; les droites vertes ($C^-$, pente $-1/c$) transportent l'information vers l'amont. L'état au point P (croix rouge) est entièrement déterminé par les points A (sur $C^-$) et B (sur $C^+$) du pas de temps précédent. La grille régulière impose $\\Delta t = \\Delta x / c$ (condition CFL). Les conditions aux limites (réservoir à gauche, vanne à droite) fournissent une équation supplémentaire à chaque extrémité."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+fig, ax = plt.subplots(figsize=(8, 5.0))
+
+# Grille caractéristiques
+N_x = 6; N_t = 5
+x_nodes = np.linspace(0, 5, N_x)
+t_nodes = np.linspace(0, 4, N_t)
+
+# Fond grille
+for xi in x_nodes:
+    ax.axvline(xi, color="#eee", lw=0.8)
+for ti in t_nodes:
+    ax.axhline(ti, color="#eee", lw=0.8)
+
+# Caractéristiques C+ et C-
+for i in range(N_x-1):
+    for j in range(N_t-1):
+        # C+ (amont vers aval)
+        ax.annotate("", xy=(x_nodes[i+1], t_nodes[j+1]),
+                    xytext=(x_nodes[i], t_nodes[j]),
+                    arrowprops=dict(arrowstyle="->", color=C_CHARGE, lw=1.5, alpha=0.7))
+        # C- (aval vers amont)
+        ax.annotate("", xy=(x_nodes[i], t_nodes[j+1]),
+                    xytext=(x_nodes[i+1], t_nodes[j]),
+                    arrowprops=dict(arrowstyle="->", color=C_PIEZO, lw=1.5, alpha=0.7))
+
+# Point P central
+P_x, P_t = x_nodes[3], t_nodes[3]
+ax.scatter([P_x], [P_t], color=C_ACCENT, s=150, zorder=7, marker="x", linewidths=3)
+ax.text(P_x+0.08, P_t+0.08, "P (inconnu)", fontsize=9, color=C_ACCENT)
+
+# Points A et B
+A_x, A_t = x_nodes[2], t_nodes[2]
+B_x, B_t = x_nodes[4], t_nodes[2]
+ax.scatter([A_x, B_x], [A_t, B_t], color="#555555", s=80, zorder=6)
+ax.text(A_x-0.25, A_t-0.15, "A ($C^-$)", fontsize=9, color=C_PIEZO)
+ax.text(B_x+0.05, B_t-0.15, "B ($C^+$)", fontsize=9, color=C_CHARGE)
+
+# Conditions aux limites
+ax.fill_between([0, 0.05], [0, 0], [4, 4], alpha=0.20, color=C_CHARGE)
+ax.text(-0.3, 2.0, "Réservoir\n$H = cste$", ha="center", fontsize=8.5, color=C_CHARGE, rotation=90)
+ax.fill_between([4.95, 5.0], [0, 0], [4, 4], alpha=0.20, color=C_ACCENT)
+ax.text(5.3, 2.0, "Vanne\n$T_f$", ha="center", fontsize=8.5, color=C_ACCENT, rotation=270)
+
+# Légende
+from matplotlib.lines import Line2D
+leg = [Line2D([0],[0], color=C_CHARGE, lw=2, label="$C^+$ (vers l'aval, pente $+1/c$)"),
+       Line2D([0],[0], color=C_PIEZO,  lw=2, label="$C^-$ (vers l'amont, pente $-1/c$)")]
+ax.legend(handles=leg, fontsize=8.5, loc="upper left")
+
+ax.set_xlabel("Abscisse $x$", fontsize=9)
+ax.set_ylabel("Temps $t$", fontsize=9)
+ax.set_title("Méthode des caractéristiques — Grille espace-temps", fontsize=10)
+ax.set_xlim(-0.5, 5.5); ax.set_ylim(-0.3, 4.5)
+ax.grid(alpha=0.0); ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+### Le schéma numérique et la condition CFL
+
+La condition de stabilité numérique est **imposée par la physique** :
+
+$$\Delta t = \frac{\Delta x}{c}$$
+
+Pour une conduite de 1 km discrétisée en 10 tronçons ($\Delta x = 100$ m) avec $c = 1\,000$ m/s → $\Delta t = 0{,}1$ s. La difficulté des réseaux complexes : la coexistence de conduites à célérités différentes impose un pas de temps global contraint par le $\Delta x/c$ le plus petit.
+
+### Conditions aux limites
+
+**Réservoir** : charge imposée $H = H_{res} = \text{cste}$ — une seule inconnue ($Q$) déterminée par l'équation caractéristique incidente.
+
+**Vanne en fermeture** : loi d'orifice $Q = C_d \cdot A_v(t) \cdot \sqrt{2g\Delta H}$, où $A_v(t)$ est la loi de fermeture temporelle.
+
+**Pompe** : courbe caractéristique $H(Q)$ + ralentissement du groupe (inertie $GD^2$ — renvoi note **2.D** pour les courbes 4 quadrants).
+
+**Jonction** : conservation de la masse et égalité des charges — chaque branche apporte une équation caractéristique.
+
+::: {.callout-note}
+## Ce que font les logiciels spécialisés
+
+**Hammer** (Bentley), **AFT Impulse**, le module transitoire de **Porteau** implémentent la méthode des caractéristiques avec gestion automatique des conditions aux limites complexes. L'ingénieur définit la topologie, les lois de fermeture et les paramètres des dispositifs — le logiciel assemble et résout le système. L'interprétation des enveloppes de pression et le choix des dispositifs de protection restent des actes d'ingénierie qui ne peuvent pas être délégués au logiciel.
+:::
+
+```{python}
+#| label: fig-loi-fermeture
+#| fig-cap: "Effet de la loi de fermeture d'une vanne sur la surpression maximale, pour une conduite DN 200 fonte ($c=1000$ m/s, $L=800$ m, $V_0=0{,}44$ m/s, $T_r=1{,}6$ s). Quatre lois de fermeture sont comparées : instantanée ($T_f=0$), rapide ($T_f=1$ s $< T_r$), lente ($T_f=3$ s $> T_r$) et à deux vitesses (rapide puis lente). La surpression est normalisée par la valeur de Joukowsky. Pour $T_f < T_r$ : surpression = Joukowsky. Pour $T_f > T_r$ : réduction significative. La fermeture à deux vitesses (la plus utilisée en pratique) permet de dépasser $T_r$ sans allonger indûment la durée de manœuvre."
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.ndimage import gaussian_filter1d
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+c = 1000; L = 800; V0 = 0.44; g = 9.81
+Tr = 2*L/c
+dH_jouk = c*V0/g
+
+t = np.linspace(0, 12, 500)
+
+def ouverture(t, Tf, mode="lineaire"):
+    if mode == "lineaire":
+        return np.maximum(1 - t/Tf, 0)
+    elif mode == "2vitesses":
+        tau = Tf * 0.3
+        A1 = np.maximum(1 - t/tau * 0.7, 0.3)
+        A2 = np.where(t < tau, A1, np.maximum(0.3 - (t-tau)/(Tf-tau)*0.3, 0))
+        return A2
+
+def surpression_vanne(t_arr, Tf, mode="lineaire"):
+    Av = ouverture(t_arr, Tf, mode)
+    dAv = np.gradient(Av, t_arr)
+    dV = -V0 * dAv * Tf  # approx linéaire
+    dH = c/g * np.maximum(-dAv * V0 * Tf, 0) * 0.8
+    return gaussian_filter1d(np.cumsum(dH)*(t_arr[1]-t_arr[0]), sigma=8)
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10.5, 4.2))
+
+# Lois de fermeture
+for Tf, lbl, col, ls, mode in [
+        (0.01, "Instantanée ($T_f \\approx 0$)",      C_ACCENT, "-",  "lineaire"),
+        (1.0,  f"Rapide ($T_f=1$ s $< T_r={Tr:.1f}$ s)", "#e67e22","--", "lineaire"),
+        (3.0,  f"Lente ($T_f=3$ s $> T_r={Tr:.1f}$ s)", C_PIEZO, "-.", "lineaire"),
+        (3.0,  "2 vitesses ($T_f=3$ s)",               C_CHARGE, ":",  "2vitesses")]:
+    Av = ouverture(t, Tf, mode)
+    ax1.plot(t, Av, color=col, lw=2.0, ls=ls, label=lbl)
+
+ax1.axvline(Tr, color="#aaa", lw=1.2, ls="--")
+ax1.text(Tr+0.1, 0.85, f"$T_r={Tr}$ s", fontsize=8.5, color="#555555")
+ax1.set_xlabel("Temps (s)", fontsize=9)
+ax1.set_ylabel("Ouverture relative de la vanne", fontsize=9)
+ax1.set_title("Lois de fermeture", fontsize=9.5)
+ax1.legend(fontsize=7.5); ax1.grid(alpha=0.2); ax1.tick_params(labelsize=8.5)
+ax1.set_xlim(0, 10)
+
+# Surpression vs Tf/Tr
+Tf_vals = np.linspace(0.1, 8, 100)
+surpression_norm = np.where(Tf_vals <= Tr, 1.0, Tr/Tf_vals)
+ax2.plot(Tf_vals/Tr, surpression_norm, color=C_CHARGE, lw=2.5)
+ax2.axvline(1.0, color=C_ACCENT, lw=1.5, ls="--",
+            label=f"$T_f = T_r$ (seuil Joukowsky)")
+ax2.axhline(1.0, color="#aaa", lw=1, ls=":")
+ax2.fill_between(Tf_vals/Tr, surpression_norm, 1.0,
+                 where=Tf_vals > Tr, alpha=0.15, color=C_PIEZO,
+                 label="Gain par fermeture lente")
+ax2.set_xlabel("$T_f / T_r$ (rapport durée de fermeture / temps de retour)", fontsize=9)
+ax2.set_ylabel("Surpression / $\\Delta H_{Joukowsky}$", fontsize=9)
+ax2.set_title("Réduction de surpression vs $T_f/T_r$", fontsize=9.5)
+ax2.legend(fontsize=8.5); ax2.grid(alpha=0.2); ax2.tick_params(labelsize=8.5)
+ax2.set_xlim(0, 4); ax2.set_ylim(0, 1.2)
+
+fig.tight_layout()
+plt.show()
+```
+
+---
+
+## Les dispositifs de protection : physique et dimensionnement
+
+### Ventouses : protéger contre la dépression
+
+Une ventouse aux points hauts du profil remplit deux fonctions : purge d'air en régime permanent, admission d'air lors d'une dépression transitoire pour éviter la formation d'une poche de vapeur.
+
+::: {.callout-warning}
+## La ventouse : une arme à double tranchant
+
+L'air admis par une ventouse lors d'une dépression doit être **réévacué** lors du retour en pression. Si la ventouse se referme trop tôt, une poche d'air comprimée génère une surpression à son expulsion parfois plus violente que le coup de bélier initial. Le choix et le dimensionnement d'une ventouse nécessitent une simulation transitoire complète.
+:::
+
+### Soupapes de décharge : écrêter les surpressions
+
+Une soupape de décharge s'ouvre lorsque la pression dépasse un seuil réglé, laisse s'échapper un volume d'eau, et se referme. Son dimensionnement repose sur le débit à évacuer pour maintenir la pression sous le seuil de protection — calculé à partir de l'enveloppe de surpression sans protection.
+
+### Réservoirs d'air : le tampon pneumatique
+
+Le réservoir d'air (ballon anti-bélier) est raccordé sur la conduite de refoulement à proximité de la pompe. Il contient un volume d'air sous pression : lors de l'arrêt de pompe, l'eau sortant du réservoir compense la décélération de la colonne d'eau ; au retour de l'onde, la compression de l'air absorbe la surpression. Dimensionnement par la loi des gaz polytropique :
+
+$$P_1 V_1^\gamma = P_2 V_2^\gamma \qquad (\gamma \approx 1{,}2\text{–}1{,}4)$$
+
+### Volant d'inertie : ralentir la décélération de la pompe
+
+Un volant d'inertie (disque massif solidaire de l'arbre) augmente le moment d'inertie du groupe, ralentissant sa décélération et transformant un arrêt brusque en arrêt progressif — il augmente artificiellement $T_f$ pour dépasser $T_r$. Efficace sur les courts refoulements ; volume prohibitif sur les longues conduites.
+
+```{python}
+#| label: fig-dispositifs-comparaison
+#| fig-cap: "Comparaison schématique de l'effet des dispositifs de protection sur l'enveloppe de pression minimale (dépression) le long du profil en long. Sans protection (rouge), la pression minimale passe sous la pression de vapeur au point haut. Avec ventouse (vert, admission d'air), la dépression est stoppée à la pression atmosphérique. Avec réservoir d'air (bleu), la dépression est encore mieux limitée sur tout le linéaire. La pression de vapeur ($-10$ m manométrique) est la borne absolue à ne jamais dépasser."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+x = np.linspace(0, 800, 200)
+z = 20 + 25*np.exp(-((x-400)**2)/(2*150**2)) + 5*np.sin(2*np.pi*x/300)
+H_stat = 50 - 0.02*x
+dH = 45
+
+p_min_no  = (H_stat - dH*np.exp(-x/1200)) - z
+p_min_vent = np.maximum(p_min_no, 0.0)   # ventouse coupe à 0 (p_atm)
+p_min_res  = np.maximum(p_min_no + 15, 0.0)  # réservoir remonte de 15 m
+p_vapeur = -10.0
+
+fig, ax = plt.subplots(figsize=(9, 4.2))
+ax.fill_between(x, p_vapeur, p_min_no, where=p_min_no < p_vapeur,
+                alpha=0.25, color=C_ACCENT, label="Zone de cavitation (sans protection)")
+ax.plot(x, p_min_no,   color=C_ACCENT, lw=2.2, label="Sans protection")
+ax.plot(x, p_min_vent, color=C_PIEZO,  lw=2.2, ls="--", label="Avec ventouse (point haut)")
+ax.plot(x, p_min_res,  color=C_CHARGE, lw=2.2, ls="-.", label="Avec réservoir d'air")
+ax.axhline(p_vapeur, color=C_ACCENT, lw=1.8, ls=":",
+           label=f"Pression de vapeur ({p_vapeur} m)")
+ax.axhline(0, color="#aaa", lw=0.8, ls="--")
+
+# Localisation ventouse
+idx_haut = np.argmin(p_min_no)
+ax.scatter([x[idx_haut]], [0.5], color=C_PIEZO, s=150, zorder=7, marker="^",
+           label=f"Ventouse ($x={x[idx_haut]:.0f}$ m, point haut)")
+
+ax.set_xlabel("Abscisse (m)", fontsize=9)
+ax.set_ylabel("Pression minimale (m manométrique)", fontsize=9)
+ax.set_title("Effet des dispositifs de protection — Enveloppe de dépression", fontsize=10)
+ax.legend(fontsize=8.5, loc="lower right", ncol=2)
+ax.set_xlim(0, 800); ax.set_ylim(-30, 30)
+ax.grid(alpha=0.2); ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+### Tableau comparatif des dispositifs
+
+| Dispositif | Protège contre | Cas d'usage privilégié | Complexité de maintenance |
+|---|---|---|---|
+| Ventouse | Dépression, poche de vapeur | Points hauts du profil | Faible (entretien annuel) |
+| Soupape de décharge | Surpression | Aval vanne, refoulement pompe | Faible |
+| Réservoir d'air | Surpression et dépression | Stations de pompage importantes | Moyenne (contrôle pression d'air) |
+| Volant d'inertie | Dépression côté refoulement | Courts refoulements, pompes rapides | Faible (pièce mécanique passive) |
+| Vanne à fermeture lente | Surpression | Vannes de sectionnement manœuvrées | Faible |
+| By-pass de pompe | Surpression au démarrage | Pompes sans variateur | Faible |
+
+: Comparaison des dispositifs de protection contre les coups de bélier {#tbl-protections}
+
+---
+
+## Démarche pratique en bureau d'études
+
+### Quand déclencher une étude coups de bélier ?
+
+Les critères justifiant une étude spécifique :
+
+- Longueur de refoulement $L > 200$ m avec $c > 500$ m/s (soit $T_r > 0{,}4$ s)
+- Vitesse de service élevée $V > 1$ m/s
+- Présence de points hauts sur le profil en long
+- Matériaux sensibles (amiante-ciment, PVC première génération)
+- Stations de pompage sans variateur de fréquence
+- Réseau fortement maillé avec clapets anti-retour multiples
+
+En dessous de ces seuils, la formule de Joukowsky suffit généralement à vérifier que les enveloppes restent dans les limites de la PN.
+
+### Les données nécessaires
+
+- **Profil en long** avec cotes altimétriques de précision centimétrique
+- **Célérités** calculées pour chaque tronçon (matériau, $D$, $e$)
+- **Courbe caractéristique complète de la pompe** : courbe $H(Q)$ nominale + courbes 4 quadrants (renvoi note **2.D**)
+- **Moment d'inertie du groupe** $GD^2$ (conditionne le temps de décélération)
+- **Lois de fermeture des vannes** : temps de manœuvre et loi $A_v(t)$
+- **Paramètres des dispositifs de protection** existants
+
+### Interprétation des résultats
+
+Les sorties sont des séries temporelles de pression. Le critère de résistance en tout point du profil :
+
+$$H_{vapeur} \leq H_{min}(x) \quad \text{et} \quad H_{max}(x) \leq H_{PN}(x)$$
+
+::: {.callout-tip}
+## Un résultat qui surprend souvent
+
+La surpression maximale n'est pas toujours au point le plus proche de la vanne ou de la pompe. Les réflexions d'ondes aux jonctions, aux changements de diamètre et aux réservoirs peuvent créer des **interférences constructives** qui amplifient localement la pression en des points éloignés de la source. C'est pourquoi la simulation complète est indispensable sur les réseaux complexes — Joukowsky ne peut pas prédire ces effets.
+:::
+
+```{python}
+#| label: fig-decision-joukowsky-vs-mc
+#| fig-cap: "Arbre de décision pratique : Joukowsky suffit-il ou faut-il une simulation par méthode des caractéristiques ? Les critères de seuil ($L$, $V$, points hauts, matériaux sensibles) délimitent les cas où le calcul simplifié est suffisant pour un diagnostic de premier ordre. Dès qu'un critère est positif, la simulation complète est requise pour dimensionner les protections."
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import FancyBboxPatch
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+fig, ax = plt.subplots(figsize=(10, 5.5))
+ax.set_xlim(0, 12); ax.set_ylim(0, 6); ax.axis("off")
+
+def box(ax, x, y, w, h, col, txt, fsz=8.5):
+    b = FancyBboxPatch((x-w/2, y-h/2), w, h,
+        boxstyle="round,pad=0.10", fc=col+"22", ec=col, lw=2)
+    ax.add_patch(b)
+    ax.text(x, y, txt, ha="center", va="center",
+            fontsize=fsz, color=col, fontweight="bold")
+
+def arr(ax, x0, y0, x1, y1, col, lbl=""):
+    ax.annotate("", xy=(x1,y1), xytext=(x0,y0),
+                arrowprops=dict(arrowstyle="->", color=col, lw=1.8))
+    if lbl:
+        ax.text((x0+x1)/2+0.15, (y0+y1)/2, lbl, fontsize=8, color=col)
+
+box(ax, 6.0, 5.2, 4.0, 0.9, C_CHARGE, "Nouvelle installation\nou modification réseau AEP")
+
+# Questions
+box(ax, 6.0, 4.0, 3.5, 0.8, "#555555", "$L > 200$ m et $c > 500$ m/s ?")
+box(ax, 6.0, 2.9, 3.5, 0.8, "#555555", "Points hauts ou $V > 1$ m/s ?")
+box(ax, 6.0, 1.8, 3.5, 0.8, "#555555", "Matériaux sensibles / pas de VFD ?")
+
+# Réponses OUI → Simulation complète
+box(ax, 10.5, 2.5, 2.5, 1.2, C_ACCENT,
+    "Simulation\ncomplète\n(méthode caract.)")
+box(ax,  1.5, 1.8, 2.5, 1.2, C_PIEZO,
+    "Joukowsky\n+ vérif. PN\nsuffit")
+
+arr(ax, 6.0, 4.75, 6.0, 4.40, "#555555")
+arr(ax, 6.0, 3.60, 6.0, 3.30, "#555555")
+arr(ax, 6.0, 2.50, 6.0, 2.20, "#555555")
+
+# OUI → simulation
+arr(ax, 7.75, 4.00, 9.25, 3.0, C_ACCENT, "OUI")
+arr(ax, 7.75, 2.90, 9.25, 2.7, C_ACCENT, "OUI")
+arr(ax, 7.75, 1.80, 9.25, 2.4, C_ACCENT, "OUI")
+
+# NON → continuer
+arr(ax, 4.25, 4.00, 4.25, 3.3, C_PIEZO, "NON →")
+arr(ax, 4.25, 2.90, 4.25, 2.2, C_PIEZO, "NON →")
+arr(ax, 4.25, 1.80, 1.5, 1.8, C_PIEZO)
+
+ax.set_title("Arbre de décision — Joukowsky vs Méthode des caractéristiques", fontsize=10.5)
+fig.tight_layout()
+plt.show()
+```
+
+---
+
+## Conclusion
+
+Le coup de bélier est un phénomène ondulatoire, pas un choc mécanique. Cette distinction conditionne entièrement la façon dont on le calcule (méthode des caractéristiques, célérité, temps de retour) et dont on le prévient (agir sur $T_f$ vs $T_r$, protéger les points hauts, amortir les ondes).
+
+La formule de Joukowsky est l'outil du premier regard — rapide, enseignante, suffisante pour trier les situations à risque. La méthode des caractéristiques est l'outil du dimensionnement — précise, complète, indispensable dès que le profil en long est complexe ou que les dispositifs de protection interagissent. L'ingénieur compétent utilise Joukowsky pour décider si une étude approfondie est justifiée, puis la méthode des caractéristiques pour la mener.
+
+---
+
+## Pour aller plus loin dans cette série
+
+**Fondements**
+
+- **Note 0.1** — *Généralités sur la modélisation* : incompressibilité qui tombe en transitoire rapide, nombre de Mach hydraulique, régime transitoire vs permanent
+- **Note 0.2** — *Énergie, charge et dégradation* : charge hydraulique $H$, conservation de l'énergie — base des équations de la ligne élastique
+- **Note 0.4** — *Analyse dimensionnelle* : célérité de Korteweg comme vitesse caractéristique du système élastique, fondement dimensionnel de $c$
+
+**Applications**
+
+- **Note 2.A1** — *Dimensionnement et diagnostic AEP en régime permanent* : le modèle EPS dont le coup de bélier est l'angle mort — socle nécessaire avant cette note
+- **Note 2.D** — *Pompes et turbines* : courbes 4 quadrants (emballement, survitesse) indispensables à la simulation de l'arrêt de pompe ; moment d'inertie $GD^2$
+
+**Transversales**
+
+- **Note 3.1** — *Calage et validation* : caler un modèle transitoire sur des enregistrements de pression lors de manœuvres de test
+- **Note 3.2** — *Quand le 1D ne suffit plus* : limites des modèles 1D pour les jonctions complexes, ouvrages à géométrie 3D
+- **Note 3.6** — *Limites et responsabilité* : documenter les hypothèses de célérité, traçabilité des calculs de dimensionnement des protections

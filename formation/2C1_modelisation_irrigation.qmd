@@ -1,0 +1,354 @@
+---
+title: "Modélisation des réseaux d'irrigation gravitaire"
+subtitle: "Canaux, partiteurs et régulation"
+date: "2026-05-16"
+author: ""
+categories: [Hydraulique, Irrigation, Modélisation, Ingénierie]
+page-layout: article
+toc: true
+toc-title: "Sommaire"
+toc-depth: 3
+number-sections: true
+lang: fr
+---
+
+::: {.callout-note}
+## Note de la série
+Cette note fait partie d'une série sur la modélisation des réseaux hydrauliques. Elle suppose la lecture des notes *Généralités sur la modélisation des réseaux hydrauliques* et *Modéliser un réseau d'irrigation — spécificités physiques et enjeux métier*. On entre ici dans la mécanique concrète de la modélisation des canaux gravitaires : du dimensionnement hydraulique à la simulation de la régulation, en passant par les ouvrages de partage et les pertes par infiltration.
+:::
+
+## Rappel : la physique de l'écoulement en canal d'irrigation
+
+### Saint-Venant comme équation gouvernante
+
+Un canal d'irrigation est un ouvrage à surface libre régi par les équations de Saint-Venant (cf. note socle). La différence fondamentale avec un collecteur d'assainissement tient à la **finalité de l'ouvrage** : un collecteur évacue passivement l'eau vers un exutoire, un canal d'irrigation distribue activement l'eau vers des prises latérales selon des règles de partage. Cette finalité impose la présence d'ouvrages de régulation qui maintiennent des niveaux et des débits dans des plages précises — c'est la dimension de **contrôle** qui est absente de l'assainissement.
+
+### Hauteur normale et hauteur critique en section trapézoïdale
+
+Les deux hauteurs de référence de l'écoulement en canal sont les mêmes qu'en assainissement, mais leur calcul diffère pour une section trapézoïdale.
+
+**La hauteur normale** $h_n$ est la hauteur en régime uniforme, calculée par Manning-Strickler pour un débit $Q$, une pente $S_0$ et un coefficient $K_s$ donnés. Pour une section trapézoïdale de largeur au fond $b$ et de fruit $m$ (rapport horizontal/vertical des talus), la résolution est implicite :
+
+$$Q = K_s \cdot \frac{[(b + mh_n)h_n]^{5/3}}{[b + 2h_n\sqrt{1+m^2}]^{2/3}} \cdot S_0^{1/2}$$
+
+Cette équation n'admet pas de solution analytique explicite — elle est résolue numériquement (itération de Newton ou abaque).
+
+**La hauteur critique** $h_c$ est la hauteur pour laquelle le nombre de Froude $Fr = 1$. Pour une section trapézoïdale, elle vérifie :
+
+$$\frac{Q^2}{g} = \frac{A_c^3}{T_c} = \frac{[(b + mh_c)h_c]^3}{b + 2mh_c}$$
+
+Là encore, la résolution est implicite.
+
+### Le régime fluvial domine en irrigation gravitaire
+
+En irrigation gravitaire, les pentes sont généralement faibles (0,1 à 5 ‰) et les débits modérés — on est presque toujours en régime **fluvial** ($Fr < 1$, $h_n > h_c$). Cette domination du régime fluvial a deux conséquences pratiques importantes :
+
+- L'information hydraulique se propage dans les **deux sens** : une perturbation aval (manœuvre d'une vanne) remonte vers l'amont. La régulation des canaux d'irrigation doit tenir compte de cette bidirectionnalité.
+- Le calcul des courbes de remous se fait **de l'aval vers l'amont** : la condition aux limites aval (niveau imposé par un ouvrage de régulation) gouverne le profil en long vers l'amont.
+
+::: {.callout-note}
+## L'exception torrentielle
+Certains canaux à forte pente (canaux de montagne, seguias de haute altitude) fonctionnent en régime torrentiel. Dans ce cas, les ondes se propagent uniquement vers l'aval, la régulation est plus simple (pas de remous amont), mais les vitesses élevées posent des problèmes d'érosion et de dissipation d'énergie aux ouvrages.
+:::
+
+---
+
+## Dimensionnement hydraulique d'un canal
+
+### La section optimale hydrauliquement
+
+Pour un débit $Q$, une pente $S_0$ et un coefficient $K_s$ donnés, il existe une section transversale qui **minimise le périmètre mouillé** pour une section mouillée donnée — c'est la **section hydrauliquement optimale**. Elle minimise les frottements et donc les pertes de charge, ce qui permet d'utiliser le minimum de matériaux pour une capacité donnée.
+
+Pour une section trapézoïdale, la condition d'optimalité géométrique est :
+
+$$b = 2h\left(\sqrt{1 + m^2} - m\right)$$
+
+Ce qui donne, pour un fruit $m$ donné, le rapport optimal $b/h$. En pratique :
+- Pour $m = 0$ (section rectangulaire) : $b = 2h$ (canal deux fois plus large que profond)
+- Pour $m = 0{,}577$ (fruit de 1/√3, angle de 60°) : $b = 0$ — la section optimale est demi-hexagonale
+- Pour $m = 1$ (fruit de 45°, le plus courant pour les canaux en terre) : $b/h \approx 0{,}83$
+
+En pratique, on s'écarte souvent de la section optimale pour des raisons géotechniques (stabilité des talus), constructives (gabarit des engins de terrassement) ou d'exploitation (accessibilité pour le curage).
+
+### La revanche et le tirant d'air
+
+Le **tirant d'air** (ou revanche) est la distance verticale entre la surface libre en régime de projet et le sommet de la berge. Il protège le canal contre les débordements lors de variations de débit imprévues (erreur de régulation, afflux brutal) et contre les vagues créées par le vent sur les grands canaux.
+
+La revanche minimale dépend du débit et des conditions d'exploitation :
+
+| Débit de projet (m³/s) | Revanche minimale recommandée (m) |
+|---|---|
+| $Q < 0{,}5$ | 0,20 — 0,30 |
+| $0{,}5 \leq Q < 5$ | 0,30 — 0,50 |
+| $5 \leq Q < 50$ | 0,50 — 0,75 |
+| $Q \geq 50$ | 0,75 — 1,00 |
+
+: Revanche minimale recommandée selon le débit {#tbl-revanche}
+
+### Pertes par infiltration : un terme source négatif distribué
+
+Un canal en terre perd une fraction de son débit par infiltration dans le sol sur toute sa longueur. Ces pertes ne sont pas des pertes de charge au sens de Bernoulli — elles réduisent le débit disponible à l'aval sans modifier significativement la ligne d'énergie locale. Mais leur cumul sur un long canal peut être très significatif.
+
+La loi de **Kostiakov** est la formulation empirique la plus utilisée pour modéliser l'infiltration cumulée dans un canal :
+
+$$F(t) = k \cdot t^a$$
+
+où $F$ est le volume infiltré par unité de surface de fond mouillée (m³/m²), $t$ le temps (heures), et $k$, $a$ des paramètres empiriques dépendant du type de sol ($a$ est typiquement compris entre 0,3 et 0,8 ; $k$ entre 0,01 et 0,5 selon la perméabilité du sol).
+
+En modélisation de canal, les pertes par infiltration sont intégrées comme un **terme source négatif distribué** $q_l < 0$ dans l'équation de continuité de Saint-Venant :
+
+$$\frac{\partial A}{\partial t} + \frac{\partial Q}{\partial x} = q_l(x) < 0$$
+
+où $q_l(x)$ représente le débit perdu par infiltration par unité de longueur de canal (m²/s, négatif).
+
+**Conséquence sur le bilan :** sur un canal de longueur $L$ avec des pertes linéiques $q_l$ (supposées uniformes), le débit à l'extrémité aval est :
+
+$$Q_{aval} = Q_{amont} + q_l \cdot L < Q_{amont}$$
+
+Les pertes typiques varient de 0,5 à 5 % du débit par kilomètre selon le type de sol et l'état du canal. Sur un périmètre irrigué de grande taille, elles peuvent représenter 20 à 40 % du volume prélevé en tête.
+
+::: {.callout-tip}
+## Revêtement et réduction des pertes
+Le revêtement béton ou les géomembranes réduisent les pertes par infiltration d'un facteur 5 à 10. Mais le revêtement supprime aussi la recharge des nappes par le canal — un effet positif en zone d'économie d'eau, mais potentiellement négatif pour les agriculteurs qui irriguent par pompage dans la nappe alimentée par le canal. Le choix de revêtir ou non un canal est donc autant un choix hydrogéologique qu'hydraulique.
+:::
+
+---
+
+## Les ouvrages de régulation : physique et modélisation
+
+### Seuils fixes : la loi de déversoir
+
+Un **seuil fixe** (déversoir à crête large ou à mince paroi) impose une relation entre le niveau amont $h_u$ et le débit qui le franchit. C'est l'ouvrage le plus simple et le plus robuste — pas de pièces mobiles, pas de maintenance.
+
+Pour un déversoir à mince paroi en régime **dénoyé** (chute libre aval) :
+
+$$Q = \mu \cdot L \cdot \sqrt{2g} \cdot h_u^{3/2}$$
+
+où $\mu$ est le coefficient de débit ($\mu \approx 0{,}40$ à $0{,}42$ pour un seuil à mince paroi) et $L$ la longueur du seuil déversant.
+
+Pour un déversoir à **crête large** (longueur de crête > 3 fois la charge amont), la loi devient :
+
+$$Q = C_d \cdot L \cdot h_u^{3/2}, \quad C_d = \frac{2}{3}\sqrt{\frac{2g}{3}} \approx 1{,}70 \text{ m}^{1/2}/\text{s}$$
+
+En régime **noyé** (le niveau aval dépasse la crête du seuil), la loi de déversoir est corrigée par un coefficient de submersion qui dépend du rapport des charges amont et aval. La transition dénoyé/noyé est une singularité numérique que les logiciels gèrent via des formules de transition progressives.
+
+### Vannes de fond et vannes de surface : loi d'orifice
+
+Les **vannes** permettent de régler le débit en modifiant leur ouverture. La loi hydraulique est la loi d'orifice, qui distingue deux régimes selon la position du plan d'eau aval par rapport à l'ouverture de la vanne.
+
+**Régime dénoyé** (vanne de fond, niveau aval bien en dessous de l'ouverture) :
+
+$$Q = C_d \cdot w \cdot L \cdot \sqrt{2g \cdot h_u}$$
+
+où $w$ est l'ouverture de la vanne (m), $L$ sa largeur (m), $h_u$ la charge amont mesurée depuis le fond, et $C_d$ le coefficient de débit ($\approx 0{,}61$ pour une vanne plate).
+
+**Régime noyé** (niveau aval au-dessus de l'ouverture) :
+
+$$Q = C_d \cdot w \cdot L \cdot \sqrt{2g \cdot (h_u - h_d)}$$
+
+où $h_d$ est la charge aval. La transition entre les deux régimes se produit lorsque $h_d / h_u \approx 0{,}67$ (condition de submersion de l'orifice).
+
+### Régulateurs automatiques : régulation de niveau aval et amont
+
+Les **régulateurs automatiques** sont des ouvrages hydrauliques passifs (sans alimentation électrique) qui maintiennent automatiquement un niveau d'eau constant en amont ou en aval, quelle que soit la variation de débit. Ils sont au cœur de la gestion des périmètres irrigués modernes.
+
+**Régulateurs à niveau aval constant** (type AMIL, AVIS, AVIO) : maintiennent un niveau d'eau constant **en aval** de l'ouvrage, indépendamment du débit transitant. Ils permettent aux prises aval de prélever à un niveau constant, garantissant une pression de service stable pour les irrigants aval. Leur loi de fonctionnement est celle d'une vanne dont l'ouverture varie automatiquement pour maintenir $h_d = \text{cste}$.
+
+**Régulateurs à niveau amont constant** (type ALSTHOM, NEYRPIC) : maintiennent un niveau d'eau constant **en amont** de l'ouvrage. Ils protègent les prises amont contre les variations de niveau, mais laissent le niveau aval fluctuer. Utilisés en tête de biefs pour maintenir une charge constante aux prises situées dans ce bief.
+
+La modélisation de ces régulateurs requiert de coupler la loi hydraulique de l'ouvrage (loi de vanne) avec une **loi de régulation** qui définit comment l'ouverture de la vanne évolue en fonction de l'écart entre le niveau mesuré et la consigne. En régime permanent, le régulateur est à son point d'équilibre — l'ouverture est celle qui assure exactement le débit de consigne au niveau de consigne. En régime transitoire (variation de débit due à un tour d'eau), l'ouverture évolue dynamiquement selon la loi de régulation.
+
+### Partiteurs et modules à masque
+
+Un **partiteur** est un ouvrage qui répartit le débit d'un canal principal entre deux ou plusieurs canaux secondaires selon des proportions définies. La répartition est assurée par des seuils ou des orifices calibrés dont les dimensions sont calculées pour obtenir les débits souhaités quelle que soit la hauteur d'eau amont (dans une certaine plage).
+
+Le **module à masque** est un partiteur robuste dont le débit est pratiquement indépendant de la hauteur d'eau amont dans une large plage : un masque (écran) place l'écoulement en régime critique à la crête, ce qui découple le débit aval de la hauteur amont. C'est l'outil classique de l'irrigation traditionnelle méditerranéenne pour garantir un partage équitable du débit quelle que soit la situation hydraulique du canal.
+
+---
+
+## Régime permanent : profils en long et courbes de remous
+
+### Calcul du profil en long entre deux ouvrages
+
+En régime permanent, le profil en long d'un bief (tronçon de canal compris entre deux ouvrages de régulation) est calculé par intégration de l'équation des profils en long, de l'aval vers l'amont en régime fluvial :
+
+$$\frac{dh}{dx} = \frac{S_0 - S_f(h)}{1 - Fr^2(h)}$$
+
+La condition aux limites aval est imposée par l'ouvrage aval : hauteur normale si l'ouvrage aval est un seuil dénoyé (le canal se raccorde à la hauteur critique à la crête), ou hauteur imposée par la consigne du régulateur aval.
+
+On intègre pas à pas vers l'amont (méthode de la longueur de pas ou méthode de la largeur de pas) jusqu'à l'ouvrage amont.
+
+**Avec pertes par infiltration :** le terme $q_l < 0$ modifie l'équation de continuité — le débit $Q$ n'est plus constant le long du bief mais décroît linéairement (ou selon la loi de Kostiakov). Le profil en long doit être recalculé avec ce débit variable, ce qui modifie $S_f(h)$ à chaque section.
+
+### L'influence des ouvrages sur la ligne d'eau
+
+Chaque ouvrage de régulation crée une **discontinuité** de la ligne d'eau :
+
+**En amont d'un seuil ou d'une vanne fermée :** le niveau monte pour atteindre la charge nécessaire à faire passer le débit — c'est le remous amont M1 (courbe de remous en régime fluvial au-dessus de la hauteur normale).
+
+**En aval d'un seuil dénoyé :** la chute crée un écoulement torrentiel localement (hauteur critique à la crête), suivi d'un ressaut hydraulique qui ramène l'écoulement au régime fluvial. La longueur et la position du ressaut dépendent des conditions aval.
+
+**En aval d'une vanne de fond :** l'orifice crée un jet dénoyé en régime torrentiel (hauteur d'eau très faible, vitesse très élevée), suivi d'un ressaut hydraulique.
+
+La modélisation de ces discontinuités est un point délicat : les logiciels utilisent des formules de saut hydraulique et des conditions de raccordement pour assurer la continuité du débit à travers les ouvrages.
+
+### Bilan de débit avec pertes par infiltration
+
+Le bilan de débit sur un périmètre irrigué gravitaire est un outil de diagnostic indispensable. Il compare, tronçon par tronçon :
+
+- Le débit mesuré à l'entrée du tronçon $Q_{entrée}$
+- La somme des débits prélevés aux prises latérales $\sum Q_{prises}$
+- Le débit mesuré à la sortie du tronçon $Q_{sortie}$
+
+La différence $Q_{entrée} - \sum Q_{prises} - Q_{sortie}$ représente les **pertes par infiltration et fuites** sur le tronçon. Un bilan systématique sur l'ensemble du réseau permet d'identifier les tronçons les plus perdants et de prioriser les travaux de réhabilitation (revêtement, colmatage).
+
+---
+
+## Régime transitoire : ondes de translation et régulation
+
+### L'onde de translation : célérité et temps de propagation
+
+Lorsqu'un ouvrage de régulation est manœuvré (ouverture ou fermeture d'une vanne, modification du débit prélevé à une prise), une **onde de translation** se propage dans le canal. En régime fluvial, cette onde se propage dans les deux sens — vers l'amont et vers l'aval — à la célérité :
+
+$$c = V \pm \sqrt{g \cdot h}$$
+
+où $V$ est la vitesse de l'écoulement et $h$ la hauteur d'eau. Pour un canal peu profond à faible vitesse ($V \ll \sqrt{gh}$), la célérité est approximativement $c \approx \sqrt{gh}$.
+
+Pour un canal d'irrigation typique ($h \approx 1$ à $2$ m), $c \approx 3$ à $4{,}5$ m/s. Un canal de 10 km voit une onde de translation traverser toute sa longueur en $10000 / 3{,}5 \approx 47$ minutes. C'est le **temps de réponse** du canal à une perturbation — un paramètre clé pour la gestion opérationnelle.
+
+::: {.callout-note}
+## Canal vs conduite sous pression : deux ordres de grandeur de différence
+La célérité des ondes gravitaires dans un canal ($\approx 3$ à $5$ m/s) est 200 à 300 fois plus faible que la célérité des ondes de pression dans une conduite sous pression ($\approx 800$ à $1200$ m/s). Cette différence fondamentale explique pourquoi la régulation des canaux est un problème "lent" (les opérateurs ont le temps d'observer et de réagir) alors que les coups de bélier en réseau AEP sont des phénomènes "instantanés" (quelques secondes).
+:::
+
+### Manœuvre de vanne : perturbation locale et propagation
+
+La fermeture partielle d'une vanne génère deux ondes simultanées :
+- Une **onde de montée** (surpression) qui se propage vers l'amont : la hauteur d'eau augmente progressivement en amont de la vanne
+- Une **onde de descente** (baisse de niveau) qui se propage vers l'aval : la hauteur d'eau diminue progressivement en aval de la vanne
+
+L'amplitude de ces ondes dépend de la vitesse de manœuvre de la vanne et du débit initial. Pour une fermeture progressive (sur un temps $T_f$ long par rapport au temps de propagation sur le bief), les variations de niveau restent faibles et le système peut être géré en quasi-permanent. Pour une fermeture rapide, les variations de niveau peuvent être importantes et imposent une modélisation transitoire.
+
+En irrigation gravitaire, les manœuvres de vannes sont gérées par les agents d'exploitation selon des protocoles définis (tours d'eau, rotations) — mais elles sont souvent moins précises que les automatismes d'un réseau AEP. La modélisation transitoire permet de prévoir les niveaux atteints lors des manœuvres et de définir des protocoles d'exploitation sûrs.
+
+### La régulation automatique : objectif et types
+
+L'objectif de la régulation automatique d'un canal est de **maintenir des niveaux et des débits dans des plages acceptables** malgré les variations de la demande des irrigants (ouvertures et fermetures de prises) et des apports en tête (fluctuations de la source). Trois grandes stratégies de régulation coexistent :
+
+**Régulation amont (upstream control) :** chaque ouvrage de régulation maintient un niveau constant en amont. Le canal fonctionne "par le haut" — les prises amont sont servies en priorité, les variations se propagent vers l'aval. Simple à opérer mais peu équitable pour les irrigants aval.
+
+**Régulation aval (downstream control) :** chaque ouvrage de régulation maintient un niveau constant en aval. Le canal s'adapte aux besoins des irrigants où qu'ils soient. Plus équitable mais plus complexe à stabiliser — une demande aval génère une onde qui remonte vers l'amont, qui doit être compensée par une augmentation du débit en tête.
+
+**Volume constant (constant volume) :** le volume total d'eau dans le canal est maintenu constant. C'est une stratégie intermédiaire qui tente de minimiser les variations de niveau tout en s'adaptant aux variations de demande. Elle nécessite un contrôle centralisé et une connaissance en temps réel du débit en chaque point.
+
+### Modélisation de la régulation : couplage hydraulique/contrôle
+
+La simulation de la régulation automatique nécessite de coupler le **modèle hydraulique** (Saint-Venant transitoire) avec un **modèle de contrôle** qui décrit la loi de commande de chaque ouvrage.
+
+La loi de commande la plus simple est un contrôleur **proportionnel-intégral** (PI) :
+
+$$w(t) = w_0 + K_p \cdot e(t) + K_i \cdot \int_0^t e(\tau) d\tau$$
+
+où $w(t)$ est l'ouverture de la vanne, $e(t) = h_{consigne} - h_{mesuré}$ l'erreur de niveau, et $K_p$, $K_i$ les gains proportionnel et intégral à caler.
+
+Les gains $K_p$ et $K_i$ doivent être choisis soigneusement : des gains trop élevés rendent le système instable (oscillations de niveau), des gains trop faibles rendent la régulation lente et peu réactive. Le calage de ces gains est un problème d'automatique appliquée à l'hydraulique — les logiciels spécialisés (SIC) proposent des outils de calage automatique des régulateurs.
+
+---
+
+## Les outils de simulation
+
+### SIC (Simulation des Irrigation Canals) — INRAE
+
+**SIC** est le logiciel de référence francophone pour la simulation des canaux d'irrigation gravitaire. Développé par l'INRAE (anciennement CEMAGREF/IRSTEA), il est spécialement conçu pour les problèmes d'irrigation :
+
+- Résolution de Saint-Venant 1D en régime permanent et transitoire
+- Modélisation native des ouvrages de régulation (régulateurs amont/aval, AMIL, AVIS, modules à masque)
+- Simulation de la régulation automatique avec contrôleurs PI
+- Prise en compte des pertes par infiltration (terme source distribué)
+- Calage du modèle sur mesures de débit et de niveau
+
+SIC est distribué gratuitement par l'INRAE pour la recherche et l'enseignement. Son interface est moins ergonomique que les outils commerciaux, mais sa spécialisation sur l'irrigation le rend irremplaçable pour les études de canaux avec régulation automatique.
+
+### HEC-RAS — US Army Corps of Engineers
+
+**HEC-RAS** est un logiciel polyvalent de modélisation hydraulique à surface libre, utilisé pour les rivières, les canaux et les zones inondables. Il peut être utilisé pour les canaux d'irrigation, notamment :
+
+- Calcul des profils en long en régime permanent (avec prise en compte des ouvrages : seuils, vannes)
+- Simulation transitoire par Saint-Venant complet
+- Modélisation 2D pour les zones de distribution complexes
+
+Ses limites pour l'irrigation : la modélisation des régulateurs automatiques est moins native que dans SIC, et les pertes par infiltration nécessitent un paramétrage spécifique. HEC-RAS est plutôt adapté aux grands canaux d'adduction, là où la régulation fine n'est pas le sujet central.
+
+### Calage d'un modèle de canal
+
+Le calage d'un modèle de canal gravitaire repose sur deux familles de mesures :
+
+**Mesures de débit :** jaugeages en des sections représentatives du canal (méthode volumétrique, moulinets, débitmètres acoustiques). Le bilan de débit entre deux sections successives permet d'estimer les pertes par infiltration sur le tronçon intermédiaire.
+
+**Mesures de niveau :** limnigraphes ou capteurs de pression enregistrant le niveau d'eau en continu. En régime permanent, ils permettent de caler le coefficient de Strickler $K_s$ (ajustement de la hauteur normale calculée à la hauteur mesurée). En régime transitoire (lors d'une manœuvre instrumentée), ils permettent de caler la célérité des ondes et les gains des régulateurs.
+
+La procédure de calage suit les mêmes principes que pour les autres types de modèles :
+
+1. **Calage du bilan volumétrique** : ajustement des pertes par infiltration tronçon par tronçon à partir des bilans de débit
+2. **Calage du coefficient de Strickler** : ajustement de $K_s$ pour reproduire les hauteurs d'eau mesurées en régime permanent
+3. **Calage des lois d'ouvrages** : ajustement des coefficients de débit ($\mu$, $C_d$) pour reproduire les relations hauteur-débit aux ouvrages
+4. **Calage des régulateurs** : ajustement des gains $K_p$ et $K_i$ pour reproduire la dynamique observée lors des manœuvres
+
+---
+
+## Du dimensionnement au diagnostic
+
+### Calculer la capacité d'un canal existant
+
+La capacité d'un canal existant est le débit maximal qu'il peut transiter sans dépasser la revanche — c'est-à-dire sans débordement. Elle est calculée par Manning-Strickler pour la section à pleine capacité (niveau de la berge moins la revanche de sécurité) :
+
+$$Q_{max} = K_s \cdot A_{pleine} \cdot R_{h,pleine}^{2/3} \cdot S_0^{1/2}$$
+
+En pratique, le $K_s$ effectif d'un canal existant est souvent inférieur au $K_s$ nominal du matériau (encrassement, végétation, sédimentation) — il doit être calé sur des mesures de terrain, pas estimé à partir des tables.
+
+### Identifier les tronçons limitants et les pertes excessives
+
+Le diagnostic d'un réseau de canaux d'irrigation combine deux analyses :
+
+**Analyse de capacité :** cartographie des taux de remplissage ($h/h_{berge}$) pour le débit de pointe de la campagne d'irrigation. Les tronçons dont le taux de remplissage dépasse 0,8 à 0,85 sont des tronçons limitants — ils contraignent le débit maximale distribuable sur le périmètre.
+
+**Analyse des pertes :** bilan de débit systématique sur chaque tronçon. Les tronçons dont les pertes dépassent 5 % du débit par kilomètre sont des candidats prioritaires à la réhabilitation (revêtement ou colmatage).
+
+### Simuler une modification de dotation
+
+La simulation d'une modification de dotation (augmentation ou réduction du débit alloué à un irrigant ou à un sous-périmètre) permet de prévoir :
+
+- L'impact sur les niveaux d'eau dans les biefs voisins
+- La capacité résiduelle disponible dans les tronçons amont
+- La nécessité d'ajuster les réglages des ouvrages de régulation
+- Les risques de débordement ou d'assèchement dans certains biefs
+
+Cette simulation est particulièrement utile lors de la gestion de la pénurie (sécheresse, restriction d'usage) pour distribuer équitablement un débit réduit sans assécher certains biefs ni en noyer d'autres.
+
+### Le bilan hydrique du périmètre : de la tête à la parcelle
+
+Le bilan hydrique complet d'un périmètre irrigué met en relation :
+
+$$Q_{prélevé} = Q_{distribué} + Q_{pertes\_canaux} + Q_{déversements}$$
+
+où $Q_{distribué}$ est le débit effectivement fourni aux parcelles, $Q_{pertes\_canaux}$ les pertes par infiltration dans les canaux, et $Q_{déversements}$ les débits évacués aux déversoirs de sécurité.
+
+L'**efficience du transport** est le rapport $Q_{distribué} / Q_{prélevé}$ — elle mesure la fraction de l'eau prélevée en tête qui atteint effectivement les parcelles. Pour un réseau de canaux en terre non revêtus ancien, cette efficience peut être inférieure à 60 %. Pour un réseau revêtu bien entretenu, elle dépasse 85 à 90 %.
+
+Le modèle hydraulique est l'outil qui permet de quantifier cette efficience, de la décomposer par tronçon, et de simuler l'effet des travaux de réhabilitation sur l'efficience globale du périmètre.
+
+---
+
+## Conclusion
+
+La modélisation des canaux d'irrigation gravitaire est une discipline à la croisée de l'hydraulique à surface libre, de l'automatique (régulation des ouvrages) et de l'agronomie (finalité de la distribution d'eau). Sa spécificité par rapport à l'assainissement gravitaire tient à deux caractéristiques fondamentales : les ouvrages de régulation actifs qui maintiennent des niveaux de service précis, et les pertes par infiltration qui modifient le bilan de débit tout au long du réseau.
+
+La maîtrise de la régulation est l'enjeu central de la gestion opérationnelle des périmètres irrigués. Un réseau bien dimensionné mais mal régulé peut distribuer l'eau de façon très inéquitable — certains irrigants recevant trop, d'autres pas assez. Le modèle hydraulique, couplé à un modèle de régulation, est l'outil qui permet d'optimiser les réglages des ouvrages et de former les agents d'exploitation aux bonnes pratiques de manœuvre.
+
+---
+
+## Pour aller plus loin dans cette série
+
+- **Note 2.C2** — *Modélisation des réseaux d'irrigation sous pression : ramifiés et goutte-à-goutte* : réseau ramifié, loi émetteur, calcul du coefficient d'uniformité, dimensionnement sous contrainte d'uniformité
+- **Note 2.C3** — *Transitoires en irrigation : coups de bélier et régulation des canaux* : méthode des caractéristiques appliquée à l'irrigation, protections, intermittence et fatigue des conduites
+- **Note 3.1** — *Calage et validation de modèles hydrauliques* : indicateurs de performance, plan de mesures, sensibilité aux paramètres

@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="fr" xml:lang="fr"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="">
+
+<title>Modélisation des réseaux d’irrigation gravitaire – Johary - Ingénieur Hydraulicien</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../static/avatar.jpg" rel="icon" type="image/jpeg">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-23bbe8b5e4efc1e257f6d59dce478b08.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-7f128302b46659ec05c1cdf12d27b5f1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-fcb2e74b6da07224c5b59afd36009af3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-7f128302b46659ec05c1cdf12d27b5f1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "Pas de résultats",
+    "search-matching-documents-text": "documents trouvés",
+    "search-copy-link-title": "Copier le lien vers la recherche",
+    "search-hide-matches-text": "Cacher les correspondances additionnelles",
+    "search-more-match-text": "correspondance de plus dans ce document",
+    "search-more-matches-text": "correspondances de plus dans ce document",
+    "search-clear-button-title": "Effacer",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Annuler",
+    "search-submit-button-title": "Envoyer",
+    "search-label": "Recherche"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../styles.css">
+</head>
+
+<body class="nav-sidebar floating quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Basculer la barre latérale" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item">
+      Johary - Ingénieur Hydraulicien
+      </li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Basculer la barre latérale" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Recherche" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Johary - Ingénieur Hydraulicien</a> 
+        <div class="sidebar-tools-main">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Basculer le mode sombre"><i class="bi"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Recherche"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🏠 Accueil</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../formation/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🌊 Formation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../etudes-de-cas/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">📐 Études de cas</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../geomatique/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🌍 Géomatique</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../programmation/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🐍 Programmation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../parcours/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🗺️ Parcours</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../contact.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">✉️ Contact</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Sommaire</h2>
+   
+  <ul>
+  <li><a href="#rappel-la-physique-de-lécoulement-en-canal-dirrigation" id="toc-rappel-la-physique-de-lécoulement-en-canal-dirrigation" class="nav-link active" data-scroll-target="#rappel-la-physique-de-lécoulement-en-canal-dirrigation"><span class="header-section-number">1</span> Rappel : la physique de l’écoulement en canal d’irrigation</a>
+  <ul class="collapse">
+  <li><a href="#saint-venant-comme-équation-gouvernante" id="toc-saint-venant-comme-équation-gouvernante" class="nav-link" data-scroll-target="#saint-venant-comme-équation-gouvernante"><span class="header-section-number">1.1</span> Saint-Venant comme équation gouvernante</a></li>
+  <li><a href="#hauteur-normale-et-hauteur-critique-en-section-trapézoïdale" id="toc-hauteur-normale-et-hauteur-critique-en-section-trapézoïdale" class="nav-link" data-scroll-target="#hauteur-normale-et-hauteur-critique-en-section-trapézoïdale"><span class="header-section-number">1.2</span> Hauteur normale et hauteur critique en section trapézoïdale</a></li>
+  <li><a href="#le-régime-fluvial-domine-en-irrigation-gravitaire" id="toc-le-régime-fluvial-domine-en-irrigation-gravitaire" class="nav-link" data-scroll-target="#le-régime-fluvial-domine-en-irrigation-gravitaire"><span class="header-section-number">1.3</span> Le régime fluvial domine en irrigation gravitaire</a></li>
+  </ul></li>
+  <li><a href="#dimensionnement-hydraulique-dun-canal" id="toc-dimensionnement-hydraulique-dun-canal" class="nav-link" data-scroll-target="#dimensionnement-hydraulique-dun-canal"><span class="header-section-number">2</span> Dimensionnement hydraulique d’un canal</a>
+  <ul class="collapse">
+  <li><a href="#la-section-optimale-hydrauliquement" id="toc-la-section-optimale-hydrauliquement" class="nav-link" data-scroll-target="#la-section-optimale-hydrauliquement"><span class="header-section-number">2.1</span> La section optimale hydrauliquement</a></li>
+  <li><a href="#la-revanche-et-le-tirant-dair" id="toc-la-revanche-et-le-tirant-dair" class="nav-link" data-scroll-target="#la-revanche-et-le-tirant-dair"><span class="header-section-number">2.2</span> La revanche et le tirant d’air</a></li>
+  <li><a href="#pertes-par-infiltration-un-terme-source-négatif-distribué" id="toc-pertes-par-infiltration-un-terme-source-négatif-distribué" class="nav-link" data-scroll-target="#pertes-par-infiltration-un-terme-source-négatif-distribué"><span class="header-section-number">2.3</span> Pertes par infiltration : un terme source négatif distribué</a></li>
+  </ul></li>
+  <li><a href="#les-ouvrages-de-régulation-physique-et-modélisation" id="toc-les-ouvrages-de-régulation-physique-et-modélisation" class="nav-link" data-scroll-target="#les-ouvrages-de-régulation-physique-et-modélisation"><span class="header-section-number">3</span> Les ouvrages de régulation : physique et modélisation</a>
+  <ul class="collapse">
+  <li><a href="#seuils-fixes-la-loi-de-déversoir" id="toc-seuils-fixes-la-loi-de-déversoir" class="nav-link" data-scroll-target="#seuils-fixes-la-loi-de-déversoir"><span class="header-section-number">3.1</span> Seuils fixes : la loi de déversoir</a></li>
+  <li><a href="#vannes-de-fond-et-vannes-de-surface-loi-dorifice" id="toc-vannes-de-fond-et-vannes-de-surface-loi-dorifice" class="nav-link" data-scroll-target="#vannes-de-fond-et-vannes-de-surface-loi-dorifice"><span class="header-section-number">3.2</span> Vannes de fond et vannes de surface : loi d’orifice</a></li>
+  <li><a href="#régulateurs-automatiques-régulation-de-niveau-aval-et-amont" id="toc-régulateurs-automatiques-régulation-de-niveau-aval-et-amont" class="nav-link" data-scroll-target="#régulateurs-automatiques-régulation-de-niveau-aval-et-amont"><span class="header-section-number">3.3</span> Régulateurs automatiques : régulation de niveau aval et amont</a></li>
+  <li><a href="#partiteurs-et-modules-à-masque" id="toc-partiteurs-et-modules-à-masque" class="nav-link" data-scroll-target="#partiteurs-et-modules-à-masque"><span class="header-section-number">3.4</span> Partiteurs et modules à masque</a></li>
+  </ul></li>
+  <li><a href="#régime-permanent-profils-en-long-et-courbes-de-remous" id="toc-régime-permanent-profils-en-long-et-courbes-de-remous" class="nav-link" data-scroll-target="#régime-permanent-profils-en-long-et-courbes-de-remous"><span class="header-section-number">4</span> Régime permanent : profils en long et courbes de remous</a>
+  <ul class="collapse">
+  <li><a href="#calcul-du-profil-en-long-entre-deux-ouvrages" id="toc-calcul-du-profil-en-long-entre-deux-ouvrages" class="nav-link" data-scroll-target="#calcul-du-profil-en-long-entre-deux-ouvrages"><span class="header-section-number">4.1</span> Calcul du profil en long entre deux ouvrages</a></li>
+  <li><a href="#linfluence-des-ouvrages-sur-la-ligne-deau" id="toc-linfluence-des-ouvrages-sur-la-ligne-deau" class="nav-link" data-scroll-target="#linfluence-des-ouvrages-sur-la-ligne-deau"><span class="header-section-number">4.2</span> L’influence des ouvrages sur la ligne d’eau</a></li>
+  <li><a href="#bilan-de-débit-avec-pertes-par-infiltration" id="toc-bilan-de-débit-avec-pertes-par-infiltration" class="nav-link" data-scroll-target="#bilan-de-débit-avec-pertes-par-infiltration"><span class="header-section-number">4.3</span> Bilan de débit avec pertes par infiltration</a></li>
+  </ul></li>
+  <li><a href="#régime-transitoire-ondes-de-translation-et-régulation" id="toc-régime-transitoire-ondes-de-translation-et-régulation" class="nav-link" data-scroll-target="#régime-transitoire-ondes-de-translation-et-régulation"><span class="header-section-number">5</span> Régime transitoire : ondes de translation et régulation</a>
+  <ul class="collapse">
+  <li><a href="#londe-de-translation-célérité-et-temps-de-propagation" id="toc-londe-de-translation-célérité-et-temps-de-propagation" class="nav-link" data-scroll-target="#londe-de-translation-célérité-et-temps-de-propagation"><span class="header-section-number">5.1</span> L’onde de translation : célérité et temps de propagation</a></li>
+  <li><a href="#manœuvre-de-vanne-perturbation-locale-et-propagation" id="toc-manœuvre-de-vanne-perturbation-locale-et-propagation" class="nav-link" data-scroll-target="#manœuvre-de-vanne-perturbation-locale-et-propagation"><span class="header-section-number">5.2</span> Manœuvre de vanne : perturbation locale et propagation</a></li>
+  <li><a href="#la-régulation-automatique-objectif-et-types" id="toc-la-régulation-automatique-objectif-et-types" class="nav-link" data-scroll-target="#la-régulation-automatique-objectif-et-types"><span class="header-section-number">5.3</span> La régulation automatique : objectif et types</a></li>
+  <li><a href="#modélisation-de-la-régulation-couplage-hydrauliquecontrôle" id="toc-modélisation-de-la-régulation-couplage-hydrauliquecontrôle" class="nav-link" data-scroll-target="#modélisation-de-la-régulation-couplage-hydrauliquecontrôle"><span class="header-section-number">5.4</span> Modélisation de la régulation : couplage hydraulique/contrôle</a></li>
+  </ul></li>
+  <li><a href="#les-outils-de-simulation" id="toc-les-outils-de-simulation" class="nav-link" data-scroll-target="#les-outils-de-simulation"><span class="header-section-number">6</span> Les outils de simulation</a>
+  <ul class="collapse">
+  <li><a href="#sic-simulation-des-irrigation-canals-inrae" id="toc-sic-simulation-des-irrigation-canals-inrae" class="nav-link" data-scroll-target="#sic-simulation-des-irrigation-canals-inrae"><span class="header-section-number">6.1</span> SIC (Simulation des Irrigation Canals) — INRAE</a></li>
+  <li><a href="#hec-ras-us-army-corps-of-engineers" id="toc-hec-ras-us-army-corps-of-engineers" class="nav-link" data-scroll-target="#hec-ras-us-army-corps-of-engineers"><span class="header-section-number">6.2</span> HEC-RAS — US Army Corps of Engineers</a></li>
+  <li><a href="#calage-dun-modèle-de-canal" id="toc-calage-dun-modèle-de-canal" class="nav-link" data-scroll-target="#calage-dun-modèle-de-canal"><span class="header-section-number">6.3</span> Calage d’un modèle de canal</a></li>
+  </ul></li>
+  <li><a href="#du-dimensionnement-au-diagnostic" id="toc-du-dimensionnement-au-diagnostic" class="nav-link" data-scroll-target="#du-dimensionnement-au-diagnostic"><span class="header-section-number">7</span> Du dimensionnement au diagnostic</a>
+  <ul class="collapse">
+  <li><a href="#calculer-la-capacité-dun-canal-existant" id="toc-calculer-la-capacité-dun-canal-existant" class="nav-link" data-scroll-target="#calculer-la-capacité-dun-canal-existant"><span class="header-section-number">7.1</span> Calculer la capacité d’un canal existant</a></li>
+  <li><a href="#identifier-les-tronçons-limitants-et-les-pertes-excessives" id="toc-identifier-les-tronçons-limitants-et-les-pertes-excessives" class="nav-link" data-scroll-target="#identifier-les-tronçons-limitants-et-les-pertes-excessives"><span class="header-section-number">7.2</span> Identifier les tronçons limitants et les pertes excessives</a></li>
+  <li><a href="#simuler-une-modification-de-dotation" id="toc-simuler-une-modification-de-dotation" class="nav-link" data-scroll-target="#simuler-une-modification-de-dotation"><span class="header-section-number">7.3</span> Simuler une modification de dotation</a></li>
+  <li><a href="#le-bilan-hydrique-du-périmètre-de-la-tête-à-la-parcelle" id="toc-le-bilan-hydrique-du-périmètre-de-la-tête-à-la-parcelle" class="nav-link" data-scroll-target="#le-bilan-hydrique-du-périmètre-de-la-tête-à-la-parcelle"><span class="header-section-number">7.4</span> Le bilan hydrique du périmètre : de la tête à la parcelle</a></li>
+  </ul></li>
+  <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion"><span class="header-section-number">8</span> Conclusion</a></li>
+  <li><a href="#pour-aller-plus-loin-dans-cette-série" id="toc-pour-aller-plus-loin-dans-cette-série" class="nav-link" data-scroll-target="#pour-aller-plus-loin-dans-cette-série"><span class="header-section-number">9</span> Pour aller plus loin dans cette série</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Modélisation des réseaux d’irrigation gravitaire</h1>
+<p class="subtitle lead">Canaux, partiteurs et régulation</p>
+  <div class="quarto-categories">
+    <div class="quarto-category">Hydraulique</div>
+    <div class="quarto-category">Irrigation</div>
+    <div class="quarto-category">Modélisation</div>
+    <div class="quarto-category">Ingénierie</div>
+  </div>
+  </div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+    <div>
+    <div class="quarto-title-meta-heading">Date de publication</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">16 mai 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Note de la série
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Cette note fait partie d’une série sur la modélisation des réseaux hydrauliques. Elle suppose la lecture des notes <em>Généralités sur la modélisation des réseaux hydrauliques</em> et <em>Modéliser un réseau d’irrigation — spécificités physiques et enjeux métier</em>. On entre ici dans la mécanique concrète de la modélisation des canaux gravitaires : du dimensionnement hydraulique à la simulation de la régulation, en passant par les ouvrages de partage et les pertes par infiltration.</p>
+</div>
+</div>
+<section id="rappel-la-physique-de-lécoulement-en-canal-dirrigation" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="rappel-la-physique-de-lécoulement-en-canal-dirrigation"><span class="header-section-number">1</span> Rappel : la physique de l’écoulement en canal d’irrigation</h2>
+<section id="saint-venant-comme-équation-gouvernante" class="level3" data-number="1.1">
+<h3 data-number="1.1" class="anchored" data-anchor-id="saint-venant-comme-équation-gouvernante"><span class="header-section-number">1.1</span> Saint-Venant comme équation gouvernante</h3>
+<p>Un canal d’irrigation est un ouvrage à surface libre régi par les équations de Saint-Venant (cf.&nbsp;note socle). La différence fondamentale avec un collecteur d’assainissement tient à la <strong>finalité de l’ouvrage</strong> : un collecteur évacue passivement l’eau vers un exutoire, un canal d’irrigation distribue activement l’eau vers des prises latérales selon des règles de partage. Cette finalité impose la présence d’ouvrages de régulation qui maintiennent des niveaux et des débits dans des plages précises — c’est la dimension de <strong>contrôle</strong> qui est absente de l’assainissement.</p>
+</section>
+<section id="hauteur-normale-et-hauteur-critique-en-section-trapézoïdale" class="level3" data-number="1.2">
+<h3 data-number="1.2" class="anchored" data-anchor-id="hauteur-normale-et-hauteur-critique-en-section-trapézoïdale"><span class="header-section-number">1.2</span> Hauteur normale et hauteur critique en section trapézoïdale</h3>
+<p>Les deux hauteurs de référence de l’écoulement en canal sont les mêmes qu’en assainissement, mais leur calcul diffère pour une section trapézoïdale.</p>
+<p><strong>La hauteur normale</strong> <span class="math inline">\(h_n\)</span> est la hauteur en régime uniforme, calculée par Manning-Strickler pour un débit <span class="math inline">\(Q\)</span>, une pente <span class="math inline">\(S_0\)</span> et un coefficient <span class="math inline">\(K_s\)</span> donnés. Pour une section trapézoïdale de largeur au fond <span class="math inline">\(b\)</span> et de fruit <span class="math inline">\(m\)</span> (rapport horizontal/vertical des talus), la résolution est implicite :</p>
+<p><span class="math display">\[Q = K_s \cdot \frac{[(b + mh_n)h_n]^{5/3}}{[b + 2h_n\sqrt{1+m^2}]^{2/3}} \cdot S_0^{1/2}\]</span></p>
+<p>Cette équation n’admet pas de solution analytique explicite — elle est résolue numériquement (itération de Newton ou abaque).</p>
+<p><strong>La hauteur critique</strong> <span class="math inline">\(h_c\)</span> est la hauteur pour laquelle le nombre de Froude <span class="math inline">\(Fr = 1\)</span>. Pour une section trapézoïdale, elle vérifie :</p>
+<p><span class="math display">\[\frac{Q^2}{g} = \frac{A_c^3}{T_c} = \frac{[(b + mh_c)h_c]^3}{b + 2mh_c}\]</span></p>
+<p>Là encore, la résolution est implicite.</p>
+</section>
+<section id="le-régime-fluvial-domine-en-irrigation-gravitaire" class="level3" data-number="1.3">
+<h3 data-number="1.3" class="anchored" data-anchor-id="le-régime-fluvial-domine-en-irrigation-gravitaire"><span class="header-section-number">1.3</span> Le régime fluvial domine en irrigation gravitaire</h3>
+<p>En irrigation gravitaire, les pentes sont généralement faibles (0,1 à 5 ‰) et les débits modérés — on est presque toujours en régime <strong>fluvial</strong> (<span class="math inline">\(Fr &lt; 1\)</span>, <span class="math inline">\(h_n &gt; h_c\)</span>). Cette domination du régime fluvial a deux conséquences pratiques importantes :</p>
+<ul>
+<li>L’information hydraulique se propage dans les <strong>deux sens</strong> : une perturbation aval (manœuvre d’une vanne) remonte vers l’amont. La régulation des canaux d’irrigation doit tenir compte de cette bidirectionnalité.</li>
+<li>Le calcul des courbes de remous se fait <strong>de l’aval vers l’amont</strong> : la condition aux limites aval (niveau imposé par un ouvrage de régulation) gouverne le profil en long vers l’amont.</li>
+</ul>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>L’exception torrentielle
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Certains canaux à forte pente (canaux de montagne, seguias de haute altitude) fonctionnent en régime torrentiel. Dans ce cas, les ondes se propagent uniquement vers l’aval, la régulation est plus simple (pas de remous amont), mais les vitesses élevées posent des problèmes d’érosion et de dissipation d’énergie aux ouvrages.</p>
+</div>
+</div>
+<hr>
+</section>
+</section>
+<section id="dimensionnement-hydraulique-dun-canal" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="dimensionnement-hydraulique-dun-canal"><span class="header-section-number">2</span> Dimensionnement hydraulique d’un canal</h2>
+<section id="la-section-optimale-hydrauliquement" class="level3" data-number="2.1">
+<h3 data-number="2.1" class="anchored" data-anchor-id="la-section-optimale-hydrauliquement"><span class="header-section-number">2.1</span> La section optimale hydrauliquement</h3>
+<p>Pour un débit <span class="math inline">\(Q\)</span>, une pente <span class="math inline">\(S_0\)</span> et un coefficient <span class="math inline">\(K_s\)</span> donnés, il existe une section transversale qui <strong>minimise le périmètre mouillé</strong> pour une section mouillée donnée — c’est la <strong>section hydrauliquement optimale</strong>. Elle minimise les frottements et donc les pertes de charge, ce qui permet d’utiliser le minimum de matériaux pour une capacité donnée.</p>
+<p>Pour une section trapézoïdale, la condition d’optimalité géométrique est :</p>
+<p><span class="math display">\[b = 2h\left(\sqrt{1 + m^2} - m\right)\]</span></p>
+<p>Ce qui donne, pour un fruit <span class="math inline">\(m\)</span> donné, le rapport optimal <span class="math inline">\(b/h\)</span>. En pratique : - Pour <span class="math inline">\(m = 0\)</span> (section rectangulaire) : <span class="math inline">\(b = 2h\)</span> (canal deux fois plus large que profond) - Pour <span class="math inline">\(m = 0{,}577\)</span> (fruit de 1/√3, angle de 60°) : <span class="math inline">\(b = 0\)</span> — la section optimale est demi-hexagonale - Pour <span class="math inline">\(m = 1\)</span> (fruit de 45°, le plus courant pour les canaux en terre) : <span class="math inline">\(b/h \approx 0{,}83\)</span></p>
+<p>En pratique, on s’écarte souvent de la section optimale pour des raisons géotechniques (stabilité des talus), constructives (gabarit des engins de terrassement) ou d’exploitation (accessibilité pour le curage).</p>
+</section>
+<section id="la-revanche-et-le-tirant-dair" class="level3" data-number="2.2">
+<h3 data-number="2.2" class="anchored" data-anchor-id="la-revanche-et-le-tirant-dair"><span class="header-section-number">2.2</span> La revanche et le tirant d’air</h3>
+<p>Le <strong>tirant d’air</strong> (ou revanche) est la distance verticale entre la surface libre en régime de projet et le sommet de la berge. Il protège le canal contre les débordements lors de variations de débit imprévues (erreur de régulation, afflux brutal) et contre les vagues créées par le vent sur les grands canaux.</p>
+<p>La revanche minimale dépend du débit et des conditions d’exploitation :</p>
+<div id="tbl-revanche" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-revanche-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Revanche minimale recommandée selon le débit
+</figcaption>
+<div aria-describedby="tbl-revanche-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Débit de projet (m³/s)</th>
+<th>Revanche minimale recommandée (m)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(Q &lt; 0{,}5\)</span></td>
+<td>0,20 — 0,30</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(0{,}5 \leq Q &lt; 5\)</span></td>
+<td>0,30 — 0,50</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(5 \leq Q &lt; 50\)</span></td>
+<td>0,50 — 0,75</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(Q \geq 50\)</span></td>
+<td>0,75 — 1,00</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+</section>
+<section id="pertes-par-infiltration-un-terme-source-négatif-distribué" class="level3" data-number="2.3">
+<h3 data-number="2.3" class="anchored" data-anchor-id="pertes-par-infiltration-un-terme-source-négatif-distribué"><span class="header-section-number">2.3</span> Pertes par infiltration : un terme source négatif distribué</h3>
+<p>Un canal en terre perd une fraction de son débit par infiltration dans le sol sur toute sa longueur. Ces pertes ne sont pas des pertes de charge au sens de Bernoulli — elles réduisent le débit disponible à l’aval sans modifier significativement la ligne d’énergie locale. Mais leur cumul sur un long canal peut être très significatif.</p>
+<p>La loi de <strong>Kostiakov</strong> est la formulation empirique la plus utilisée pour modéliser l’infiltration cumulée dans un canal :</p>
+<p><span class="math display">\[F(t) = k \cdot t^a\]</span></p>
+<p>où <span class="math inline">\(F\)</span> est le volume infiltré par unité de surface de fond mouillée (m³/m²), <span class="math inline">\(t\)</span> le temps (heures), et <span class="math inline">\(k\)</span>, <span class="math inline">\(a\)</span> des paramètres empiriques dépendant du type de sol (<span class="math inline">\(a\)</span> est typiquement compris entre 0,3 et 0,8 ; <span class="math inline">\(k\)</span> entre 0,01 et 0,5 selon la perméabilité du sol).</p>
+<p>En modélisation de canal, les pertes par infiltration sont intégrées comme un <strong>terme source négatif distribué</strong> <span class="math inline">\(q_l &lt; 0\)</span> dans l’équation de continuité de Saint-Venant :</p>
+<p><span class="math display">\[\frac{\partial A}{\partial t} + \frac{\partial Q}{\partial x} = q_l(x) &lt; 0\]</span></p>
+<p>où <span class="math inline">\(q_l(x)\)</span> représente le débit perdu par infiltration par unité de longueur de canal (m²/s, négatif).</p>
+<p><strong>Conséquence sur le bilan :</strong> sur un canal de longueur <span class="math inline">\(L\)</span> avec des pertes linéiques <span class="math inline">\(q_l\)</span> (supposées uniformes), le débit à l’extrémité aval est :</p>
+<p><span class="math display">\[Q_{aval} = Q_{amont} + q_l \cdot L &lt; Q_{amont}\]</span></p>
+<p>Les pertes typiques varient de 0,5 à 5 % du débit par kilomètre selon le type de sol et l’état du canal. Sur un périmètre irrigué de grande taille, elles peuvent représenter 20 à 40 % du volume prélevé en tête.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Astuce</span>Revêtement et réduction des pertes
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Le revêtement béton ou les géomembranes réduisent les pertes par infiltration d’un facteur 5 à 10. Mais le revêtement supprime aussi la recharge des nappes par le canal — un effet positif en zone d’économie d’eau, mais potentiellement négatif pour les agriculteurs qui irriguent par pompage dans la nappe alimentée par le canal. Le choix de revêtir ou non un canal est donc autant un choix hydrogéologique qu’hydraulique.</p>
+</div>
+</div>
+<hr>
+</section>
+</section>
+<section id="les-ouvrages-de-régulation-physique-et-modélisation" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="les-ouvrages-de-régulation-physique-et-modélisation"><span class="header-section-number">3</span> Les ouvrages de régulation : physique et modélisation</h2>
+<section id="seuils-fixes-la-loi-de-déversoir" class="level3" data-number="3.1">
+<h3 data-number="3.1" class="anchored" data-anchor-id="seuils-fixes-la-loi-de-déversoir"><span class="header-section-number">3.1</span> Seuils fixes : la loi de déversoir</h3>
+<p>Un <strong>seuil fixe</strong> (déversoir à crête large ou à mince paroi) impose une relation entre le niveau amont <span class="math inline">\(h_u\)</span> et le débit qui le franchit. C’est l’ouvrage le plus simple et le plus robuste — pas de pièces mobiles, pas de maintenance.</p>
+<p>Pour un déversoir à mince paroi en régime <strong>dénoyé</strong> (chute libre aval) :</p>
+<p><span class="math display">\[Q = \mu \cdot L \cdot \sqrt{2g} \cdot h_u^{3/2}\]</span></p>
+<p>où <span class="math inline">\(\mu\)</span> est le coefficient de débit (<span class="math inline">\(\mu \approx 0{,}40\)</span> à <span class="math inline">\(0{,}42\)</span> pour un seuil à mince paroi) et <span class="math inline">\(L\)</span> la longueur du seuil déversant.</p>
+<p>Pour un déversoir à <strong>crête large</strong> (longueur de crête &gt; 3 fois la charge amont), la loi devient :</p>
+<p><span class="math display">\[Q = C_d \cdot L \cdot h_u^{3/2}, \quad C_d = \frac{2}{3}\sqrt{\frac{2g}{3}} \approx 1{,}70 \text{ m}^{1/2}/\text{s}\]</span></p>
+<p>En régime <strong>noyé</strong> (le niveau aval dépasse la crête du seuil), la loi de déversoir est corrigée par un coefficient de submersion qui dépend du rapport des charges amont et aval. La transition dénoyé/noyé est une singularité numérique que les logiciels gèrent via des formules de transition progressives.</p>
+</section>
+<section id="vannes-de-fond-et-vannes-de-surface-loi-dorifice" class="level3" data-number="3.2">
+<h3 data-number="3.2" class="anchored" data-anchor-id="vannes-de-fond-et-vannes-de-surface-loi-dorifice"><span class="header-section-number">3.2</span> Vannes de fond et vannes de surface : loi d’orifice</h3>
+<p>Les <strong>vannes</strong> permettent de régler le débit en modifiant leur ouverture. La loi hydraulique est la loi d’orifice, qui distingue deux régimes selon la position du plan d’eau aval par rapport à l’ouverture de la vanne.</p>
+<p><strong>Régime dénoyé</strong> (vanne de fond, niveau aval bien en dessous de l’ouverture) :</p>
+<p><span class="math display">\[Q = C_d \cdot w \cdot L \cdot \sqrt{2g \cdot h_u}\]</span></p>
+<p>où <span class="math inline">\(w\)</span> est l’ouverture de la vanne (m), <span class="math inline">\(L\)</span> sa largeur (m), <span class="math inline">\(h_u\)</span> la charge amont mesurée depuis le fond, et <span class="math inline">\(C_d\)</span> le coefficient de débit (<span class="math inline">\(\approx 0{,}61\)</span> pour une vanne plate).</p>
+<p><strong>Régime noyé</strong> (niveau aval au-dessus de l’ouverture) :</p>
+<p><span class="math display">\[Q = C_d \cdot w \cdot L \cdot \sqrt{2g \cdot (h_u - h_d)}\]</span></p>
+<p>où <span class="math inline">\(h_d\)</span> est la charge aval. La transition entre les deux régimes se produit lorsque <span class="math inline">\(h_d / h_u \approx 0{,}67\)</span> (condition de submersion de l’orifice).</p>
+</section>
+<section id="régulateurs-automatiques-régulation-de-niveau-aval-et-amont" class="level3" data-number="3.3">
+<h3 data-number="3.3" class="anchored" data-anchor-id="régulateurs-automatiques-régulation-de-niveau-aval-et-amont"><span class="header-section-number">3.3</span> Régulateurs automatiques : régulation de niveau aval et amont</h3>
+<p>Les <strong>régulateurs automatiques</strong> sont des ouvrages hydrauliques passifs (sans alimentation électrique) qui maintiennent automatiquement un niveau d’eau constant en amont ou en aval, quelle que soit la variation de débit. Ils sont au cœur de la gestion des périmètres irrigués modernes.</p>
+<p><strong>Régulateurs à niveau aval constant</strong> (type AMIL, AVIS, AVIO) : maintiennent un niveau d’eau constant <strong>en aval</strong> de l’ouvrage, indépendamment du débit transitant. Ils permettent aux prises aval de prélever à un niveau constant, garantissant une pression de service stable pour les irrigants aval. Leur loi de fonctionnement est celle d’une vanne dont l’ouverture varie automatiquement pour maintenir <span class="math inline">\(h_d = \text{cste}\)</span>.</p>
+<p><strong>Régulateurs à niveau amont constant</strong> (type ALSTHOM, NEYRPIC) : maintiennent un niveau d’eau constant <strong>en amont</strong> de l’ouvrage. Ils protègent les prises amont contre les variations de niveau, mais laissent le niveau aval fluctuer. Utilisés en tête de biefs pour maintenir une charge constante aux prises situées dans ce bief.</p>
+<p>La modélisation de ces régulateurs requiert de coupler la loi hydraulique de l’ouvrage (loi de vanne) avec une <strong>loi de régulation</strong> qui définit comment l’ouverture de la vanne évolue en fonction de l’écart entre le niveau mesuré et la consigne. En régime permanent, le régulateur est à son point d’équilibre — l’ouverture est celle qui assure exactement le débit de consigne au niveau de consigne. En régime transitoire (variation de débit due à un tour d’eau), l’ouverture évolue dynamiquement selon la loi de régulation.</p>
+</section>
+<section id="partiteurs-et-modules-à-masque" class="level3" data-number="3.4">
+<h3 data-number="3.4" class="anchored" data-anchor-id="partiteurs-et-modules-à-masque"><span class="header-section-number">3.4</span> Partiteurs et modules à masque</h3>
+<p>Un <strong>partiteur</strong> est un ouvrage qui répartit le débit d’un canal principal entre deux ou plusieurs canaux secondaires selon des proportions définies. La répartition est assurée par des seuils ou des orifices calibrés dont les dimensions sont calculées pour obtenir les débits souhaités quelle que soit la hauteur d’eau amont (dans une certaine plage).</p>
+<p>Le <strong>module à masque</strong> est un partiteur robuste dont le débit est pratiquement indépendant de la hauteur d’eau amont dans une large plage : un masque (écran) place l’écoulement en régime critique à la crête, ce qui découple le débit aval de la hauteur amont. C’est l’outil classique de l’irrigation traditionnelle méditerranéenne pour garantir un partage équitable du débit quelle que soit la situation hydraulique du canal.</p>
+<hr>
+</section>
+</section>
+<section id="régime-permanent-profils-en-long-et-courbes-de-remous" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="régime-permanent-profils-en-long-et-courbes-de-remous"><span class="header-section-number">4</span> Régime permanent : profils en long et courbes de remous</h2>
+<section id="calcul-du-profil-en-long-entre-deux-ouvrages" class="level3" data-number="4.1">
+<h3 data-number="4.1" class="anchored" data-anchor-id="calcul-du-profil-en-long-entre-deux-ouvrages"><span class="header-section-number">4.1</span> Calcul du profil en long entre deux ouvrages</h3>
+<p>En régime permanent, le profil en long d’un bief (tronçon de canal compris entre deux ouvrages de régulation) est calculé par intégration de l’équation des profils en long, de l’aval vers l’amont en régime fluvial :</p>
+<p><span class="math display">\[\frac{dh}{dx} = \frac{S_0 - S_f(h)}{1 - Fr^2(h)}\]</span></p>
+<p>La condition aux limites aval est imposée par l’ouvrage aval : hauteur normale si l’ouvrage aval est un seuil dénoyé (le canal se raccorde à la hauteur critique à la crête), ou hauteur imposée par la consigne du régulateur aval.</p>
+<p>On intègre pas à pas vers l’amont (méthode de la longueur de pas ou méthode de la largeur de pas) jusqu’à l’ouvrage amont.</p>
+<p><strong>Avec pertes par infiltration :</strong> le terme <span class="math inline">\(q_l &lt; 0\)</span> modifie l’équation de continuité — le débit <span class="math inline">\(Q\)</span> n’est plus constant le long du bief mais décroît linéairement (ou selon la loi de Kostiakov). Le profil en long doit être recalculé avec ce débit variable, ce qui modifie <span class="math inline">\(S_f(h)\)</span> à chaque section.</p>
+</section>
+<section id="linfluence-des-ouvrages-sur-la-ligne-deau" class="level3" data-number="4.2">
+<h3 data-number="4.2" class="anchored" data-anchor-id="linfluence-des-ouvrages-sur-la-ligne-deau"><span class="header-section-number">4.2</span> L’influence des ouvrages sur la ligne d’eau</h3>
+<p>Chaque ouvrage de régulation crée une <strong>discontinuité</strong> de la ligne d’eau :</p>
+<p><strong>En amont d’un seuil ou d’une vanne fermée :</strong> le niveau monte pour atteindre la charge nécessaire à faire passer le débit — c’est le remous amont M1 (courbe de remous en régime fluvial au-dessus de la hauteur normale).</p>
+<p><strong>En aval d’un seuil dénoyé :</strong> la chute crée un écoulement torrentiel localement (hauteur critique à la crête), suivi d’un ressaut hydraulique qui ramène l’écoulement au régime fluvial. La longueur et la position du ressaut dépendent des conditions aval.</p>
+<p><strong>En aval d’une vanne de fond :</strong> l’orifice crée un jet dénoyé en régime torrentiel (hauteur d’eau très faible, vitesse très élevée), suivi d’un ressaut hydraulique.</p>
+<p>La modélisation de ces discontinuités est un point délicat : les logiciels utilisent des formules de saut hydraulique et des conditions de raccordement pour assurer la continuité du débit à travers les ouvrages.</p>
+</section>
+<section id="bilan-de-débit-avec-pertes-par-infiltration" class="level3" data-number="4.3">
+<h3 data-number="4.3" class="anchored" data-anchor-id="bilan-de-débit-avec-pertes-par-infiltration"><span class="header-section-number">4.3</span> Bilan de débit avec pertes par infiltration</h3>
+<p>Le bilan de débit sur un périmètre irrigué gravitaire est un outil de diagnostic indispensable. Il compare, tronçon par tronçon :</p>
+<ul>
+<li>Le débit mesuré à l’entrée du tronçon <span class="math inline">\(Q_{entrée}\)</span></li>
+<li>La somme des débits prélevés aux prises latérales <span class="math inline">\(\sum Q_{prises}\)</span></li>
+<li>Le débit mesuré à la sortie du tronçon <span class="math inline">\(Q_{sortie}\)</span></li>
+</ul>
+<p>La différence <span class="math inline">\(Q_{entrée} - \sum Q_{prises} - Q_{sortie}\)</span> représente les <strong>pertes par infiltration et fuites</strong> sur le tronçon. Un bilan systématique sur l’ensemble du réseau permet d’identifier les tronçons les plus perdants et de prioriser les travaux de réhabilitation (revêtement, colmatage).</p>
+<hr>
+</section>
+</section>
+<section id="régime-transitoire-ondes-de-translation-et-régulation" class="level2" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="régime-transitoire-ondes-de-translation-et-régulation"><span class="header-section-number">5</span> Régime transitoire : ondes de translation et régulation</h2>
+<section id="londe-de-translation-célérité-et-temps-de-propagation" class="level3" data-number="5.1">
+<h3 data-number="5.1" class="anchored" data-anchor-id="londe-de-translation-célérité-et-temps-de-propagation"><span class="header-section-number">5.1</span> L’onde de translation : célérité et temps de propagation</h3>
+<p>Lorsqu’un ouvrage de régulation est manœuvré (ouverture ou fermeture d’une vanne, modification du débit prélevé à une prise), une <strong>onde de translation</strong> se propage dans le canal. En régime fluvial, cette onde se propage dans les deux sens — vers l’amont et vers l’aval — à la célérité :</p>
+<p><span class="math display">\[c = V \pm \sqrt{g \cdot h}\]</span></p>
+<p>où <span class="math inline">\(V\)</span> est la vitesse de l’écoulement et <span class="math inline">\(h\)</span> la hauteur d’eau. Pour un canal peu profond à faible vitesse (<span class="math inline">\(V \ll \sqrt{gh}\)</span>), la célérité est approximativement <span class="math inline">\(c \approx \sqrt{gh}\)</span>.</p>
+<p>Pour un canal d’irrigation typique (<span class="math inline">\(h \approx 1\)</span> à <span class="math inline">\(2\)</span> m), <span class="math inline">\(c \approx 3\)</span> à <span class="math inline">\(4{,}5\)</span> m/s. Un canal de 10 km voit une onde de translation traverser toute sa longueur en <span class="math inline">\(10000 / 3{,}5 \approx 47\)</span> minutes. C’est le <strong>temps de réponse</strong> du canal à une perturbation — un paramètre clé pour la gestion opérationnelle.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Canal vs conduite sous pression : deux ordres de grandeur de différence
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>La célérité des ondes gravitaires dans un canal (<span class="math inline">\(\approx 3\)</span> à <span class="math inline">\(5\)</span> m/s) est 200 à 300 fois plus faible que la célérité des ondes de pression dans une conduite sous pression (<span class="math inline">\(\approx 800\)</span> à <span class="math inline">\(1200\)</span> m/s). Cette différence fondamentale explique pourquoi la régulation des canaux est un problème “lent” (les opérateurs ont le temps d’observer et de réagir) alors que les coups de bélier en réseau AEP sont des phénomènes “instantanés” (quelques secondes).</p>
+</div>
+</div>
+</section>
+<section id="manœuvre-de-vanne-perturbation-locale-et-propagation" class="level3" data-number="5.2">
+<h3 data-number="5.2" class="anchored" data-anchor-id="manœuvre-de-vanne-perturbation-locale-et-propagation"><span class="header-section-number">5.2</span> Manœuvre de vanne : perturbation locale et propagation</h3>
+<p>La fermeture partielle d’une vanne génère deux ondes simultanées : - Une <strong>onde de montée</strong> (surpression) qui se propage vers l’amont : la hauteur d’eau augmente progressivement en amont de la vanne - Une <strong>onde de descente</strong> (baisse de niveau) qui se propage vers l’aval : la hauteur d’eau diminue progressivement en aval de la vanne</p>
+<p>L’amplitude de ces ondes dépend de la vitesse de manœuvre de la vanne et du débit initial. Pour une fermeture progressive (sur un temps <span class="math inline">\(T_f\)</span> long par rapport au temps de propagation sur le bief), les variations de niveau restent faibles et le système peut être géré en quasi-permanent. Pour une fermeture rapide, les variations de niveau peuvent être importantes et imposent une modélisation transitoire.</p>
+<p>En irrigation gravitaire, les manœuvres de vannes sont gérées par les agents d’exploitation selon des protocoles définis (tours d’eau, rotations) — mais elles sont souvent moins précises que les automatismes d’un réseau AEP. La modélisation transitoire permet de prévoir les niveaux atteints lors des manœuvres et de définir des protocoles d’exploitation sûrs.</p>
+</section>
+<section id="la-régulation-automatique-objectif-et-types" class="level3" data-number="5.3">
+<h3 data-number="5.3" class="anchored" data-anchor-id="la-régulation-automatique-objectif-et-types"><span class="header-section-number">5.3</span> La régulation automatique : objectif et types</h3>
+<p>L’objectif de la régulation automatique d’un canal est de <strong>maintenir des niveaux et des débits dans des plages acceptables</strong> malgré les variations de la demande des irrigants (ouvertures et fermetures de prises) et des apports en tête (fluctuations de la source). Trois grandes stratégies de régulation coexistent :</p>
+<p><strong>Régulation amont (upstream control) :</strong> chaque ouvrage de régulation maintient un niveau constant en amont. Le canal fonctionne “par le haut” — les prises amont sont servies en priorité, les variations se propagent vers l’aval. Simple à opérer mais peu équitable pour les irrigants aval.</p>
+<p><strong>Régulation aval (downstream control) :</strong> chaque ouvrage de régulation maintient un niveau constant en aval. Le canal s’adapte aux besoins des irrigants où qu’ils soient. Plus équitable mais plus complexe à stabiliser — une demande aval génère une onde qui remonte vers l’amont, qui doit être compensée par une augmentation du débit en tête.</p>
+<p><strong>Volume constant (constant volume) :</strong> le volume total d’eau dans le canal est maintenu constant. C’est une stratégie intermédiaire qui tente de minimiser les variations de niveau tout en s’adaptant aux variations de demande. Elle nécessite un contrôle centralisé et une connaissance en temps réel du débit en chaque point.</p>
+</section>
+<section id="modélisation-de-la-régulation-couplage-hydrauliquecontrôle" class="level3" data-number="5.4">
+<h3 data-number="5.4" class="anchored" data-anchor-id="modélisation-de-la-régulation-couplage-hydrauliquecontrôle"><span class="header-section-number">5.4</span> Modélisation de la régulation : couplage hydraulique/contrôle</h3>
+<p>La simulation de la régulation automatique nécessite de coupler le <strong>modèle hydraulique</strong> (Saint-Venant transitoire) avec un <strong>modèle de contrôle</strong> qui décrit la loi de commande de chaque ouvrage.</p>
+<p>La loi de commande la plus simple est un contrôleur <strong>proportionnel-intégral</strong> (PI) :</p>
+<p><span class="math display">\[w(t) = w_0 + K_p \cdot e(t) + K_i \cdot \int_0^t e(\tau) d\tau\]</span></p>
+<p>où <span class="math inline">\(w(t)\)</span> est l’ouverture de la vanne, <span class="math inline">\(e(t) = h_{consigne} - h_{mesuré}\)</span> l’erreur de niveau, et <span class="math inline">\(K_p\)</span>, <span class="math inline">\(K_i\)</span> les gains proportionnel et intégral à caler.</p>
+<p>Les gains <span class="math inline">\(K_p\)</span> et <span class="math inline">\(K_i\)</span> doivent être choisis soigneusement : des gains trop élevés rendent le système instable (oscillations de niveau), des gains trop faibles rendent la régulation lente et peu réactive. Le calage de ces gains est un problème d’automatique appliquée à l’hydraulique — les logiciels spécialisés (SIC) proposent des outils de calage automatique des régulateurs.</p>
+<hr>
+</section>
+</section>
+<section id="les-outils-de-simulation" class="level2" data-number="6">
+<h2 data-number="6" class="anchored" data-anchor-id="les-outils-de-simulation"><span class="header-section-number">6</span> Les outils de simulation</h2>
+<section id="sic-simulation-des-irrigation-canals-inrae" class="level3" data-number="6.1">
+<h3 data-number="6.1" class="anchored" data-anchor-id="sic-simulation-des-irrigation-canals-inrae"><span class="header-section-number">6.1</span> SIC (Simulation des Irrigation Canals) — INRAE</h3>
+<p><strong>SIC</strong> est le logiciel de référence francophone pour la simulation des canaux d’irrigation gravitaire. Développé par l’INRAE (anciennement CEMAGREF/IRSTEA), il est spécialement conçu pour les problèmes d’irrigation :</p>
+<ul>
+<li>Résolution de Saint-Venant 1D en régime permanent et transitoire</li>
+<li>Modélisation native des ouvrages de régulation (régulateurs amont/aval, AMIL, AVIS, modules à masque)</li>
+<li>Simulation de la régulation automatique avec contrôleurs PI</li>
+<li>Prise en compte des pertes par infiltration (terme source distribué)</li>
+<li>Calage du modèle sur mesures de débit et de niveau</li>
+</ul>
+<p>SIC est distribué gratuitement par l’INRAE pour la recherche et l’enseignement. Son interface est moins ergonomique que les outils commerciaux, mais sa spécialisation sur l’irrigation le rend irremplaçable pour les études de canaux avec régulation automatique.</p>
+</section>
+<section id="hec-ras-us-army-corps-of-engineers" class="level3" data-number="6.2">
+<h3 data-number="6.2" class="anchored" data-anchor-id="hec-ras-us-army-corps-of-engineers"><span class="header-section-number">6.2</span> HEC-RAS — US Army Corps of Engineers</h3>
+<p><strong>HEC-RAS</strong> est un logiciel polyvalent de modélisation hydraulique à surface libre, utilisé pour les rivières, les canaux et les zones inondables. Il peut être utilisé pour les canaux d’irrigation, notamment :</p>
+<ul>
+<li>Calcul des profils en long en régime permanent (avec prise en compte des ouvrages : seuils, vannes)</li>
+<li>Simulation transitoire par Saint-Venant complet</li>
+<li>Modélisation 2D pour les zones de distribution complexes</li>
+</ul>
+<p>Ses limites pour l’irrigation : la modélisation des régulateurs automatiques est moins native que dans SIC, et les pertes par infiltration nécessitent un paramétrage spécifique. HEC-RAS est plutôt adapté aux grands canaux d’adduction, là où la régulation fine n’est pas le sujet central.</p>
+</section>
+<section id="calage-dun-modèle-de-canal" class="level3" data-number="6.3">
+<h3 data-number="6.3" class="anchored" data-anchor-id="calage-dun-modèle-de-canal"><span class="header-section-number">6.3</span> Calage d’un modèle de canal</h3>
+<p>Le calage d’un modèle de canal gravitaire repose sur deux familles de mesures :</p>
+<p><strong>Mesures de débit :</strong> jaugeages en des sections représentatives du canal (méthode volumétrique, moulinets, débitmètres acoustiques). Le bilan de débit entre deux sections successives permet d’estimer les pertes par infiltration sur le tronçon intermédiaire.</p>
+<p><strong>Mesures de niveau :</strong> limnigraphes ou capteurs de pression enregistrant le niveau d’eau en continu. En régime permanent, ils permettent de caler le coefficient de Strickler <span class="math inline">\(K_s\)</span> (ajustement de la hauteur normale calculée à la hauteur mesurée). En régime transitoire (lors d’une manœuvre instrumentée), ils permettent de caler la célérité des ondes et les gains des régulateurs.</p>
+<p>La procédure de calage suit les mêmes principes que pour les autres types de modèles :</p>
+<ol type="1">
+<li><strong>Calage du bilan volumétrique</strong> : ajustement des pertes par infiltration tronçon par tronçon à partir des bilans de débit</li>
+<li><strong>Calage du coefficient de Strickler</strong> : ajustement de <span class="math inline">\(K_s\)</span> pour reproduire les hauteurs d’eau mesurées en régime permanent</li>
+<li><strong>Calage des lois d’ouvrages</strong> : ajustement des coefficients de débit (<span class="math inline">\(\mu\)</span>, <span class="math inline">\(C_d\)</span>) pour reproduire les relations hauteur-débit aux ouvrages</li>
+<li><strong>Calage des régulateurs</strong> : ajustement des gains <span class="math inline">\(K_p\)</span> et <span class="math inline">\(K_i\)</span> pour reproduire la dynamique observée lors des manœuvres</li>
+</ol>
+<hr>
+</section>
+</section>
+<section id="du-dimensionnement-au-diagnostic" class="level2" data-number="7">
+<h2 data-number="7" class="anchored" data-anchor-id="du-dimensionnement-au-diagnostic"><span class="header-section-number">7</span> Du dimensionnement au diagnostic</h2>
+<section id="calculer-la-capacité-dun-canal-existant" class="level3" data-number="7.1">
+<h3 data-number="7.1" class="anchored" data-anchor-id="calculer-la-capacité-dun-canal-existant"><span class="header-section-number">7.1</span> Calculer la capacité d’un canal existant</h3>
+<p>La capacité d’un canal existant est le débit maximal qu’il peut transiter sans dépasser la revanche — c’est-à-dire sans débordement. Elle est calculée par Manning-Strickler pour la section à pleine capacité (niveau de la berge moins la revanche de sécurité) :</p>
+<p><span class="math display">\[Q_{max} = K_s \cdot A_{pleine} \cdot R_{h,pleine}^{2/3} \cdot S_0^{1/2}\]</span></p>
+<p>En pratique, le <span class="math inline">\(K_s\)</span> effectif d’un canal existant est souvent inférieur au <span class="math inline">\(K_s\)</span> nominal du matériau (encrassement, végétation, sédimentation) — il doit être calé sur des mesures de terrain, pas estimé à partir des tables.</p>
+</section>
+<section id="identifier-les-tronçons-limitants-et-les-pertes-excessives" class="level3" data-number="7.2">
+<h3 data-number="7.2" class="anchored" data-anchor-id="identifier-les-tronçons-limitants-et-les-pertes-excessives"><span class="header-section-number">7.2</span> Identifier les tronçons limitants et les pertes excessives</h3>
+<p>Le diagnostic d’un réseau de canaux d’irrigation combine deux analyses :</p>
+<p><strong>Analyse de capacité :</strong> cartographie des taux de remplissage (<span class="math inline">\(h/h_{berge}\)</span>) pour le débit de pointe de la campagne d’irrigation. Les tronçons dont le taux de remplissage dépasse 0,8 à 0,85 sont des tronçons limitants — ils contraignent le débit maximale distribuable sur le périmètre.</p>
+<p><strong>Analyse des pertes :</strong> bilan de débit systématique sur chaque tronçon. Les tronçons dont les pertes dépassent 5 % du débit par kilomètre sont des candidats prioritaires à la réhabilitation (revêtement ou colmatage).</p>
+</section>
+<section id="simuler-une-modification-de-dotation" class="level3" data-number="7.3">
+<h3 data-number="7.3" class="anchored" data-anchor-id="simuler-une-modification-de-dotation"><span class="header-section-number">7.3</span> Simuler une modification de dotation</h3>
+<p>La simulation d’une modification de dotation (augmentation ou réduction du débit alloué à un irrigant ou à un sous-périmètre) permet de prévoir :</p>
+<ul>
+<li>L’impact sur les niveaux d’eau dans les biefs voisins</li>
+<li>La capacité résiduelle disponible dans les tronçons amont</li>
+<li>La nécessité d’ajuster les réglages des ouvrages de régulation</li>
+<li>Les risques de débordement ou d’assèchement dans certains biefs</li>
+</ul>
+<p>Cette simulation est particulièrement utile lors de la gestion de la pénurie (sécheresse, restriction d’usage) pour distribuer équitablement un débit réduit sans assécher certains biefs ni en noyer d’autres.</p>
+</section>
+<section id="le-bilan-hydrique-du-périmètre-de-la-tête-à-la-parcelle" class="level3" data-number="7.4">
+<h3 data-number="7.4" class="anchored" data-anchor-id="le-bilan-hydrique-du-périmètre-de-la-tête-à-la-parcelle"><span class="header-section-number">7.4</span> Le bilan hydrique du périmètre : de la tête à la parcelle</h3>
+<p>Le bilan hydrique complet d’un périmètre irrigué met en relation :</p>
+<p><span class="math display">\[Q_{prélevé} = Q_{distribué} + Q_{pertes\_canaux} + Q_{déversements}\]</span></p>
+<p>où <span class="math inline">\(Q_{distribué}\)</span> est le débit effectivement fourni aux parcelles, <span class="math inline">\(Q_{pertes\_canaux}\)</span> les pertes par infiltration dans les canaux, et <span class="math inline">\(Q_{déversements}\)</span> les débits évacués aux déversoirs de sécurité.</p>
+<p>L’<strong>efficience du transport</strong> est le rapport <span class="math inline">\(Q_{distribué} / Q_{prélevé}\)</span> — elle mesure la fraction de l’eau prélevée en tête qui atteint effectivement les parcelles. Pour un réseau de canaux en terre non revêtus ancien, cette efficience peut être inférieure à 60 %. Pour un réseau revêtu bien entretenu, elle dépasse 85 à 90 %.</p>
+<p>Le modèle hydraulique est l’outil qui permet de quantifier cette efficience, de la décomposer par tronçon, et de simuler l’effet des travaux de réhabilitation sur l’efficience globale du périmètre.</p>
+<hr>
+</section>
+</section>
+<section id="conclusion" class="level2" data-number="8">
+<h2 data-number="8" class="anchored" data-anchor-id="conclusion"><span class="header-section-number">8</span> Conclusion</h2>
+<p>La modélisation des canaux d’irrigation gravitaire est une discipline à la croisée de l’hydraulique à surface libre, de l’automatique (régulation des ouvrages) et de l’agronomie (finalité de la distribution d’eau). Sa spécificité par rapport à l’assainissement gravitaire tient à deux caractéristiques fondamentales : les ouvrages de régulation actifs qui maintiennent des niveaux de service précis, et les pertes par infiltration qui modifient le bilan de débit tout au long du réseau.</p>
+<p>La maîtrise de la régulation est l’enjeu central de la gestion opérationnelle des périmètres irrigués. Un réseau bien dimensionné mais mal régulé peut distribuer l’eau de façon très inéquitable — certains irrigants recevant trop, d’autres pas assez. Le modèle hydraulique, couplé à un modèle de régulation, est l’outil qui permet d’optimiser les réglages des ouvrages et de former les agents d’exploitation aux bonnes pratiques de manœuvre.</p>
+<hr>
+</section>
+<section id="pour-aller-plus-loin-dans-cette-série" class="level2" data-number="9">
+<h2 data-number="9" class="anchored" data-anchor-id="pour-aller-plus-loin-dans-cette-série"><span class="header-section-number">9</span> Pour aller plus loin dans cette série</h2>
+<ul>
+<li><strong>Note 2.C2</strong> — <em>Modélisation des réseaux d’irrigation sous pression : ramifiés et goutte-à-goutte</em> : réseau ramifié, loi émetteur, calcul du coefficient d’uniformité, dimensionnement sous contrainte d’uniformité</li>
+<li><strong>Note 2.C3</strong> — <em>Transitoires en irrigation : coups de bélier et régulation des canaux</em> : méthode des caractéristiques appliquée à l’irrigation, protections, intermittence et fatigue des conduites</li>
+<li><strong>Note 3.1</strong> — <em>Calage et validation de modèles hydrauliques</em> : indicateurs de performance, plan de mesures, sensibilité aux paramètres</li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copié");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copié");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<script src="../site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="fr" xml:lang="fr"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="">
+
+<title>Modélisation des réseaux d’irrigation sous pression – Johary - Ingénieur Hydraulicien</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../static/avatar.jpg" rel="icon" type="image/jpeg">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-23bbe8b5e4efc1e257f6d59dce478b08.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-7f128302b46659ec05c1cdf12d27b5f1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-fcb2e74b6da07224c5b59afd36009af3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-7f128302b46659ec05c1cdf12d27b5f1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "Pas de résultats",
+    "search-matching-documents-text": "documents trouvés",
+    "search-copy-link-title": "Copier le lien vers la recherche",
+    "search-hide-matches-text": "Cacher les correspondances additionnelles",
+    "search-more-match-text": "correspondance de plus dans ce document",
+    "search-more-matches-text": "correspondances de plus dans ce document",
+    "search-clear-button-title": "Effacer",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Annuler",
+    "search-submit-button-title": "Envoyer",
+    "search-label": "Recherche"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../styles.css">
+</head>
+
+<body class="nav-sidebar floating quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Basculer la barre latérale" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item">
+      Johary - Ingénieur Hydraulicien
+      </li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Basculer la barre latérale" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Recherche" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Johary - Ingénieur Hydraulicien</a> 
+        <div class="sidebar-tools-main">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Basculer le mode sombre"><i class="bi"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Recherche"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🏠 Accueil</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../formation/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🌊 Formation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../etudes-de-cas/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">📐 Études de cas</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../geomatique/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🌍 Géomatique</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../programmation/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🐍 Programmation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../parcours/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🗺️ Parcours</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../contact.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">✉️ Contact</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Sommaire</h2>
+   
+  <ul>
+  <li><a href="#la-topologie-ramifiée-et-ses-implications-hydrauliques" id="toc-la-topologie-ramifiée-et-ses-implications-hydrauliques" class="nav-link active" data-scroll-target="#la-topologie-ramifiée-et-ses-implications-hydrauliques"><span class="header-section-number">1</span> La topologie ramifiée et ses implications hydrauliques</a>
+  <ul class="collapse">
+  <li><a href="#arborescent-vs-maillé-deux-logiques-de-résolution" id="toc-arborescent-vs-maillé-deux-logiques-de-résolution" class="nav-link" data-scroll-target="#arborescent-vs-maillé-deux-logiques-de-résolution"><span class="header-section-number">1.1</span> Arborescent vs maillé : deux logiques de résolution</a></li>
+  <li><a href="#les-niveaux-du-réseau" id="toc-les-niveaux-du-réseau" class="nav-link" data-scroll-target="#les-niveaux-du-réseau"><span class="header-section-number">1.2</span> Les niveaux du réseau</a></li>
+  <li><a href="#la-vulnérabilité-topologique" id="toc-la-vulnérabilité-topologique" class="nav-link" data-scroll-target="#la-vulnérabilité-topologique"><span class="header-section-number">1.3</span> La vulnérabilité topologique</a></li>
+  </ul></li>
+  <li><a href="#la-loi-émetteur-le-cœur-du-problème" id="toc-la-loi-émetteur-le-cœur-du-problème" class="nav-link" data-scroll-target="#la-loi-émetteur-le-cœur-du-problème"><span class="header-section-number">2</span> La loi émetteur : le cœur du problème</a>
+  <ul class="collapse">
+  <li><a href="#la-relation-débit-pression" id="toc-la-relation-débit-pression" class="nav-link" data-scroll-target="#la-relation-débit-pression"><span class="header-section-number">2.1</span> La relation débit-pression</a></li>
+  <li><a href="#la-sensibilité-du-débit-à-la-pression" id="toc-la-sensibilité-du-débit-à-la-pression" class="nav-link" data-scroll-target="#la-sensibilité-du-débit-à-la-pression"><span class="header-section-number">2.2</span> La sensibilité du débit à la pression</a></li>
+  <li><a href="#les-goutteurs-autocompensants-la-loi-bi-linéaire" id="toc-les-goutteurs-autocompensants-la-loi-bi-linéaire" class="nav-link" data-scroll-target="#les-goutteurs-autocompensants-la-loi-bi-linéaire"><span class="header-section-number">2.3</span> Les goutteurs autocompensants : la loi bi-linéaire</a></li>
+  </ul></li>
+  <li><a href="#la-résolution-hydraulique-dun-réseau-ramifié" id="toc-la-résolution-hydraulique-dun-réseau-ramifié" class="nav-link" data-scroll-target="#la-résolution-hydraulique-dun-réseau-ramifié"><span class="header-section-number">3</span> La résolution hydraulique d’un réseau ramifié</a>
+  <ul class="collapse">
+  <li><a href="#passe-1-amont-vers-aval-calcul-des-débits" id="toc-passe-1-amont-vers-aval-calcul-des-débits" class="nav-link" data-scroll-target="#passe-1-amont-vers-aval-calcul-des-débits"><span class="header-section-number">3.1</span> Passe 1 — Amont vers aval : calcul des débits</a></li>
+  <li><a href="#passe-2-aval-vers-amont-calcul-des-pressions" id="toc-passe-2-aval-vers-amont-calcul-des-pressions" class="nav-link" data-scroll-target="#passe-2-aval-vers-amont-calcul-des-pressions"><span class="header-section-number">3.2</span> Passe 2 — Aval vers amont : calcul des pressions</a></li>
+  <li><a href="#litération-nécessaire" id="toc-litération-nécessaire" class="nav-link" data-scroll-target="#litération-nécessaire"><span class="header-section-number">3.3</span> L’itération nécessaire</a></li>
+  </ul></li>
+  <li><a href="#les-pertes-de-charge-en-réseau-dirrigation-sous-pression" id="toc-les-pertes-de-charge-en-réseau-dirrigation-sous-pression" class="nav-link" data-scroll-target="#les-pertes-de-charge-en-réseau-dirrigation-sous-pression"><span class="header-section-number">4</span> Les pertes de charge en réseau d’irrigation sous pression</a>
+  <ul class="collapse">
+  <li><a href="#darcy-weisbach-comme-référence" id="toc-darcy-weisbach-comme-référence" class="nav-link" data-scroll-target="#darcy-weisbach-comme-référence"><span class="header-section-number">4.1</span> Darcy-Weisbach comme référence</a></li>
+  <li><a href="#les-pertes-singulières-une-réalité-sous-estimée" id="toc-les-pertes-singulières-une-réalité-sous-estimée" class="nav-link" data-scroll-target="#les-pertes-singulières-une-réalité-sous-estimée"><span class="header-section-number">4.2</span> Les pertes singulières : une réalité sous-estimée</a></li>
+  <li><a href="#le-facteur-de-christiansen-f-pour-les-rampes-à-prises-multiples" id="toc-le-facteur-de-christiansen-f-pour-les-rampes-à-prises-multiples" class="nav-link" data-scroll-target="#le-facteur-de-christiansen-f-pour-les-rampes-à-prises-multiples"><span class="header-section-number">4.3</span> Le facteur de Christiansen <span class="math inline">\(F\)</span> pour les rampes à prises multiples</a></li>
+  </ul></li>
+  <li><a href="#le-dimensionnement-sous-contrainte-duniformité" id="toc-le-dimensionnement-sous-contrainte-duniformité" class="nav-link" data-scroll-target="#le-dimensionnement-sous-contrainte-duniformité"><span class="header-section-number">5</span> Le dimensionnement sous contrainte d’uniformité</a>
+  <ul class="collapse">
+  <li><a href="#la-règle-de-keller-karmeli" id="toc-la-règle-de-keller-karmeli" class="nav-link" data-scroll-target="#la-règle-de-keller-karmeli"><span class="header-section-number">5.1</span> La règle de Keller-Karmeli</a></li>
+  <li><a href="#répartition-de-la-tolérance-entre-conduites-et-topographie" id="toc-répartition-de-la-tolérance-entre-conduites-et-topographie" class="nav-link" data-scroll-target="#répartition-de-la-tolérance-entre-conduites-et-topographie"><span class="header-section-number">5.2</span> Répartition de la tolérance entre conduites et topographie</a></li>
+  <li><a href="#dimensionnement-des-conduites-principales" id="toc-dimensionnement-des-conduites-principales" class="nav-link" data-scroll-target="#dimensionnement-des-conduites-principales"><span class="header-section-number">5.3</span> Dimensionnement des conduites principales</a></li>
+  <li><a href="#dimensionnement-des-rampes" id="toc-dimensionnement-des-rampes" class="nav-link" data-scroll-target="#dimensionnement-des-rampes"><span class="header-section-number">5.4</span> Dimensionnement des rampes</a></li>
+  <li><a href="#le-calcul-du-cu-à-partir-du-modèle" id="toc-le-calcul-du-cu-à-partir-du-modèle" class="nav-link" data-scroll-target="#le-calcul-du-cu-à-partir-du-modèle"><span class="header-section-number">5.5</span> Le calcul du <span class="math inline">\(CU\)</span> à partir du modèle</a></li>
+  </ul></li>
+  <li><a href="#leffet-de-la-topographie" id="toc-leffet-de-la-topographie" class="nav-link" data-scroll-target="#leffet-de-la-topographie"><span class="header-section-number">6</span> L’effet de la topographie</a>
+  <ul class="collapse">
+  <li><a href="#terrain-plat-contrainte-purement-hydraulique" id="toc-terrain-plat-contrainte-purement-hydraulique" class="nav-link" data-scroll-target="#terrain-plat-contrainte-purement-hydraulique"><span class="header-section-number">6.1</span> Terrain plat : contrainte purement hydraulique</a></li>
+  <li><a href="#terrain-en-pente-favorable" id="toc-terrain-en-pente-favorable" class="nav-link" data-scroll-target="#terrain-en-pente-favorable"><span class="header-section-number">6.2</span> Terrain en pente favorable</a></li>
+  <li><a href="#terrain-en-pente-défavorable" id="toc-terrain-en-pente-défavorable" class="nav-link" data-scroll-target="#terrain-en-pente-défavorable"><span class="header-section-number">6.3</span> Terrain en pente défavorable</a></li>
+  </ul></li>
+  <li><a href="#les-stations-de-tête-et-les-conditions-aux-limites" id="toc-les-stations-de-tête-et-les-conditions-aux-limites" class="nav-link" data-scroll-target="#les-stations-de-tête-et-les-conditions-aux-limites"><span class="header-section-number">7</span> Les stations de tête et les conditions aux limites</a>
+  <ul class="collapse">
+  <li><a href="#la-pompe-source-de-pression-et-condition-aux-limites-amont" id="toc-la-pompe-source-de-pression-et-condition-aux-limites-amont" class="nav-link" data-scroll-target="#la-pompe-source-de-pression-et-condition-aux-limites-amont"><span class="header-section-number">7.1</span> La pompe : source de pression et condition aux limites amont</a></li>
+  <li><a href="#les-filtres-dimensionner-pour-le-filtre-colmaté" id="toc-les-filtres-dimensionner-pour-le-filtre-colmaté" class="nav-link" data-scroll-target="#les-filtres-dimensionner-pour-le-filtre-colmaté"><span class="header-section-number">7.2</span> Les filtres : dimensionner pour le filtre colmaté</a></li>
+  </ul></li>
+  <li><a href="#calage-et-diagnostic" id="toc-calage-et-diagnostic" class="nav-link" data-scroll-target="#calage-et-diagnostic"><span class="header-section-number">8</span> Calage et diagnostic</a>
+  <ul class="collapse">
+  <li><a href="#mesures-sur-le-réseau-existant" id="toc-mesures-sur-le-réseau-existant" class="nav-link" data-scroll-target="#mesures-sur-le-réseau-existant"><span class="header-section-number">8.1</span> Mesures sur le réseau existant</a></li>
+  <li><a href="#identifier-les-zones-de-sous-pression-et-de-surpression" id="toc-identifier-les-zones-de-sous-pression-et-de-surpression" class="nav-link" data-scroll-target="#identifier-les-zones-de-sous-pression-et-de-surpression"><span class="header-section-number">8.2</span> Identifier les zones de sous-pression et de surpression</a></li>
+  <li><a href="#simuler-un-renforcement" id="toc-simuler-un-renforcement" class="nav-link" data-scroll-target="#simuler-un-renforcement"><span class="header-section-number">8.3</span> Simuler un renforcement</a></li>
+  </ul></li>
+  <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion"><span class="header-section-number">9</span> Conclusion</a></li>
+  <li><a href="#pour-aller-plus-loin-dans-cette-série" id="toc-pour-aller-plus-loin-dans-cette-série" class="nav-link" data-scroll-target="#pour-aller-plus-loin-dans-cette-série"><span class="header-section-number">10</span> Pour aller plus loin dans cette série</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Modélisation des réseaux d’irrigation sous pression</h1>
+<p class="subtitle lead">Réseaux ramifiés et goutte-à-goutte</p>
+  <div class="quarto-categories">
+    <div class="quarto-category">Hydraulique</div>
+    <div class="quarto-category">Irrigation</div>
+    <div class="quarto-category">Modélisation</div>
+    <div class="quarto-category">Ingénierie</div>
+  </div>
+  </div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+    <div>
+    <div class="quarto-title-meta-heading">Date de publication</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">16 mai 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Note de la série
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Cette note fait partie d’une série sur la modélisation des réseaux hydrauliques. Elle suppose la lecture des notes <em>Généralités sur la modélisation des réseaux hydrauliques</em> et <em>Modéliser un réseau d’irrigation — spécificités physiques et enjeux métier</em>. On entre ici dans la mécanique concrète de la modélisation des réseaux d’irrigation sous pression : de la loi émetteur au calcul du coefficient d’uniformité, en passant par la résolution hydraulique des réseaux ramifiés et le dimensionnement sous contrainte d’uniformité.</p>
+</div>
+</div>
+<section id="la-topologie-ramifiée-et-ses-implications-hydrauliques" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="la-topologie-ramifiée-et-ses-implications-hydrauliques"><span class="header-section-number">1</span> La topologie ramifiée et ses implications hydrauliques</h2>
+<section id="arborescent-vs-maillé-deux-logiques-de-résolution" class="level3" data-number="1.1">
+<h3 data-number="1.1" class="anchored" data-anchor-id="arborescent-vs-maillé-deux-logiques-de-résolution"><span class="header-section-number">1.1</span> Arborescent vs maillé : deux logiques de résolution</h3>
+<p>Un réseau d’irrigation sous pression est structurellement <strong>arborescent</strong> : une source (station de pompage ou réservoir en charge) alimente une conduite principale, qui se divise en conduites secondaires, elles-mêmes divisées en tertiaires, puis en rampes portant les émetteurs. Il n’existe pas de boucles — chaque nœud n’a qu’un seul chemin possible vers la source.</p>
+<p>Cette topologie contraste fondamentalement avec le réseau AEP maillé (cf.&nbsp;note 2.A1) et simplifie la résolution hydraulique : le sens des débits est entièrement déterminé par la topologie, sans ambiguïté. Il n’est pas nécessaire de résoudre un système couplé global par Newton-Raphson — une résolution séquentielle en deux passes suffit, avec une itération pour tenir compte de la loi émetteur.</p>
+</section>
+<section id="les-niveaux-du-réseau" class="level3" data-number="1.2">
+<h3 data-number="1.2" class="anchored" data-anchor-id="les-niveaux-du-réseau"><span class="header-section-number">1.2</span> Les niveaux du réseau</h3>
+<p>Un réseau d’irrigation sous pression s’organise en <strong>niveaux hiérarchiques</strong> dont chacun a ses propres caractéristiques hydrauliques :</p>
+<div id="tbl-niveaux" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-niveaux-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Niveaux hiérarchiques d’un réseau d’irrigation sous pression
+</figcaption>
+<div aria-describedby="tbl-niveaux-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Niveau</th>
+<th>Rôle</th>
+<th>Diamètre typique</th>
+<th>Débit typique</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Conduite principale</td>
+<td>Transport depuis la source</td>
+<td>100 — 400 mm</td>
+<td>10 — 200 m³/h</td>
+</tr>
+<tr class="even">
+<td>Conduite secondaire</td>
+<td>Distribution par secteur</td>
+<td>63 — 160 mm</td>
+<td>2 — 50 m³/h</td>
+</tr>
+<tr class="odd">
+<td>Conduite tertiaire</td>
+<td>Alimentation des rampes</td>
+<td>32 — 90 mm</td>
+<td>0,5 — 10 m³/h</td>
+</tr>
+<tr class="even">
+<td>Rampe porte-émetteurs</td>
+<td>Distribution aux émetteurs</td>
+<td>16 — 32 mm</td>
+<td>0,1 — 2 m³/h</td>
+</tr>
+<tr class="odd">
+<td>Émetteurs</td>
+<td>Application à la plante</td>
+<td>—</td>
+<td>1 — 200 L/h</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>Chaque niveau a une logique de dimensionnement différente. Les conduites principales et secondaires sont dimensionnées pour minimiser les pertes de charge sur les trajets longs. Les rampes sont dimensionnées pour respecter la contrainte d’uniformité de distribution entre émetteurs.</p>
+</section>
+<section id="la-vulnérabilité-topologique" class="level3" data-number="1.3">
+<h3 data-number="1.3" class="anchored" data-anchor-id="la-vulnérabilité-topologique"><span class="header-section-number">1.3</span> La vulnérabilité topologique</h3>
+<p>L’absence de boucles a une conséquence opérationnelle importante : <strong>la rupture d’un tronçon prive d’eau tous les émetteurs en aval de ce tronçon</strong>. Il n’existe pas de chemin alternatif comme dans un réseau maillé. Cette vulnérabilité doit être prise en compte dans la conception — les tronçons principaux méritent une protection particulière (matériaux résistants, enterrement suffisant, vannes d’isolement rapprochées).</p>
+<hr>
+</section>
+</section>
+<section id="la-loi-émetteur-le-cœur-du-problème" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="la-loi-émetteur-le-cœur-du-problème"><span class="header-section-number">2</span> La loi émetteur : le cœur du problème</h2>
+<section id="la-relation-débit-pression" class="level3" data-number="2.1">
+<h3 data-number="2.1" class="anchored" data-anchor-id="la-relation-débit-pression"><span class="header-section-number">2.1</span> La relation débit-pression</h3>
+<p>La différence fondamentale entre un réseau d’irrigation sous pression et un réseau AEP réside dans la nature de la condition aux limites terminale. En AEP, la demande nodale <span class="math inline">\(d_i\)</span> est imposée indépendamment de la pression — elle ne varie pas si la pression change. En irrigation sous pression, le débit à chaque émetteur est une <strong>fonction de la pression locale</strong> :</p>
+<p><span class="math display">\[q = k \cdot h^x\]</span></p>
+<p>où <span class="math inline">\(q\)</span> est le débit de l’émetteur (L/h), <span class="math inline">\(h\)</span> la pression de service (m ou bar selon la convention), <span class="math inline">\(k\)</span> le coefficient de débit (caractéristique de l’émetteur, donné par le constructeur), et <span class="math inline">\(x\)</span> l’exposant de débit.</p>
+<p>L’exposant <span class="math inline">\(x\)</span> est la caractéristique physique la plus importante de l’émetteur — il détermine la sensibilité du débit à la pression :</p>
+<div id="tbl-exposants" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-exposants-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;2: Exposants de débit selon le type d’émetteur
+</figcaption>
+<div aria-describedby="tbl-exposants-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Type d’émetteur</th>
+<th>Exposant <span class="math inline">\(x\)</span></th>
+<th>Signification</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Asperseur (buses fixes)</td>
+<td><span class="math inline">\(\approx 0{,}50\)</span></td>
+<td>Débit proportionnel à <span class="math inline">\(\sqrt{h}\)</span> — loi d’orifice standard</td>
+</tr>
+<tr class="even">
+<td>Goutteur non autocompensant</td>
+<td>0,50 — 0,70</td>
+<td>Plus sensible à la pression que l’asperseur</td>
+</tr>
+<tr class="odd">
+<td>Micro-jet, micro-aspereur</td>
+<td><span class="math inline">\(\approx 0{,}50\)</span></td>
+<td>Comportement similaire à l’asperseur</td>
+</tr>
+<tr class="even">
+<td>Canon d’arrosage</td>
+<td>0,45 — 0,55</td>
+<td>Proche de la loi d’orifice</td>
+</tr>
+<tr class="odd">
+<td>Goutteur autocompensant</td>
+<td>Variable</td>
+<td>Loi bi-linéaire (voir ci-dessous)</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+</section>
+<section id="la-sensibilité-du-débit-à-la-pression" class="level3" data-number="2.2">
+<h3 data-number="2.2" class="anchored" data-anchor-id="la-sensibilité-du-débit-à-la-pression"><span class="header-section-number">2.2</span> La sensibilité du débit à la pression</h3>
+<p>La dérivée de la loi émetteur donne la sensibilité du débit à la pression :</p>
+<p><span class="math display">\[\frac{\partial q}{\partial h} = x \cdot k \cdot h^{x-1} = x \cdot \frac{q}{h}\]</span></p>
+<p>Cette relation montre que la <strong>variation relative de débit</strong> est proportionnelle à la variation relative de pression, avec un facteur <span class="math inline">\(x\)</span> :</p>
+<p><span class="math display">\[\frac{\Delta q}{q} \approx x \cdot \frac{\Delta h}{h}\]</span></p>
+<p>Pour un asperseur (<span class="math inline">\(x = 0{,}5\)</span>), une variation de pression de 20 % entraîne une variation de débit de 10 %. Pour un goutteur (<span class="math inline">\(x = 0{,}6\)</span>), la même variation de pression entraîne une variation de débit de 12 %. C’est cette relation qui justifie la règle des 20 % de Keller-Karmeli (cf.&nbsp;section 5) : une variation de pression de 20 % entre l’émetteur le plus favorisé et le moins favorisé entraîne une variation de débit de 10 %, ce qui correspond à un coefficient d’uniformité <span class="math inline">\(CU \approx 90\)</span> % — jugé acceptable en pratique.</p>
+</section>
+<section id="les-goutteurs-autocompensants-la-loi-bi-linéaire" class="level3" data-number="2.3">
+<h3 data-number="2.3" class="anchored" data-anchor-id="les-goutteurs-autocompensants-la-loi-bi-linéaire"><span class="header-section-number">2.3</span> Les goutteurs autocompensants : la loi bi-linéaire</h3>
+<p>Les <strong>goutteurs autocompensants</strong> sont équipés d’une membrane déformable qui régule automatiquement le débit dans une plage de pression définie — la <strong>plage de compensation</strong>. Leur courbe débit-pression n’est pas une simple loi puissance mais une <strong>loi bi-linéaire</strong> :</p>
+<ul>
+<li>En dessous de la pression minimale de compensation <span class="math inline">\(h_{min}\)</span> : le goutteur se comporte comme un goutteur non autocompensant (<span class="math inline">\(q = k \cdot h^x\)</span>, débit croissant avec la pression)</li>
+<li>Dans la plage de compensation [<span class="math inline">\(h_{min}\)</span>, <span class="math inline">\(h_{max}\)</span>] : le débit est pratiquement constant (<span class="math inline">\(q \approx q_{nominal}\)</span>) malgré les variations de pression</li>
+<li>Au-dessus de <span class="math inline">\(h_{max}\)</span> : la membrane est totalement comprimée, le goutteur se comporte à nouveau comme un orifice non régulé</li>
+</ul>
+<p>En modélisation, la loi bi-linéaire est implémentée par une fonction par morceaux :</p>
+<p><span class="math display">\[q(h) = \begin{cases} k \cdot h^x &amp; \text{si } h &lt; h_{min} \\ q_{nominal} &amp; \text{si } h_{min} \leq h \leq h_{max} \\ q_{nominal} + k' \cdot (h - h_{max}) &amp; \text{si } h &gt; h_{max} \end{cases}\]</span></p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Astuce</span>L’autocompensation : une solution partielle
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Les goutteurs autocompensants améliorent considérablement l’uniformité sur les terrains accidentés ou les longues rampes. Mais ils ne compensent pas les variations de débit dues au colmatage (obstruction partielle de l’orifice) ni les variations liées à la température (la viscosité de l’eau varie avec la température, ce qui modifie légèrement le débit). Ils sont plus coûteux que les goutteurs non autocompensants et nécessitent une pression minimale de service — il faut vérifier que la pression est partout supérieure à <span class="math inline">\(h_{min}\)</span> même en bout de rampe.</p>
+</div>
+</div>
+<hr>
+</section>
+</section>
+<section id="la-résolution-hydraulique-dun-réseau-ramifié" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="la-résolution-hydraulique-dun-réseau-ramifié"><span class="header-section-number">3</span> La résolution hydraulique d’un réseau ramifié</h2>
+<section id="passe-1-amont-vers-aval-calcul-des-débits" class="level3" data-number="3.1">
+<h3 data-number="3.1" class="anchored" data-anchor-id="passe-1-amont-vers-aval-calcul-des-débits"><span class="header-section-number">3.1</span> Passe 1 — Amont vers aval : calcul des débits</h3>
+<p>La première passe parcourt le réseau de la source vers les émetteurs et calcule le débit dans chaque tronçon par <strong>accumulation</strong> des débits aval :</p>
+<p><span class="math display">\[Q_{tronçon} = \sum_{k \in \text{émetteurs aval}} q_k\]</span></p>
+<p>Pour cette passe, on a besoin des débits <span class="math inline">\(q_k\)</span> à chaque émetteur — qui dépendent des pressions, encore inconnues. On part donc d’une <strong>hypothèse initiale</strong> : tous les émetteurs fonctionnent à la pression nominale <span class="math inline">\(h_0\)</span>, donnant un débit initial <span class="math inline">\(q_0 = k \cdot h_0^x\)</span>.</p>
+</section>
+<section id="passe-2-aval-vers-amont-calcul-des-pressions" class="level3" data-number="3.2">
+<h3 data-number="3.2" class="anchored" data-anchor-id="passe-2-aval-vers-amont-calcul-des-pressions"><span class="header-section-number">3.2</span> Passe 2 — Aval vers amont : calcul des pressions</h3>
+<p>La deuxième passe parcourt le réseau de la source vers les émetteurs (ou de l’émetteur le plus défavorisé vers la source) et calcule la pression en chaque nœud par <strong>accumulation des pertes de charge</strong> depuis la source :</p>
+<p><span class="math display">\[H_i = H_{source} - \sum_{j \in \text{chemin source} \to i} \Delta H_j\]</span></p>
+<p>où <span class="math inline">\(\Delta H_j\)</span> est la perte de charge dans le tronçon <span class="math inline">\(j\)</span> (régulière + singulière + dénivelé).</p>
+</section>
+<section id="litération-nécessaire" class="level3" data-number="3.3">
+<h3 data-number="3.3" class="anchored" data-anchor-id="litération-nécessaire"><span class="header-section-number">3.3</span> L’itération nécessaire</h3>
+<p>Après la passe 2, les pressions calculées aux émetteurs diffèrent des pressions initiales supposées <span class="math inline">\(h_0\)</span>. Les débits réels des émetteurs (<span class="math inline">\(q = k \cdot h^x\)</span> avec les nouvelles pressions) diffèrent des débits initiaux — ce qui modifie les débits dans les tronçons, puis les pertes de charge, puis les pressions.</p>
+<p>On itère jusqu’à convergence :</p>
+<ol type="1">
+<li>Calculer les débits émetteurs à partir des pressions courantes : <span class="math inline">\(q_k^{(n)} = k \cdot h_k^{(n)x}\)</span></li>
+<li>Recalculer les débits dans les tronçons (passe amont→aval)</li>
+<li>Recalculer les pressions aux nœuds (passe aval→amont)</li>
+<li>Vérifier la convergence : <span class="math inline">\(\max_k |h_k^{(n+1)} - h_k^{(n)}| &lt; \varepsilon\)</span></li>
+<li>Si convergence : arrêt. Sinon : retour en 1</li>
+</ol>
+<p>La convergence est généralement <strong>rapide</strong> (3 à 10 itérations) sur un réseau ramifié, car la non-linéarité est modérée (exposant <span class="math inline">\(x\)</span> proche de 0,5) et la topologie arborescente évite les bouclages. C’est nettement plus rapide que la convergence de Newton-Raphson sur un réseau maillé AEP.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Convergence et goutteurs autocompensants
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>La loi bi-linéaire des goutteurs autocompensants peut ralentir la convergence au voisinage des seuils <span class="math inline">\(h_{min}\)</span> et <span class="math inline">\(h_{max}\)</span> (discontinuité de la dérivée). Les logiciels spécialisés utilisent des formules de raccordement progressives aux transitions pour éviter les oscillations numériques.</p>
+</div>
+</div>
+<hr>
+</section>
+</section>
+<section id="les-pertes-de-charge-en-réseau-dirrigation-sous-pression" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="les-pertes-de-charge-en-réseau-dirrigation-sous-pression"><span class="header-section-number">4</span> Les pertes de charge en réseau d’irrigation sous pression</h2>
+<section id="darcy-weisbach-comme-référence" class="level3" data-number="4.1">
+<h3 data-number="4.1" class="anchored" data-anchor-id="darcy-weisbach-comme-référence"><span class="header-section-number">4.1</span> Darcy-Weisbach comme référence</h3>
+<p>Les pertes de charge régulières dans les conduites d’irrigation sont calculées par la formule de Darcy-Weisbach (cf.&nbsp;note socle), avec le coefficient de frottement <span class="math inline">\(f\)</span> calculé par Colebrook-White ou l’approximation de Swamee-Jain.</p>
+<p>Pour les conduites en PVC et PE (les plus courantes en irrigation), la rugosité est très faible (<span class="math inline">\(\varepsilon \approx 0{,}0015\)</span> à <span class="math inline">\(0{,}01\)</span> mm), ce qui place la plupart des écoulements en régime <strong>turbulent hydrauliquement lisse</strong>. Dans cette zone, <span class="math inline">\(f\)</span> dépend principalement du nombre de Reynolds et peu de la rugosité absolue — la formule de Blasius est une bonne approximation pour les conduites lisses :</p>
+<p><span class="math display">\[f = \frac{0{,}316}{Re^{0{,}25}} \quad \text{pour } Re &lt; 10^5\]</span></p>
+</section>
+<section id="les-pertes-singulières-une-réalité-sous-estimée" class="level3" data-number="4.2">
+<h3 data-number="4.2" class="anchored" data-anchor-id="les-pertes-singulières-une-réalité-sous-estimée"><span class="header-section-number">4.2</span> Les pertes singulières : une réalité sous-estimée</h3>
+<p>En réseau d’irrigation sous pression, les <strong>pertes singulières</strong> aux raccords, filtres, compteurs et régulateurs peuvent représenter 20 à 40 % des pertes totales sur les conduites tertiaires et les rampes. Leur négligence conduit à sous-estimer les pertes de charge et à surdimensionner les pressions — avec pour conséquence une hétérogénéité réelle supérieure à celle prédite par le modèle.</p>
+<p>La méthode de la <strong>longueur équivalente</strong> est la plus simple : chaque singularité est remplacée par une longueur de conduite droite produisant la même perte de charge :</p>
+<p><span class="math display">\[L_{eq} = \frac{\xi \cdot D}{f}\]</span></p>
+<p>où <span class="math inline">\(\xi\)</span> est le coefficient de perte de charge singulière et <span class="math inline">\(f\)</span> le coefficient de frottement. Les valeurs typiques de <span class="math inline">\(\xi\)</span> pour les éléments courants en irrigation :</p>
+<div id="tbl-singuliers" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-singuliers-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;3: Coefficients de perte de charge singulière pour les éléments courants
+</figcaption>
+<div aria-describedby="tbl-singuliers-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Élément</th>
+<th><span class="math inline">\(\xi\)</span> typique</th>
+<th><span class="math inline">\(L_{eq}\)</span> typique pour DN 32</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Coude 90°</td>
+<td>0,5 — 1,5</td>
+<td>0,5 — 1,5 m</td>
+</tr>
+<tr class="even">
+<td>Té en dérivation</td>
+<td>1,0 — 2,0</td>
+<td>1,0 — 2,0 m</td>
+</tr>
+<tr class="odd">
+<td>Vanne à boisseau sphérique (ouverte)</td>
+<td>0,1 — 0,3</td>
+<td>0,1 — 0,3 m</td>
+</tr>
+<tr class="even">
+<td>Filtre à disques (propre)</td>
+<td>2 — 5</td>
+<td>2 — 5 m</td>
+</tr>
+<tr class="odd">
+<td>Filtre à disques (colmaté à 50 %)</td>
+<td>10 — 30</td>
+<td>10 — 30 m</td>
+</tr>
+<tr class="even">
+<td>Compteur volumétrique</td>
+<td>3 — 8</td>
+<td>3 — 8 m</td>
+</tr>
+<tr class="odd">
+<td>Régulateur de pression</td>
+<td>5 — 15</td>
+<td>5 — 15 m</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+</section>
+<section id="le-facteur-de-christiansen-f-pour-les-rampes-à-prises-multiples" class="level3" data-number="4.3">
+<h3 data-number="4.3" class="anchored" data-anchor-id="le-facteur-de-christiansen-f-pour-les-rampes-à-prises-multiples"><span class="header-section-number">4.3</span> Le facteur de Christiansen <span class="math inline">\(F\)</span> pour les rampes à prises multiples</h3>
+<p>Une <strong>rampe porte-émetteurs</strong> est une conduite sur laquelle sont régulièrement répartis <span class="math inline">\(N\)</span> émetteurs, chacun prélevant un débit <span class="math inline">\(q\)</span>. Le débit dans la rampe décroît de <span class="math inline">\(N \cdot q\)</span> en tête à <span class="math inline">\(q\)</span> juste avant le dernier émetteur. La perte de charge totale dans la rampe n’est donc pas <span class="math inline">\(N\)</span> fois la perte de charge d’une conduite de longueur <span class="math inline">\(L\)</span> avec débit <span class="math inline">\(N \cdot q\)</span> — c’est moins, car le débit décroît le long de la rampe.</p>
+<p><strong>Christiansen</strong> (1942) a démontré que la perte de charge totale dans une rampe à <span class="math inline">\(N\)</span> prises uniformément réparties vaut :</p>
+<p><span class="math display">\[\Delta H_{rampe} = F(N, m) \cdot \Delta H_{pleine\_charge}\]</span></p>
+<p>où <span class="math inline">\(\Delta H_{pleine\_charge}\)</span> est la perte de charge qu’aurait la rampe si elle transportait le débit total <span class="math inline">\(N \cdot q\)</span> sur toute sa longueur, et <span class="math inline">\(F(N, m)\)</span> est le <strong>facteur de Christiansen</strong> :</p>
+<p><span class="math display">\[F(N, m) = \frac{1}{N^m} \left[\frac{N}{m+1} + \frac{1}{2} + \frac{\sqrt{m-1}}{6N}\right]\]</span></p>
+<p>où <span class="math inline">\(m\)</span> est l’exposant du débit dans la loi de perte de charge (<span class="math inline">\(m = 2\)</span> pour Darcy-Weisbach à <span class="math inline">\(f\)</span> constant, <span class="math inline">\(m \approx 1{,}75\)</span> à <span class="math inline">\(1{,}85\)</span> pour des formules empiriques).</p>
+<p>Pour <span class="math inline">\(N\)</span> grand (rampes avec de nombreux émetteurs), le facteur <span class="math inline">\(F\)</span> tend vers des valeurs asymptotiques :</p>
+<div id="tbl-christiansen" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-christiansen-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;4: Facteur de Christiansen asymptotique selon l’exposant <span class="math inline">\(m\)</span>
+</figcaption>
+<div aria-describedby="tbl-christiansen-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th><span class="math inline">\(m\)</span></th>
+<th><span class="math inline">\(F\)</span> asymptotique (<span class="math inline">\(N \to \infty\)</span>)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1,75 (Hazen-Williams)</td>
+<td>0,364</td>
+</tr>
+<tr class="even">
+<td>1,85 (Hazen-Williams corrigé)</td>
+<td>0,351</td>
+</tr>
+<tr class="odd">
+<td>2,00 (Darcy-Weisbach)</td>
+<td>0,333</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p><strong>Interprétation :</strong> pour une grande rampe avec beaucoup d’émetteurs, la perte de charge réelle est environ 36 % de la perte de charge qu’aurait la rampe si tout le débit transitait sur toute la longueur. Sans ce facteur, on surdimensionne massivement les rampes.</p>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Le facteur <span class="math inline">\(F\)</span> : une erreur courante en bureau d’études
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Oublier d’appliquer le facteur de Christiansen sur les rampes conduit à surestimer les pertes de charge d’un facteur 2 à 3 — et donc à surdimensionner les diamètres, augmentant inutilement le coût d’investissement. Inversement, oublier les pertes singulières aux raccords conduit à sous-estimer les pertes réelles. Ces deux erreurs s’opposent partiellement — mais elles peuvent se combiner défavorablement selon la géométrie du réseau.</p>
+</div>
+</div>
+<hr>
+</section>
+</section>
+<section id="le-dimensionnement-sous-contrainte-duniformité" class="level2" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="le-dimensionnement-sous-contrainte-duniformité"><span class="header-section-number">5</span> Le dimensionnement sous contrainte d’uniformité</h2>
+<section id="la-règle-de-keller-karmeli" class="level3" data-number="5.1">
+<h3 data-number="5.1" class="anchored" data-anchor-id="la-règle-de-keller-karmeli"><span class="header-section-number">5.1</span> La règle de Keller-Karmeli</h3>
+<p>La règle de <strong>Keller et Karmeli</strong> (1974) est la contrainte de dimensionnement fondamentale pour les réseaux d’irrigation sous pression. Elle stipule que la variation de pression entre l’émetteur le plus favorisé et l’émetteur le moins favorisé ne doit pas dépasser <strong>20 % de la pression nominale de service</strong> :</p>
+<p><span class="math display">\[\Delta h_{admissible} = h_{max} - h_{min} \leq 0{,}20 \times h_{nominal}\]</span></p>
+<p>Cette règle assure un coefficient d’uniformité <span class="math inline">\(CU \geq 90\)</span> % pour les émetteurs à exposant <span class="math inline">\(x \leq 0{,}5\)</span>, et <span class="math inline">\(CU \geq 87\)</span> % pour <span class="math inline">\(x \leq 0{,}7\)</span> — valeurs généralement considérées comme acceptables en pratique.</p>
+<p>La variation de pression admissible de 20 % doit être répartie entre deux sources : - Les <strong>pertes de charge</strong> dans les conduites (rampes et tertiaires essentiellement) - Le <strong>dénivelé topographique</strong> (différence d’altitude entre l’émetteur le plus haut et le plus bas)</p>
+</section>
+<section id="répartition-de-la-tolérance-entre-conduites-et-topographie" class="level3" data-number="5.2">
+<h3 data-number="5.2" class="anchored" data-anchor-id="répartition-de-la-tolérance-entre-conduites-et-topographie"><span class="header-section-number">5.2</span> Répartition de la tolérance entre conduites et topographie</h3>
+<p>La relation entre pression, pertes de charge et dénivelé s’écrit, entre deux émetteurs <span class="math inline">\(i\)</span> et <span class="math inline">\(j\)</span> :</p>
+<p><span class="math display">\[h_i - h_j = (H_i - H_j) + (z_j - z_i) = \Delta H_{ij} + \Delta z_{ij}\]</span></p>
+<p>où <span class="math inline">\(H_i - H_j\)</span> est la différence de charge hydraulique (due aux pertes de charge dans le réseau) et <span class="math inline">\(z_j - z_i\)</span> le dénivelé topographique.</p>
+<p>La contrainte de Keller-Karmeli impose :</p>
+<p><span class="math display">\[|\Delta H_{ij,max}| + |\Delta z_{ij,max}| \leq 0{,}20 \times h_{nominal}\]</span></p>
+<p>En pratique, <strong>75 % de la tolérance</strong> est allouée aux conduites (pertes de charge) et <strong>25 %</strong> au dénivelé — soit :</p>
+<p><span class="math display">\[\Delta H_{conduites} \leq 0{,}15 \times h_{nominal}, \quad \Delta z \leq 0{,}05 \times h_{nominal}\]</span></p>
+<p>Cette répartition standard peut être ajustée selon la topographie du terrain : - Terrain plat (<span class="math inline">\(\Delta z \approx 0\)</span>) : toute la tolérance est disponible pour les pertes de charge - Terrain en pente favorable (émetteurs aval plus bas) : le dénivelé compense les pertes de charge — on peut accepter des pertes plus importantes dans les conduites - Terrain en pente défavorable (émetteurs aval plus hauts) : le dénivelé s’ajoute aux pertes de charge — il faut réduire les pertes dans les conduites, donc augmenter les diamètres</p>
+</section>
+<section id="dimensionnement-des-conduites-principales" class="level3" data-number="5.3">
+<h3 data-number="5.3" class="anchored" data-anchor-id="dimensionnement-des-conduites-principales"><span class="header-section-number">5.3</span> Dimensionnement des conduites principales</h3>
+<p>Les conduites principales et secondaires sont dimensionnées pour que la <strong>perte de charge totale sur le trajet le plus long</strong> (depuis la source jusqu’à l’émetteur le plus défavorisé) respecte la contrainte de Keller-Karmeli.</p>
+<p>La démarche est la suivante :</p>
+<ol type="1">
+<li>Identifier le <strong>chemin hydraulique le plus défavorable</strong> : celui qui cumule le plus de pertes de charge (trajet le plus long et/ou le plus élevé topographiquement)</li>
+<li>Calculer la <strong>tolérance de perte de charge disponible</strong> sur ce chemin : <span class="math inline">\(\Delta H_{disponible} = 0{,}15 \times h_{nominal} - \Delta z_{défavorable}\)</span></li>
+<li>Choisir les diamètres pour que les pertes de charge sur ce chemin respectent <span class="math inline">\(\Delta H_{disponible}\)</span></li>
+<li>Vérifier que les émetteurs les plus proches de la source ne sont pas en <strong>surpression</strong> : <span class="math inline">\(h_{max} \leq h_{nominal} + 0{,}10 \times h_{nominal}\)</span> (10 % de marge de surpression acceptable)</li>
+</ol>
+</section>
+<section id="dimensionnement-des-rampes" class="level3" data-number="5.4">
+<h3 data-number="5.4" class="anchored" data-anchor-id="dimensionnement-des-rampes"><span class="header-section-number">5.4</span> Dimensionnement des rampes</h3>
+<p>Les rampes sont le niveau le plus critique pour l’uniformité — c’est là que la variation de pression entre émetteurs est la plus sensible à la géométrie. Le dimensionnement des rampes repose sur le facteur de Christiansen et la contrainte d’uniformité locale :</p>
+<p>La perte de charge admissible dans une rampe de longueur <span class="math inline">\(L\)</span> avec <span class="math inline">\(N\)</span> émetteurs est :</p>
+<p><span class="math display">\[\Delta H_{rampe} \leq \Delta H_{admissible,rampe}\]</span></p>
+<p>où <span class="math inline">\(\Delta H_{admissible,rampe}\)</span> est la fraction de la tolérance globale allouée à la rampe (typiquement 55 % de la tolérance totale sur conduites, les 45 % restants étant pour la conduite tertiaire alimentant la rampe).</p>
+<p>Le diamètre minimal de la rampe est calculé en inversant la formule de Darcy-Weisbach avec le facteur de Christiansen :</p>
+<p><span class="math display">\[D \geq \left(\frac{8 \cdot F(N,m) \cdot f \cdot L \cdot (N \cdot q)^2}{\pi^2 \cdot g \cdot \Delta H_{admissible,rampe}}\right)^{1/5}\]</span></p>
+<p>Cette formule est implicite en <span class="math inline">\(D\)</span> (car <span class="math inline">\(f\)</span> dépend de <span class="math inline">\(Re\)</span> qui dépend de <span class="math inline">\(D\)</span>) — elle est résolue par itération ou par abaque.</p>
+</section>
+<section id="le-calcul-du-cu-à-partir-du-modèle" class="level3" data-number="5.5">
+<h3 data-number="5.5" class="anchored" data-anchor-id="le-calcul-du-cu-à-partir-du-modèle"><span class="header-section-number">5.5</span> Le calcul du <span class="math inline">\(CU\)</span> à partir du modèle</h3>
+<p>Une fois le réseau dimensionné et la résolution hydraulique convergée, le <strong>coefficient d’uniformité de Christiansen</strong> est calculé directement à partir des débits simulés aux émetteurs :</p>
+<p><span class="math display">\[CU = 100 \times \left(1 - \frac{\sum_{i=1}^{N} |q_i - \bar{q}|}{N \cdot \bar{q}}\right)\]</span></p>
+<p>Un <span class="math inline">\(CU\)</span> simulé inférieur à 85 % indique que le dimensionnement ne respecte pas les contraintes d’uniformité — il faut augmenter les diamètres ou réduire la longueur des rampes.</p>
+<hr>
+</section>
+</section>
+<section id="leffet-de-la-topographie" class="level2" data-number="6">
+<h2 data-number="6" class="anchored" data-anchor-id="leffet-de-la-topographie"><span class="header-section-number">6</span> L’effet de la topographie</h2>
+<section id="terrain-plat-contrainte-purement-hydraulique" class="level3" data-number="6.1">
+<h3 data-number="6.1" class="anchored" data-anchor-id="terrain-plat-contrainte-purement-hydraulique"><span class="header-section-number">6.1</span> Terrain plat : contrainte purement hydraulique</h3>
+<p>Sur terrain plat, <span class="math inline">\(\Delta z = 0\)</span> et toute la tolérance de Keller-Karmeli est disponible pour les pertes de charge. La pression aux émetteurs décroît régulièrement de la tête de rampe vers son extrémité. Le <span class="math inline">\(CU\)</span> est entièrement déterminé par le rapport entre les pertes de charge dans la rampe et la pression nominale.</p>
+</section>
+<section id="terrain-en-pente-favorable" class="level3" data-number="6.2">
+<h3 data-number="6.2" class="anchored" data-anchor-id="terrain-en-pente-favorable"><span class="header-section-number">6.2</span> Terrain en pente favorable</h3>
+<p>Lorsque les émetteurs aval sont plus bas que les émetteurs amont (pente dans le sens d’écoulement), le <strong>dénivelé compense les pertes de charge</strong>. La pression aux émetteurs reste plus uniforme qu’en terrain plat pour le même diamètre de rampe. Dans ce cas favorable, on peut : - Réduire le diamètre de la rampe (économie d’investissement) tout en maintenant le même <span class="math inline">\(CU\)</span> - Augmenter la longueur de la rampe (extension de la surface irriguée) pour le même diamètre</p>
+<p><strong>Attention à la surpression en tête de rampe :</strong> si la pente est forte, les émetteurs en tête de rampe peuvent être en surpression excessive (<span class="math inline">\(h &gt; h_{max}\)</span> pour les goutteurs autocompensants, ou débit trop élevé pour les asperseurs). Un <strong>régulateur de pression en tête de rampe</strong> peut être nécessaire.</p>
+</section>
+<section id="terrain-en-pente-défavorable" class="level3" data-number="6.3">
+<h3 data-number="6.3" class="anchored" data-anchor-id="terrain-en-pente-défavorable"><span class="header-section-number">6.3</span> Terrain en pente défavorable</h3>
+<p>Lorsque les émetteurs aval sont plus hauts que les émetteurs amont (pente contre le sens d’écoulement), le <strong>dénivelé s’ajoute aux pertes de charge</strong>. La pression aux émetteurs décroît rapidement vers l’aval. Pour maintenir le <span class="math inline">\(CU\)</span>, il faut : - Augmenter le diamètre de la rampe - Réduire la longueur de la rampe - Utiliser des goutteurs autocompensants pour découpler le débit de la pression - Installer des <strong>régulateurs de pression de ligne</strong> à mi-rampe pour rétablir la pression</p>
+<p>Les <strong>régulateurs de pression de ligne</strong> (ou régulateurs de pression en ligne) sont des dispositifs passifs qui maintiennent une pression de sortie constante quelle que soit la pression d’entrée (dans une plage définie). Ils se modélisent comme des nœuds à charge imposée dans le modèle hydraulique : en amont, la pression est libre ; en aval, la pression est fixée à la consigne du régulateur.</p>
+<hr>
+</section>
+</section>
+<section id="les-stations-de-tête-et-les-conditions-aux-limites" class="level2" data-number="7">
+<h2 data-number="7" class="anchored" data-anchor-id="les-stations-de-tête-et-les-conditions-aux-limites"><span class="header-section-number">7</span> Les stations de tête et les conditions aux limites</h2>
+<section id="la-pompe-source-de-pression-et-condition-aux-limites-amont" class="level3" data-number="7.1">
+<h3 data-number="7.1" class="anchored" data-anchor-id="la-pompe-source-de-pression-et-condition-aux-limites-amont"><span class="header-section-number">7.1</span> La pompe : source de pression et condition aux limites amont</h3>
+<p>La station de pompage est la <strong>source d’énergie</strong> du réseau d’irrigation sous pression. Elle est modélisée comme un nœud à charge imposée (si la courbe <span class="math inline">\(H(Q)\)</span> est plate dans la plage de débit utile) ou comme un arc actif avec la courbe caractéristique <span class="math inline">\(H(Q)\)</span> (si la courbe est significativement variable).</p>
+<p>Le <strong>point de fonctionnement</strong> de la pompe est l’intersection de sa courbe caractéristique avec la courbe de résistance du réseau. Il dépend : - Du nombre d’émetteurs en service (tour d’eau, secteur irrigué) - De l’état des filtres (propres ou colmatés) - Du niveau du réservoir amont (si la pompe aspire dans un réservoir)</p>
+<p>En irrigation par tours d’eau, le nombre de secteurs en service varie au cours de la journée — le point de fonctionnement de la pompe varie en conséquence. Le modèle doit simuler chaque configuration de tour d’eau séparément.</p>
+</section>
+<section id="les-filtres-dimensionner-pour-le-filtre-colmaté" class="level3" data-number="7.2">
+<h3 data-number="7.2" class="anchored" data-anchor-id="les-filtres-dimensionner-pour-le-filtre-colmaté"><span class="header-section-number">7.2</span> Les filtres : dimensionner pour le filtre colmaté</h3>
+<p>Les filtres (à sable, à disques, à tamis) sont des éléments critiques du réseau d’irrigation sous pression — ils protègent les émetteurs contre le colmatage. Hydrauliquement, ils introduisent une <strong>perte de charge variable</strong> avec leur état d’encrassement :</p>
+<p><span class="math display">\[\Delta H_{filtre} = \Delta H_{propre} + f_{encrassement}(t)\]</span></p>
+<p>où <span class="math inline">\(f_{encrassement}\)</span> est une fonction croissante du temps depuis le dernier nettoyage. En pratique, les filtres sont nettoyés (manuellement ou automatiquement) lorsque la perte de charge dépasse un seuil (typiquement 3 à 5 m pour un filtre à disques).</p>
+<p><strong>Règle de dimensionnement :</strong> le réseau doit fonctionner correctement (respecter la contrainte de <span class="math inline">\(CU\)</span>) avec les filtres <strong>en fin de cycle</strong> (colmatés à 50 % de leur capacité de rétention). La perte de charge du filtre colmaté peut être 3 à 10 fois supérieure à celle du filtre propre — c’est une des principales sources de variation de pression en tête de réseau.</p>
+<hr>
+</section>
+</section>
+<section id="calage-et-diagnostic" class="level2" data-number="8">
+<h2 data-number="8" class="anchored" data-anchor-id="calage-et-diagnostic"><span class="header-section-number">8</span> Calage et diagnostic</h2>
+<section id="mesures-sur-le-réseau-existant" class="level3" data-number="8.1">
+<h3 data-number="8.1" class="anchored" data-anchor-id="mesures-sur-le-réseau-existant"><span class="header-section-number">8.1</span> Mesures sur le réseau existant</h3>
+<p>Le calage d’un modèle de réseau d’irrigation sous pression repose sur des mesures synchrones de pression et de débit :</p>
+<p><strong>Mesures de pression :</strong> manomètres ou capteurs de pression enregistreurs déployés en des points représentatifs — tête de rampe, milieu de rampe, bout de rampe, nœuds de bifurcation. L’enregistrement doit couvrir une période d’irrigation complète (depuis le démarrage de la pompe jusqu’à l’arrêt).</p>
+<p><strong>Mesures de débit :</strong> débitmètres volumétriques sur la conduite principale et les conduites secondaires. Le débit total mesuré en tête doit correspondre à la somme des débits des émetteurs — un écart signale des fuites ou des dérivations non modélisées.</p>
+<p><strong>Mesures d’uniformité sur planche d’essai :</strong> collecte de l’eau appliquée par chaque émetteur sur une rampe de référence pendant une durée fixe (typiquement 30 minutes). Le calcul du <span class="math inline">\(CU\)</span> mesuré sur la planche d’essai est comparé au <span class="math inline">\(CU\)</span> simulé — c’est la validation la plus directe du modèle.</p>
+</section>
+<section id="identifier-les-zones-de-sous-pression-et-de-surpression" class="level3" data-number="8.2">
+<h3 data-number="8.2" class="anchored" data-anchor-id="identifier-les-zones-de-sous-pression-et-de-surpression"><span class="header-section-number">8.2</span> Identifier les zones de sous-pression et de surpression</h3>
+<p>Le modèle calé produit une cartographie des pressions aux émetteurs. On identifie :</p>
+<ul>
+<li>Les <strong>zones de sous-pression</strong> (<span class="math inline">\(h &lt; h_{min}\)</span>) : émetteurs qui ne reçoivent pas la pression minimale de service. Causes possibles : conduite sous-dimensionnée, filtre colmaté, pompe sous-dimensionnée, fuite non détectée.</li>
+<li>Les <strong>zones de surpression</strong> (<span class="math inline">\(h &gt; h_{max}\)</span>) : émetteurs qui reçoivent une pression trop élevée. Causes possibles : réducteur de pression absent ou mal réglé, pente favorable excessive, émetteurs en tête de réseau trop proches de la pompe.</li>
+</ul>
+</section>
+<section id="simuler-un-renforcement" class="level3" data-number="8.3">
+<h3 data-number="8.3" class="anchored" data-anchor-id="simuler-un-renforcement"><span class="header-section-number">8.3</span> Simuler un renforcement</h3>
+<p>Le modèle permet de tester des variantes de renforcement :</p>
+<p><strong>Augmentation de diamètre :</strong> remplacement d’un tronçon sous-dimensionné par un diamètre supérieur. Le modèle recalcule les pressions et le <span class="math inline">\(CU\)</span> après modification.</p>
+<p><strong>Ajout de régulateurs de pression :</strong> insertion de régulateurs de pression en ligne dans les rampes trop longues ou sur terrain défavorable. Le modèle simule l’effet en imposant une charge constante aux nœuds de régulation.</p>
+<p><strong>Modification du tour d’eau :</strong> réduction du nombre de secteurs irrigués simultanément. Le débit total diminue, les pertes de charge diminuent, les pressions augmentent — et le <span class="math inline">\(CU\)</span> s’améliore. Le modèle permet de trouver le nombre optimal de secteurs simultanés pour respecter le <span class="math inline">\(CU\)</span> cible.</p>
+<p><strong>Changement d’émetteurs :</strong> passage de goutteurs non autocompensants à autocompensants. Le modèle simule la loi bi-linéaire des nouveaux émetteurs et calcule le gain de <span class="math inline">\(CU\)</span> attendu.</p>
+<hr>
+</section>
+</section>
+<section id="conclusion" class="level2" data-number="9">
+<h2 data-number="9" class="anchored" data-anchor-id="conclusion"><span class="header-section-number">9</span> Conclusion</h2>
+<p>La modélisation des réseaux d’irrigation sous pression est une discipline où la physique est bien maîtrisée — la loi émetteur, le facteur de Christiansen, la règle de Keller-Karmeli — mais où les détails d’exécution font la différence entre un système performant et un système médiocre. Les pertes singulières sous-estimées, le filtre colmaté ignoré, le dénivelé mal pris en compte : chacun de ces détails peut dégrader le <span class="math inline">\(CU\)</span> réel de 5 à 15 points par rapport au <span class="math inline">\(CU\)</span> simulé.</p>
+<p>La valeur d’un modèle d’irrigation sous pression ne se mesure pas à sa sophistication numérique — elle se mesure à sa capacité à prédire le <span class="math inline">\(CU\)</span> réel mesuré sur le terrain. Un modèle qui simule <span class="math inline">\(CU = 92\)</span> % alors que la planche d’essai donne <span class="math inline">\(CU = 78\)</span> % est un modèle mal construit, quelles que soient ses équations. La confrontation systématique aux mesures de terrain est la condition non négociable de la crédibilité du modèle.</p>
+<hr>
+</section>
+<section id="pour-aller-plus-loin-dans-cette-série" class="level2" data-number="10">
+<h2 data-number="10" class="anchored" data-anchor-id="pour-aller-plus-loin-dans-cette-série"><span class="header-section-number">10</span> Pour aller plus loin dans cette série</h2>
+<ul>
+<li><strong>Note 2.C3</strong> — <em>Transitoires en irrigation : coups de bélier et régulation des canaux</em> : méthode des caractéristiques appliquée à l’irrigation, intermittence et fatigue des conduites, protections</li>
+<li><strong>Note 3.1</strong> — <em>Calage et validation de modèles hydrauliques</em> : indicateurs de performance, plan de mesures, analyse de sensibilité</li>
+<li><strong>Note 3.2</strong> — <em>Quand le 1D ne suffit plus</em> : limites des modèles 1D pour les ouvrages complexes, introduction aux approches 2D</li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copié");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copié");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<script src="../site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

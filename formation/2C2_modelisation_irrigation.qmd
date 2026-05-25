@@ -1,0 +1,375 @@
+---
+title: "Modélisation des réseaux d'irrigation sous pression"
+subtitle: "Réseaux ramifiés et goutte-à-goutte"
+date: "2026-05-16"
+author: ""
+categories: [Hydraulique, Irrigation, Modélisation, Ingénierie]
+page-layout: article
+toc: true
+toc-title: "Sommaire"
+toc-depth: 3
+number-sections: true
+lang: fr
+---
+
+::: {.callout-note}
+## Note de la série
+Cette note fait partie d'une série sur la modélisation des réseaux hydrauliques. Elle suppose la lecture des notes *Généralités sur la modélisation des réseaux hydrauliques* et *Modéliser un réseau d'irrigation — spécificités physiques et enjeux métier*. On entre ici dans la mécanique concrète de la modélisation des réseaux d'irrigation sous pression : de la loi émetteur au calcul du coefficient d'uniformité, en passant par la résolution hydraulique des réseaux ramifiés et le dimensionnement sous contrainte d'uniformité.
+:::
+
+## La topologie ramifiée et ses implications hydrauliques
+
+### Arborescent vs maillé : deux logiques de résolution
+
+Un réseau d'irrigation sous pression est structurellement **arborescent** : une source (station de pompage ou réservoir en charge) alimente une conduite principale, qui se divise en conduites secondaires, elles-mêmes divisées en tertiaires, puis en rampes portant les émetteurs. Il n'existe pas de boucles — chaque nœud n'a qu'un seul chemin possible vers la source.
+
+Cette topologie contraste fondamentalement avec le réseau AEP maillé (cf. note 2.A1) et simplifie la résolution hydraulique : le sens des débits est entièrement déterminé par la topologie, sans ambiguïté. Il n'est pas nécessaire de résoudre un système couplé global par Newton-Raphson — une résolution séquentielle en deux passes suffit, avec une itération pour tenir compte de la loi émetteur.
+
+### Les niveaux du réseau
+
+Un réseau d'irrigation sous pression s'organise en **niveaux hiérarchiques** dont chacun a ses propres caractéristiques hydrauliques :
+
+| Niveau | Rôle | Diamètre typique | Débit typique |
+|---|---|---|---|
+| Conduite principale | Transport depuis la source | 100 — 400 mm | 10 — 200 m³/h |
+| Conduite secondaire | Distribution par secteur | 63 — 160 mm | 2 — 50 m³/h |
+| Conduite tertiaire | Alimentation des rampes | 32 — 90 mm | 0,5 — 10 m³/h |
+| Rampe porte-émetteurs | Distribution aux émetteurs | 16 — 32 mm | 0,1 — 2 m³/h |
+| Émetteurs | Application à la plante | — | 1 — 200 L/h |
+
+: Niveaux hiérarchiques d'un réseau d'irrigation sous pression {#tbl-niveaux}
+
+Chaque niveau a une logique de dimensionnement différente. Les conduites principales et secondaires sont dimensionnées pour minimiser les pertes de charge sur les trajets longs. Les rampes sont dimensionnées pour respecter la contrainte d'uniformité de distribution entre émetteurs.
+
+### La vulnérabilité topologique
+
+L'absence de boucles a une conséquence opérationnelle importante : **la rupture d'un tronçon prive d'eau tous les émetteurs en aval de ce tronçon**. Il n'existe pas de chemin alternatif comme dans un réseau maillé. Cette vulnérabilité doit être prise en compte dans la conception — les tronçons principaux méritent une protection particulière (matériaux résistants, enterrement suffisant, vannes d'isolement rapprochées).
+
+---
+
+## La loi émetteur : le cœur du problème
+
+### La relation débit-pression
+
+La différence fondamentale entre un réseau d'irrigation sous pression et un réseau AEP réside dans la nature de la condition aux limites terminale. En AEP, la demande nodale $d_i$ est imposée indépendamment de la pression — elle ne varie pas si la pression change. En irrigation sous pression, le débit à chaque émetteur est une **fonction de la pression locale** :
+
+$$q = k \cdot h^x$$
+
+où $q$ est le débit de l'émetteur (L/h), $h$ la pression de service (m ou bar selon la convention), $k$ le coefficient de débit (caractéristique de l'émetteur, donné par le constructeur), et $x$ l'exposant de débit.
+
+L'exposant $x$ est la caractéristique physique la plus importante de l'émetteur — il détermine la sensibilité du débit à la pression :
+
+| Type d'émetteur | Exposant $x$ | Signification |
+|---|---|---|
+| Asperseur (buses fixes) | $\approx 0{,}50$ | Débit proportionnel à $\sqrt{h}$ — loi d'orifice standard |
+| Goutteur non autocompensant | 0,50 — 0,70 | Plus sensible à la pression que l'asperseur |
+| Micro-jet, micro-aspereur | $\approx 0{,}50$ | Comportement similaire à l'asperseur |
+| Canon d'arrosage | 0,45 — 0,55 | Proche de la loi d'orifice |
+| Goutteur autocompensant | Variable | Loi bi-linéaire (voir ci-dessous) |
+
+: Exposants de débit selon le type d'émetteur {#tbl-exposants}
+
+### La sensibilité du débit à la pression
+
+La dérivée de la loi émetteur donne la sensibilité du débit à la pression :
+
+$$\frac{\partial q}{\partial h} = x \cdot k \cdot h^{x-1} = x \cdot \frac{q}{h}$$
+
+Cette relation montre que la **variation relative de débit** est proportionnelle à la variation relative de pression, avec un facteur $x$ :
+
+$$\frac{\Delta q}{q} \approx x \cdot \frac{\Delta h}{h}$$
+
+Pour un asperseur ($x = 0{,}5$), une variation de pression de 20 % entraîne une variation de débit de 10 %. Pour un goutteur ($x = 0{,}6$), la même variation de pression entraîne une variation de débit de 12 %. C'est cette relation qui justifie la règle des 20 % de Keller-Karmeli (cf. section 5) : une variation de pression de 20 % entre l'émetteur le plus favorisé et le moins favorisé entraîne une variation de débit de 10 %, ce qui correspond à un coefficient d'uniformité $CU \approx 90$ % — jugé acceptable en pratique.
+
+### Les goutteurs autocompensants : la loi bi-linéaire
+
+Les **goutteurs autocompensants** sont équipés d'une membrane déformable qui régule automatiquement le débit dans une plage de pression définie — la **plage de compensation**. Leur courbe débit-pression n'est pas une simple loi puissance mais une **loi bi-linéaire** :
+
+- En dessous de la pression minimale de compensation $h_{min}$ : le goutteur se comporte comme un goutteur non autocompensant ($q = k \cdot h^x$, débit croissant avec la pression)
+- Dans la plage de compensation [$h_{min}$, $h_{max}$] : le débit est pratiquement constant ($q \approx q_{nominal}$) malgré les variations de pression
+- Au-dessus de $h_{max}$ : la membrane est totalement comprimée, le goutteur se comporte à nouveau comme un orifice non régulé
+
+En modélisation, la loi bi-linéaire est implémentée par une fonction par morceaux :
+
+$$q(h) = \begin{cases} k \cdot h^x & \text{si } h < h_{min} \\ q_{nominal} & \text{si } h_{min} \leq h \leq h_{max} \\ q_{nominal} + k' \cdot (h - h_{max}) & \text{si } h > h_{max} \end{cases}$$
+
+::: {.callout-tip}
+## L'autocompensation : une solution partielle
+Les goutteurs autocompensants améliorent considérablement l'uniformité sur les terrains accidentés ou les longues rampes. Mais ils ne compensent pas les variations de débit dues au colmatage (obstruction partielle de l'orifice) ni les variations liées à la température (la viscosité de l'eau varie avec la température, ce qui modifie légèrement le débit). Ils sont plus coûteux que les goutteurs non autocompensants et nécessitent une pression minimale de service — il faut vérifier que la pression est partout supérieure à $h_{min}$ même en bout de rampe.
+:::
+
+---
+
+## La résolution hydraulique d'un réseau ramifié
+
+### Passe 1 — Amont vers aval : calcul des débits
+
+La première passe parcourt le réseau de la source vers les émetteurs et calcule le débit dans chaque tronçon par **accumulation** des débits aval :
+
+$$Q_{tronçon} = \sum_{k \in \text{émetteurs aval}} q_k$$
+
+Pour cette passe, on a besoin des débits $q_k$ à chaque émetteur — qui dépendent des pressions, encore inconnues. On part donc d'une **hypothèse initiale** : tous les émetteurs fonctionnent à la pression nominale $h_0$, donnant un débit initial $q_0 = k \cdot h_0^x$.
+
+### Passe 2 — Aval vers amont : calcul des pressions
+
+La deuxième passe parcourt le réseau de la source vers les émetteurs (ou de l'émetteur le plus défavorisé vers la source) et calcule la pression en chaque nœud par **accumulation des pertes de charge** depuis la source :
+
+$$H_i = H_{source} - \sum_{j \in \text{chemin source} \to i} \Delta H_j$$
+
+où $\Delta H_j$ est la perte de charge dans le tronçon $j$ (régulière + singulière + dénivelé).
+
+### L'itération nécessaire
+
+Après la passe 2, les pressions calculées aux émetteurs diffèrent des pressions initiales supposées $h_0$. Les débits réels des émetteurs ($q = k \cdot h^x$ avec les nouvelles pressions) diffèrent des débits initiaux — ce qui modifie les débits dans les tronçons, puis les pertes de charge, puis les pressions.
+
+On itère jusqu'à convergence :
+
+1. Calculer les débits émetteurs à partir des pressions courantes : $q_k^{(n)} = k \cdot h_k^{(n)x}$
+2. Recalculer les débits dans les tronçons (passe amont→aval)
+3. Recalculer les pressions aux nœuds (passe aval→amont)
+4. Vérifier la convergence : $\max_k |h_k^{(n+1)} - h_k^{(n)}| < \varepsilon$
+5. Si convergence : arrêt. Sinon : retour en 1
+
+La convergence est généralement **rapide** (3 à 10 itérations) sur un réseau ramifié, car la non-linéarité est modérée (exposant $x$ proche de 0,5) et la topologie arborescente évite les bouclages. C'est nettement plus rapide que la convergence de Newton-Raphson sur un réseau maillé AEP.
+
+::: {.callout-note}
+## Convergence et goutteurs autocompensants
+La loi bi-linéaire des goutteurs autocompensants peut ralentir la convergence au voisinage des seuils $h_{min}$ et $h_{max}$ (discontinuité de la dérivée). Les logiciels spécialisés utilisent des formules de raccordement progressives aux transitions pour éviter les oscillations numériques.
+:::
+
+---
+
+## Les pertes de charge en réseau d'irrigation sous pression
+
+### Darcy-Weisbach comme référence
+
+Les pertes de charge régulières dans les conduites d'irrigation sont calculées par la formule de Darcy-Weisbach (cf. note socle), avec le coefficient de frottement $f$ calculé par Colebrook-White ou l'approximation de Swamee-Jain.
+
+Pour les conduites en PVC et PE (les plus courantes en irrigation), la rugosité est très faible ($\varepsilon \approx 0{,}0015$ à $0{,}01$ mm), ce qui place la plupart des écoulements en régime **turbulent hydrauliquement lisse**. Dans cette zone, $f$ dépend principalement du nombre de Reynolds et peu de la rugosité absolue — la formule de Blasius est une bonne approximation pour les conduites lisses :
+
+$$f = \frac{0{,}316}{Re^{0{,}25}} \quad \text{pour } Re < 10^5$$
+
+### Les pertes singulières : une réalité sous-estimée
+
+En réseau d'irrigation sous pression, les **pertes singulières** aux raccords, filtres, compteurs et régulateurs peuvent représenter 20 à 40 % des pertes totales sur les conduites tertiaires et les rampes. Leur négligence conduit à sous-estimer les pertes de charge et à surdimensionner les pressions — avec pour conséquence une hétérogénéité réelle supérieure à celle prédite par le modèle.
+
+La méthode de la **longueur équivalente** est la plus simple : chaque singularité est remplacée par une longueur de conduite droite produisant la même perte de charge :
+
+$$L_{eq} = \frac{\xi \cdot D}{f}$$
+
+où $\xi$ est le coefficient de perte de charge singulière et $f$ le coefficient de frottement. Les valeurs typiques de $\xi$ pour les éléments courants en irrigation :
+
+| Élément | $\xi$ typique | $L_{eq}$ typique pour DN 32 |
+|---|---|---|
+| Coude 90° | 0,5 — 1,5 | 0,5 — 1,5 m |
+| Té en dérivation | 1,0 — 2,0 | 1,0 — 2,0 m |
+| Vanne à boisseau sphérique (ouverte) | 0,1 — 0,3 | 0,1 — 0,3 m |
+| Filtre à disques (propre) | 2 — 5 | 2 — 5 m |
+| Filtre à disques (colmaté à 50 %) | 10 — 30 | 10 — 30 m |
+| Compteur volumétrique | 3 — 8 | 3 — 8 m |
+| Régulateur de pression | 5 — 15 | 5 — 15 m |
+
+: Coefficients de perte de charge singulière pour les éléments courants {#tbl-singuliers}
+
+### Le facteur de Christiansen $F$ pour les rampes à prises multiples
+
+Une **rampe porte-émetteurs** est une conduite sur laquelle sont régulièrement répartis $N$ émetteurs, chacun prélevant un débit $q$. Le débit dans la rampe décroît de $N \cdot q$ en tête à $q$ juste avant le dernier émetteur. La perte de charge totale dans la rampe n'est donc pas $N$ fois la perte de charge d'une conduite de longueur $L$ avec débit $N \cdot q$ — c'est moins, car le débit décroît le long de la rampe.
+
+**Christiansen** (1942) a démontré que la perte de charge totale dans une rampe à $N$ prises uniformément réparties vaut :
+
+$$\Delta H_{rampe} = F(N, m) \cdot \Delta H_{pleine\_charge}$$
+
+où $\Delta H_{pleine\_charge}$ est la perte de charge qu'aurait la rampe si elle transportait le débit total $N \cdot q$ sur toute sa longueur, et $F(N, m)$ est le **facteur de Christiansen** :
+
+$$F(N, m) = \frac{1}{N^m} \left[\frac{N}{m+1} + \frac{1}{2} + \frac{\sqrt{m-1}}{6N}\right]$$
+
+où $m$ est l'exposant du débit dans la loi de perte de charge ($m = 2$ pour Darcy-Weisbach à $f$ constant, $m \approx 1{,}75$ à $1{,}85$ pour des formules empiriques).
+
+Pour $N$ grand (rampes avec de nombreux émetteurs), le facteur $F$ tend vers des valeurs asymptotiques :
+
+| $m$ | $F$ asymptotique ($N \to \infty$) |
+|---|---|
+| 1,75 (Hazen-Williams) | 0,364 |
+| 1,85 (Hazen-Williams corrigé) | 0,351 |
+| 2,00 (Darcy-Weisbach) | 0,333 |
+
+: Facteur de Christiansen asymptotique selon l'exposant $m$ {#tbl-christiansen}
+
+**Interprétation :** pour une grande rampe avec beaucoup d'émetteurs, la perte de charge réelle est environ 36 % de la perte de charge qu'aurait la rampe si tout le débit transitait sur toute la longueur. Sans ce facteur, on surdimensionne massivement les rampes.
+
+::: {.callout-important}
+## Le facteur $F$ : une erreur courante en bureau d'études
+Oublier d'appliquer le facteur de Christiansen sur les rampes conduit à surestimer les pertes de charge d'un facteur 2 à 3 — et donc à surdimensionner les diamètres, augmentant inutilement le coût d'investissement. Inversement, oublier les pertes singulières aux raccords conduit à sous-estimer les pertes réelles. Ces deux erreurs s'opposent partiellement — mais elles peuvent se combiner défavorablement selon la géométrie du réseau.
+:::
+
+---
+
+## Le dimensionnement sous contrainte d'uniformité
+
+### La règle de Keller-Karmeli
+
+La règle de **Keller et Karmeli** (1974) est la contrainte de dimensionnement fondamentale pour les réseaux d'irrigation sous pression. Elle stipule que la variation de pression entre l'émetteur le plus favorisé et l'émetteur le moins favorisé ne doit pas dépasser **20 % de la pression nominale de service** :
+
+$$\Delta h_{admissible} = h_{max} - h_{min} \leq 0{,}20 \times h_{nominal}$$
+
+Cette règle assure un coefficient d'uniformité $CU \geq 90$ % pour les émetteurs à exposant $x \leq 0{,}5$, et $CU \geq 87$ % pour $x \leq 0{,}7$ — valeurs généralement considérées comme acceptables en pratique.
+
+La variation de pression admissible de 20 % doit être répartie entre deux sources :
+- Les **pertes de charge** dans les conduites (rampes et tertiaires essentiellement)
+- Le **dénivelé topographique** (différence d'altitude entre l'émetteur le plus haut et le plus bas)
+
+### Répartition de la tolérance entre conduites et topographie
+
+La relation entre pression, pertes de charge et dénivelé s'écrit, entre deux émetteurs $i$ et $j$ :
+
+$$h_i - h_j = (H_i - H_j) + (z_j - z_i) = \Delta H_{ij} + \Delta z_{ij}$$
+
+où $H_i - H_j$ est la différence de charge hydraulique (due aux pertes de charge dans le réseau) et $z_j - z_i$ le dénivelé topographique.
+
+La contrainte de Keller-Karmeli impose :
+
+$$|\Delta H_{ij,max}| + |\Delta z_{ij,max}| \leq 0{,}20 \times h_{nominal}$$
+
+En pratique, **75 % de la tolérance** est allouée aux conduites (pertes de charge) et **25 %** au dénivelé — soit :
+
+$$\Delta H_{conduites} \leq 0{,}15 \times h_{nominal}, \quad \Delta z \leq 0{,}05 \times h_{nominal}$$
+
+Cette répartition standard peut être ajustée selon la topographie du terrain :
+- Terrain plat ($\Delta z \approx 0$) : toute la tolérance est disponible pour les pertes de charge
+- Terrain en pente favorable (émetteurs aval plus bas) : le dénivelé compense les pertes de charge — on peut accepter des pertes plus importantes dans les conduites
+- Terrain en pente défavorable (émetteurs aval plus hauts) : le dénivelé s'ajoute aux pertes de charge — il faut réduire les pertes dans les conduites, donc augmenter les diamètres
+
+### Dimensionnement des conduites principales
+
+Les conduites principales et secondaires sont dimensionnées pour que la **perte de charge totale sur le trajet le plus long** (depuis la source jusqu'à l'émetteur le plus défavorisé) respecte la contrainte de Keller-Karmeli.
+
+La démarche est la suivante :
+
+1. Identifier le **chemin hydraulique le plus défavorable** : celui qui cumule le plus de pertes de charge (trajet le plus long et/ou le plus élevé topographiquement)
+2. Calculer la **tolérance de perte de charge disponible** sur ce chemin : $\Delta H_{disponible} = 0{,}15 \times h_{nominal} - \Delta z_{défavorable}$
+3. Choisir les diamètres pour que les pertes de charge sur ce chemin respectent $\Delta H_{disponible}$
+4. Vérifier que les émetteurs les plus proches de la source ne sont pas en **surpression** : $h_{max} \leq h_{nominal} + 0{,}10 \times h_{nominal}$ (10 % de marge de surpression acceptable)
+
+### Dimensionnement des rampes
+
+Les rampes sont le niveau le plus critique pour l'uniformité — c'est là que la variation de pression entre émetteurs est la plus sensible à la géométrie. Le dimensionnement des rampes repose sur le facteur de Christiansen et la contrainte d'uniformité locale :
+
+La perte de charge admissible dans une rampe de longueur $L$ avec $N$ émetteurs est :
+
+$$\Delta H_{rampe} \leq \Delta H_{admissible,rampe}$$
+
+où $\Delta H_{admissible,rampe}$ est la fraction de la tolérance globale allouée à la rampe (typiquement 55 % de la tolérance totale sur conduites, les 45 % restants étant pour la conduite tertiaire alimentant la rampe).
+
+Le diamètre minimal de la rampe est calculé en inversant la formule de Darcy-Weisbach avec le facteur de Christiansen :
+
+$$D \geq \left(\frac{8 \cdot F(N,m) \cdot f \cdot L \cdot (N \cdot q)^2}{\pi^2 \cdot g \cdot \Delta H_{admissible,rampe}}\right)^{1/5}$$
+
+Cette formule est implicite en $D$ (car $f$ dépend de $Re$ qui dépend de $D$) — elle est résolue par itération ou par abaque.
+
+### Le calcul du $CU$ à partir du modèle
+
+Une fois le réseau dimensionné et la résolution hydraulique convergée, le **coefficient d'uniformité de Christiansen** est calculé directement à partir des débits simulés aux émetteurs :
+
+$$CU = 100 \times \left(1 - \frac{\sum_{i=1}^{N} |q_i - \bar{q}|}{N \cdot \bar{q}}\right)$$
+
+Un $CU$ simulé inférieur à 85 % indique que le dimensionnement ne respecte pas les contraintes d'uniformité — il faut augmenter les diamètres ou réduire la longueur des rampes.
+
+---
+
+## L'effet de la topographie
+
+### Terrain plat : contrainte purement hydraulique
+
+Sur terrain plat, $\Delta z = 0$ et toute la tolérance de Keller-Karmeli est disponible pour les pertes de charge. La pression aux émetteurs décroît régulièrement de la tête de rampe vers son extrémité. Le $CU$ est entièrement déterminé par le rapport entre les pertes de charge dans la rampe et la pression nominale.
+
+### Terrain en pente favorable
+
+Lorsque les émetteurs aval sont plus bas que les émetteurs amont (pente dans le sens d'écoulement), le **dénivelé compense les pertes de charge**. La pression aux émetteurs reste plus uniforme qu'en terrain plat pour le même diamètre de rampe. Dans ce cas favorable, on peut :
+- Réduire le diamètre de la rampe (économie d'investissement) tout en maintenant le même $CU$
+- Augmenter la longueur de la rampe (extension de la surface irriguée) pour le même diamètre
+
+**Attention à la surpression en tête de rampe :** si la pente est forte, les émetteurs en tête de rampe peuvent être en surpression excessive ($h > h_{max}$ pour les goutteurs autocompensants, ou débit trop élevé pour les asperseurs). Un **régulateur de pression en tête de rampe** peut être nécessaire.
+
+### Terrain en pente défavorable
+
+Lorsque les émetteurs aval sont plus hauts que les émetteurs amont (pente contre le sens d'écoulement), le **dénivelé s'ajoute aux pertes de charge**. La pression aux émetteurs décroît rapidement vers l'aval. Pour maintenir le $CU$, il faut :
+- Augmenter le diamètre de la rampe
+- Réduire la longueur de la rampe
+- Utiliser des goutteurs autocompensants pour découpler le débit de la pression
+- Installer des **régulateurs de pression de ligne** à mi-rampe pour rétablir la pression
+
+Les **régulateurs de pression de ligne** (ou régulateurs de pression en ligne) sont des dispositifs passifs qui maintiennent une pression de sortie constante quelle que soit la pression d'entrée (dans une plage définie). Ils se modélisent comme des nœuds à charge imposée dans le modèle hydraulique : en amont, la pression est libre ; en aval, la pression est fixée à la consigne du régulateur.
+
+---
+
+## Les stations de tête et les conditions aux limites
+
+### La pompe : source de pression et condition aux limites amont
+
+La station de pompage est la **source d'énergie** du réseau d'irrigation sous pression. Elle est modélisée comme un nœud à charge imposée (si la courbe $H(Q)$ est plate dans la plage de débit utile) ou comme un arc actif avec la courbe caractéristique $H(Q)$ (si la courbe est significativement variable).
+
+Le **point de fonctionnement** de la pompe est l'intersection de sa courbe caractéristique avec la courbe de résistance du réseau. Il dépend :
+- Du nombre d'émetteurs en service (tour d'eau, secteur irrigué)
+- De l'état des filtres (propres ou colmatés)
+- Du niveau du réservoir amont (si la pompe aspire dans un réservoir)
+
+En irrigation par tours d'eau, le nombre de secteurs en service varie au cours de la journée — le point de fonctionnement de la pompe varie en conséquence. Le modèle doit simuler chaque configuration de tour d'eau séparément.
+
+### Les filtres : dimensionner pour le filtre colmaté
+
+Les filtres (à sable, à disques, à tamis) sont des éléments critiques du réseau d'irrigation sous pression — ils protègent les émetteurs contre le colmatage. Hydrauliquement, ils introduisent une **perte de charge variable** avec leur état d'encrassement :
+
+$$\Delta H_{filtre} = \Delta H_{propre} + f_{encrassement}(t)$$
+
+où $f_{encrassement}$ est une fonction croissante du temps depuis le dernier nettoyage. En pratique, les filtres sont nettoyés (manuellement ou automatiquement) lorsque la perte de charge dépasse un seuil (typiquement 3 à 5 m pour un filtre à disques).
+
+**Règle de dimensionnement :** le réseau doit fonctionner correctement (respecter la contrainte de $CU$) avec les filtres **en fin de cycle** (colmatés à 50 % de leur capacité de rétention). La perte de charge du filtre colmaté peut être 3 à 10 fois supérieure à celle du filtre propre — c'est une des principales sources de variation de pression en tête de réseau.
+
+---
+
+## Calage et diagnostic
+
+### Mesures sur le réseau existant
+
+Le calage d'un modèle de réseau d'irrigation sous pression repose sur des mesures synchrones de pression et de débit :
+
+**Mesures de pression :** manomètres ou capteurs de pression enregistreurs déployés en des points représentatifs — tête de rampe, milieu de rampe, bout de rampe, nœuds de bifurcation. L'enregistrement doit couvrir une période d'irrigation complète (depuis le démarrage de la pompe jusqu'à l'arrêt).
+
+**Mesures de débit :** débitmètres volumétriques sur la conduite principale et les conduites secondaires. Le débit total mesuré en tête doit correspondre à la somme des débits des émetteurs — un écart signale des fuites ou des dérivations non modélisées.
+
+**Mesures d'uniformité sur planche d'essai :** collecte de l'eau appliquée par chaque émetteur sur une rampe de référence pendant une durée fixe (typiquement 30 minutes). Le calcul du $CU$ mesuré sur la planche d'essai est comparé au $CU$ simulé — c'est la validation la plus directe du modèle.
+
+### Identifier les zones de sous-pression et de surpression
+
+Le modèle calé produit une cartographie des pressions aux émetteurs. On identifie :
+
+- Les **zones de sous-pression** ($h < h_{min}$) : émetteurs qui ne reçoivent pas la pression minimale de service. Causes possibles : conduite sous-dimensionnée, filtre colmaté, pompe sous-dimensionnée, fuite non détectée.
+- Les **zones de surpression** ($h > h_{max}$) : émetteurs qui reçoivent une pression trop élevée. Causes possibles : réducteur de pression absent ou mal réglé, pente favorable excessive, émetteurs en tête de réseau trop proches de la pompe.
+
+### Simuler un renforcement
+
+Le modèle permet de tester des variantes de renforcement :
+
+**Augmentation de diamètre :** remplacement d'un tronçon sous-dimensionné par un diamètre supérieur. Le modèle recalcule les pressions et le $CU$ après modification.
+
+**Ajout de régulateurs de pression :** insertion de régulateurs de pression en ligne dans les rampes trop longues ou sur terrain défavorable. Le modèle simule l'effet en imposant une charge constante aux nœuds de régulation.
+
+**Modification du tour d'eau :** réduction du nombre de secteurs irrigués simultanément. Le débit total diminue, les pertes de charge diminuent, les pressions augmentent — et le $CU$ s'améliore. Le modèle permet de trouver le nombre optimal de secteurs simultanés pour respecter le $CU$ cible.
+
+**Changement d'émetteurs :** passage de goutteurs non autocompensants à autocompensants. Le modèle simule la loi bi-linéaire des nouveaux émetteurs et calcule le gain de $CU$ attendu.
+
+---
+
+## Conclusion
+
+La modélisation des réseaux d'irrigation sous pression est une discipline où la physique est bien maîtrisée — la loi émetteur, le facteur de Christiansen, la règle de Keller-Karmeli — mais où les détails d'exécution font la différence entre un système performant et un système médiocre. Les pertes singulières sous-estimées, le filtre colmaté ignoré, le dénivelé mal pris en compte : chacun de ces détails peut dégrader le $CU$ réel de 5 à 15 points par rapport au $CU$ simulé.
+
+La valeur d'un modèle d'irrigation sous pression ne se mesure pas à sa sophistication numérique — elle se mesure à sa capacité à prédire le $CU$ réel mesuré sur le terrain. Un modèle qui simule $CU = 92$ % alors que la planche d'essai donne $CU = 78$ % est un modèle mal construit, quelles que soient ses équations. La confrontation systématique aux mesures de terrain est la condition non négociable de la crédibilité du modèle.
+
+---
+
+## Pour aller plus loin dans cette série
+
+- **Note 2.C3** — *Transitoires en irrigation : coups de bélier et régulation des canaux* : méthode des caractéristiques appliquée à l'irrigation, intermittence et fatigue des conduites, protections
+- **Note 3.1** — *Calage et validation de modèles hydrauliques* : indicateurs de performance, plan de mesures, analyse de sensibilité
+- **Note 3.2** — *Quand le 1D ne suffit plus* : limites des modèles 1D pour les ouvrages complexes, introduction aux approches 2D

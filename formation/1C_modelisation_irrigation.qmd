@@ -1,0 +1,608 @@
+---
+title: "Modéliser un réseau d'irrigation"
+subtitle: "Spécificités physiques et enjeux métier"
+date: "2026-05-17"
+author: ""
+categories: [Hydraulique, Irrigation, Modélisation, Ingénierie]
+page-layout: article
+toc: true
+toc-title: "Sommaire"
+toc-depth: 3
+number-sections: true
+lang: fr
+format:
+  html:
+    embed-resources: true
+    html-math-method: katex
+    theme: cosmo
+execute:
+  echo: false
+  warning: false
+  fig-format: svg
+  fig-responsive: true
+  fig-width: 8
+  fig-height: 4.5
+jupyter: python3
+---
+
+::: {.callout-note}
+## Note de la série
+Cette note fait partie d'une série sur la modélisation des réseaux hydrauliques. Elle suppose la lecture de la note introductive **0.1** (*Généralités sur la modélisation des réseaux hydrauliques*), qui pose les fondements communs (Navier-Stokes, cascade dimensionnelle, régimes permanent et transitoire). Les concepts de base n'y sont pas redéfinis — on se concentre ici sur ce qui est **spécifique à l'irrigation**.
+:::
+
+---
+
+## Un domaine, deux physiques radicalement différentes
+
+### La dualité fondamentale de l'irrigation
+
+L'irrigation est le seul domaine des trois grandes familles de réseaux hydrauliques urbains et ruraux qui regroupe sous un même vocable deux systèmes aux physiques **radicalement différentes**. Un canal gravitaire en terre alimentant un périmètre irrigué et un réseau goutte-à-goutte sous pression dans un vignoble n'ont hydrauliquement presque rien en commun — ni les équations qui les gouvernent, ni les grandeurs qui les caractérisent, ni les outils qui les modélisent.
+
+| Système d'irrigation | Régime hydraulique | Modélisation associée |
+|---|---|---|
+| Canal gravitaire (bétonné ou en terre) | Surface libre | Saint-Venant 1D, onde cinématique |
+| Seguia, rigole, raie d'irrigation | Surface libre | Onde cinématique, bilan de volume |
+| Aspersion (pivot, rampe, canon) | En charge | Bernoulli, réseau ramifié |
+| Goutte-à-goutte, micro-irrigation | En charge | Réseau ramifié, loi émetteur |
+| Réseau sous pression à la demande | En charge | Réseau maillé ou ramifié |
+| Système mixte (canal + distribution sous pression) | Surface libre + charge | Modèle couplé |
+
+: Systèmes d'irrigation et régimes hydrauliques associés {#tbl-systemes}
+
+```{python}
+#| label: fig-dualite-irrigation
+#| fig-cap: "Positionnement des systèmes d'irrigation dans l'espace régime hydraulique × finalité agronomique. L'axe horizontal distingue la physique dominante (surface libre à gauche, charge à droite) ; l'axe vertical distingue les systèmes collectifs à grande échelle (haut) des systèmes à la parcelle (bas). Un même périmètre irrigué peut contenir des composantes dans les quatre quadrants — c'est la situation mixte la plus fréquente en pratique. Les couleurs reprennent les conventions de la série : bleu pour l'écoulement en charge, vert pour la surface libre."
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+fig, ax = plt.subplots(figsize=(9, 5.0))
+ax.set_xlim(-1.2, 1.2); ax.set_ylim(-1.2, 1.2); ax.axis("off")
+
+# Axes
+ax.axhline(0, color="#aaa", lw=1.2, ls="--")
+ax.axvline(0, color="#aaa", lw=1.2, ls="--")
+ax.text( 1.15,  0.02, "En charge →", fontsize=9, color=C_CHARGE, ha="right")
+ax.text(-1.15,  0.02, "← Surface libre", fontsize=9, color=C_PIEZO, ha="left")
+ax.text( 0.02,  1.18, "Collectif ↑", fontsize=9, color="#555", va="top")
+ax.text( 0.02, -1.18, "↓ Parcellaire", fontsize=9, color="#555", va="bottom")
+
+systemes = [
+    ( 0.70,  0.80, C_CHARGE, "Réseau colonne\nsous pression\ncollectif"),
+    ( 0.80,  0.10, C_CHARGE, "Aspersion\n(pivot, rampe)"),
+    ( 0.90, -0.60, C_CHARGE, "Goutte-à-goutte\nsous pression"),
+    (-0.75,  0.85, C_PIEZO,  "Grand canal\ngravitaire\n(CACG, BRL...)"),
+    (-0.65,  0.20, C_PIEZO,  "Canal secondaire\n/ seguia"),
+    (-0.80, -0.55, C_PIEZO,  "Raie d'irrigation\n/ rigole"),
+    ( 0.00,  0.00, "#8e44ad", "Système\nmixte"),
+]
+for x, y, col, lbl in systemes:
+    ax.scatter([x],[y], s=220, color=col, alpha=0.85, zorder=5)
+    dx = 0.10 if x > 0 else -0.10
+    ax.text(x+dx, y+0.06, lbl, fontsize=7.5, color=col,
+            ha="left" if x > 0 else "right", va="center")
+
+ax.set_title("Positionnement des systèmes d'irrigation — Dualité physique",
+             fontsize=10.5)
+fig.tight_layout()
+plt.show()
+```
+
+### Ce qui distingue l'irrigation de l'AEP et de l'assainissement
+
+Trois spécificités structurelles influencent profondément la modélisation en irrigation :
+
+**L'intermittence radicale.** Un réseau AEP fonctionne 24 h/24. Un réseau d'irrigation peut être totalement à sec la nuit, ouvert par intermittence selon un tour d'eau, et sollicité massivement en période de pointe estivale. Cette intermittence génère des transitoires répétés — remplissage et vidange, ouvertures et fermetures de vannes — sources de coups de bélier bien plus fréquents qu'en AEP (renvoi note **2.C3**).
+
+**La demande pilotée par le climat, pas par l'usager.** En AEP, la demande est pilotée par les comportements humains (relativement prévisibles). En irrigation, elle est pilotée par l'**évapotranspiration potentielle** (ETP). Un coup de chaleur peut faire exploser la demande en 24 heures.
+
+**La finalité agronomique.** En irrigation, l'objectif n'est pas de maintenir une pression — c'est d'**apporter la bonne dose d'eau à la bonne plante au bon moment**. Cette finalité impose des contraintes d'uniformité de distribution qui n'ont pas d'équivalent en AEP ou en assainissement.
+
+---
+
+## L'objectif n'est pas hydraulique, il est agronomique
+
+### La notion d'uniformité de distribution
+
+En AEP, un réseau est performant si la pression en tout nœud est dans la plage réglementaire. En irrigation, ce critère est nécessaire mais pas suffisant. Ce qui compte, c'est que **chaque plante reçoive la même dose d'eau**. Cette exigence se traduit par le **coefficient d'uniformité de Christiansen** $CU$ :
+
+$$CU = 100 \times \left(1 - \frac{\sum_{i=1}^{n} |q_i - \bar{q}|}{n \cdot \bar{q}}\right)$$
+
+où $q_i$ est le débit à l'émetteur $i$, $\bar{q}$ le débit moyen, et $n$ le nombre d'émetteurs. Un $CU > 90$ % est excellent ; en dessous de 75 %, les pertes de rendement agricole deviennent significatives.
+
+La relation débit–pression aux émetteurs (loi puissance, détaillée au §4.2) crée un **fil conducteur hydraulique → agronomique** : hétérogénéité de pression → hétérogénéité de débit → hétérogénéité de dose → écarts de rendement.
+
+```{python}
+#| label: fig-cu-pression
+#| fig-cap: "Relation entre coefficient d'uniformité $CU$ (%) et écart de pression relatif $\\Delta h / h_{nom}$ entre l'émetteur le plus favorisé et le moins favorisé, pour trois valeurs de l'exposant de débit $x$ de la loi émetteur ($x = 0{,}5$ asperseur, $x = 0{,}6$ goutteur compensant, $x = 1{,}0$ buse non régulée). Les seuils agronomiques ($CU = 75\\,\\%$ et $CU = 90\\,\\%$) sont indiqués. La règle de Keller et Karmeli ($\\Delta h \\leq 20\\,\\%$) correspond approximativement à $CU \\approx 90\\,\\%$ pour $x = 0{,}5$. Un émetteur à exposant élevé ($x = 1$) est beaucoup plus sensible aux variations de pression."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+dh_rel = np.linspace(0, 0.5, 200)
+
+fig, ax = plt.subplots(figsize=(8, 4.2))
+for x_exp, col, ls, lbl in [
+        (0.5, C_CHARGE, "-",   "$x = 0{,}5$ (asperseur)"),
+        (0.6, C_PIEZO,  "--",  "$x = 0{,}6$ (goutteur)"),
+        (1.0, C_ACCENT, "-.",  "$x = 1{,}0$ (buse non régulée)")]:
+    # Distribution de pression : uniforme entre h_nom*(1-dh_rel/2) et h_nom*(1+dh_rel/2)
+    # Débit relatif : q_i/q_nom = (h_i/h_nom)^x
+    n_pts = 200
+    h_rel = np.linspace(1 - dh_rel/2, 1 + dh_rel/2, n_pts).T  # shape (200, 200)
+    q_rel = h_rel**x_exp  # shape (200, 200)
+    q_mean = np.mean(q_rel, axis=1)
+    cu = 100 * (1 - np.mean(np.abs(q_rel - q_mean[:,None]), axis=1) / q_mean)
+    ax.plot(dh_rel*100, cu, color=col, lw=2.2, ls=ls, label=lbl)
+
+ax.axhline(90, color="#27ae60", lw=1.5, ls=":", label="$CU = 90\\,\\%$ (excellent)")
+ax.axhline(75, color=C_ACCENT,  lw=1.5, ls=":", label="$CU = 75\\,\\%$ (limite agronomique)")
+ax.axvline(20, color="#aaa",    lw=1.2, ls="--", label="Règle Keller–Karmeli (20 %)")
+
+ax.set_xlabel("Écart de pression relatif $\\Delta h / h_{nom}$ (\\%)", fontsize=9)
+ax.set_ylabel("Coefficient d'uniformité $CU$ (\\%)", fontsize=9)
+ax.set_title("$CU$ vs hétérogénéité de pression — Sensibilité à l'exposant émetteur", fontsize=10)
+ax.legend(fontsize=8.5, loc="lower left")
+ax.set_xlim(0, 50); ax.set_ylim(55, 101)
+ax.grid(alpha=0.2); ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-tip}
+## Ce que le modèle hydraulique ne peut pas dire
+
+Un modèle hydraulique calcule les pressions et débits aux émetteurs — il ne calcule pas l'efficience agronomique réelle, qui dépend aussi de l'hétérogénéité du sol, de la profondeur racinaire, du stade phénologique et de la stratégie d'irrigation. Le modèle hydraulique est un outil nécessaire mais non suffisant pour optimiser un système d'irrigation.
+:::
+
+### La demande en irrigation : ETP et bilan hydrique
+
+La demande en irrigation est une donnée **agroclimatique**, pas sociale. Elle se calcule à partir du bilan hydrique de la culture :
+
+$$\text{Besoin net d'irrigation} = ETP \times K_c - P_{eff}$$
+
+où $ETP$ est l'évapotranspiration potentielle (mm/jour, formule de Penman-Monteith), $K_c$ le coefficient cultural (dépendant de l'espèce et du stade de développement), et $P_{eff}$ la pluie efficace.
+
+```{python}
+#| label: fig-etp-besoin
+#| fig-cap: "Cycle saisonnier de la demande en irrigation pour une culture de maïs en zone méditerranéenne (indicatif). La courbe bleue représente l'ETP de référence mensuelle (mm/j). La courbe verte est le besoin net d'irrigation (ETP × $K_c$ − $P_{eff}$), qui s'annule en hiver (pluie efficace suffisante) et culmine en juillet-août lors de la pleine floraison–fructification ($K_c$ maximal + déficit pluviométrique). La variabilité interannuelle (bande grisée : ±1 écart-type sur 30 ans) illustre pourquoi le modèle doit être conçu pour un spectre de scénarios, pas un unique scénario de pointe."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+mois = np.arange(1, 13)
+mois_lbl = ["J","F","M","A","M","J","J","A","S","O","N","D"]
+
+# ETP mensuelle (Penman-Monteith, zone méditerranéenne, indicatif)
+etp = np.array([0.8, 1.2, 2.2, 3.5, 5.0, 6.8, 7.5, 7.0, 5.2, 3.0, 1.5, 0.9])
+
+# Kc maïs par mois (semis avril, récolte septembre)
+kc  = np.array([0.0, 0.0, 0.0, 0.4, 0.7, 1.0, 1.15, 1.15, 0.9, 0.0, 0.0, 0.0])
+
+# Pluie efficace mensuelle (mm/j)
+peff = np.array([1.2, 1.1, 1.3, 1.5, 1.2, 0.4, 0.2, 0.2, 0.7, 1.8, 2.0, 1.5])
+
+besoin = np.maximum(etp * kc - peff, 0)
+besoin_lo = np.maximum(besoin * 0.75, 0)
+besoin_hi = besoin * 1.30
+
+fig, ax = plt.subplots(figsize=(9, 4.2))
+ax.fill_between(mois, besoin_lo, besoin_hi, alpha=0.18, color=C_CHARGE,
+                label="Variabilité interannuelle (±1 σ)")
+ax.plot(mois, etp,    color=C_CHARGE, lw=2.0, ls="--", label="ETP référence (mm/j)")
+ax.plot(mois, besoin, color=C_PIEZO,  lw=2.5, label="Besoin net irrigation ($ETP \\times K_c - P_{eff}$, mm/j)")
+ax.fill_between(mois, 0, besoin, alpha=0.18, color=C_PIEZO)
+
+ax.set_xticks(mois); ax.set_xticklabels(mois_lbl, fontsize=9)
+ax.set_xlabel("Mois", fontsize=9)
+ax.set_ylabel("Besoin en eau (mm/j)", fontsize=9)
+ax.set_title("Cycle saisonnier de la demande en irrigation — Maïs, zone méditerranéenne", fontsize=10)
+ax.legend(fontsize=8.5)
+ax.set_ylim(0, 9); ax.grid(alpha=0.2)
+ax.tick_params(axis="y", labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+### Les tours d'eau et la flexibilité à la demande
+
+La plupart des réseaux d'irrigation collectifs fonctionnent selon un **tour d'eau** : chaque irrigant reçoit sa dotation à un créneau horaire défini. Le débit de pointe sur le réseau dépend du **nombre d'irrigants simultanément en activité** — un paramètre probabiliste pour les réseaux à la demande libre, déterministe pour les tours d'eau stricts. Cette simultanéité est l'analogue direct du foisonnement de la note **1.A** (coefficients de pointe en AEP).
+
+---
+
+## Irrigation gravitaire : physique et contraintes spécifiques
+
+### Le canal comme ouvrage hydraulique
+
+Un canal d'irrigation gravitaire est un ouvrage à surface libre gouverné par les équations de Saint-Venant (renvoi note **0.1**). Trois caractéristiques le distinguent d'un collecteur d'assainissement :
+
+**Les pertes par infiltration** : un canal en terre perd typiquement 1 à 5 % de son débit par kilomètre selon la nature du sol. Ces pertes réduisent le débit disponible à l'aval et doivent être intégrées comme terme source négatif dans le bilan hydraulique (renvoi note **3.4** pour la modélisation du transport solide associé aux canaux en terre — renvoi note **3.3** pour la qualité de l'eau transportée).
+
+**La rugosité variable** : le coefficient de Strickler $K_s$ peut varier de 25 m$^{1/3}$/s pour un canal enherbé à 80 m$^{1/3}$/s pour un canal bétonné lisse. Cette variabilité est une source d'incertitude majeure du calage.
+
+**La section trapézoïdale** : relation $A(h)$ et $P(h)$ analytique (renvoi note **0.2** pour le lien avec Manning-Strickler et la pente de frottement) :
+
+$$A = (b + mh) \cdot h \qquad ; \qquad P = b + 2h\sqrt{1 + m^2}$$
+
+où $b$ est la largeur au fond, $h$ la hauteur d'eau et $m$ le fruit des talus.
+
+```{python}
+#| label: fig-sections-canal
+#| fig-cap: "Courbes adimensionnelles d'un canal trapézoïdal ($m = 1{,}5$, fruit de talus usuel en terre) : débit relatif $Q / Q_{normale}$ (bleu) et vitesse relative $V / V_{normale}$ (vert) en fonction du taux de remplissage $h / h_{normale}$ ($h_{normale}$ = hauteur normale de dimensionnement). La section trapézoïdale a un comportement différent de la section circulaire : le débit croît de façon quasi monotone avec la hauteur, et il n'y a pas de maximum intermédiaire. La vitesse maximale est atteinte pour $h \\approx 0{,}65\\,h_{normale}$. Ces courbes sont l'équivalent irrigation des courbes de la note 1.B pour les collecteurs."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+# Paramètres canal trapézoïdal (normalisé : b=1, m=1.5)
+b_n, m_n = 1.0, 1.5
+h_norm = 1.0  # hauteur normale de référence
+
+h_vals = np.linspace(0.05, 1.6, 300)
+
+def canal_geom(h, b, m):
+    A = (b + m*h) * h
+    P = b + 2*h*np.sqrt(1 + m**2)
+    Rh = A / P
+    return A, P, Rh
+
+A_n, P_n, Rh_n = canal_geom(h_norm, b_n, m_n)
+Ks = 60; J = 0.0005
+Q_norm = Ks * A_n * Rh_n**(2/3) * J**0.5
+V_norm = Q_norm / A_n
+
+Q_rel_list, V_rel_list = [], []
+for h in h_vals:
+    A, P, Rh = canal_geom(h, b_n, m_n)
+    Q = Ks * A * Rh**(2/3) * J**0.5
+    Q_rel_list.append(Q / Q_norm)
+    V_rel_list.append(Q / A / V_norm)
+
+Q_rel = np.array(Q_rel_list)
+V_rel = np.array(V_rel_list)
+
+fig, ax = plt.subplots(figsize=(7.5, 4.2))
+ax.plot(Q_rel, h_vals/h_norm, color=C_CHARGE, lw=2.5, label="Débit relatif $Q/Q_{norm}$")
+ax.plot(V_rel, h_vals/h_norm, color=C_PIEZO,  lw=2.2, ls="--", label="Vitesse relative $V/V_{norm}$")
+
+# Plein bord
+ax.axhline(1.0, color="#aaa", lw=1.2, ls=":")
+ax.text(0.05, 1.02, "Hauteur normale\n(dimensionnement)", fontsize=8, color="#555")
+
+# Vitesse max
+i_vmax = np.argmax(V_rel)
+ax.scatter([V_rel[i_vmax]], [h_vals[i_vmax]/h_norm], color=C_PIEZO, s=70, zorder=6)
+ax.text(V_rel[i_vmax]+0.04, h_vals[i_vmax]/h_norm + 0.03,
+        f"$V_{{max}}$ à $h/h_n = {h_vals[i_vmax]/h_norm:.2f}$",
+        fontsize=8, color=C_PIEZO)
+
+ax.set_xlabel("Valeur relative (—)", fontsize=9)
+ax.set_ylabel("Taux de remplissage $h / h_{normale}$", fontsize=9)
+ax.set_title("Canal trapézoïdal ($m=1{,}5$) — Débit et vitesse relatifs", fontsize=10)
+ax.legend(fontsize=8.5)
+ax.set_xlim(0, 1.6); ax.set_ylim(0, 1.6)
+ax.grid(alpha=0.2); ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+### Régulation et ouvrages de partage
+
+Un canal d'irrigation est équipé d'ouvrages de régulation et de partage (renvoi note **0.3** pour la formalisation des conditions aux limites associées) :
+
+**Les ouvrages de prise** (vannes de tête, modules à masque, modules à déversoir) règlent le débit prélevé vers les canaux secondaires. Leur modélisation repose sur des lois de débit (loi de l'orifice, loi du déversoir) qui doivent être paramétrées correctement.
+
+**Les ouvrages de régulation de niveau** (seuils réglables, vannes à aiguilles, régulateurs aval) maintiennent un niveau d'eau constant. Leur régulation automatique peut nécessiter un couplage entre le modèle hydraulique et un modèle de régulation.
+
+**Les siphons et aqueducs** introduisent localement une mise en charge (siphon) ou une rupture de pente (aqueduc) qui doit être traitée spécifiquement.
+
+### L'onde de translation : le transitoire des canaux gravitaires
+
+Lorsqu'un ouvrage de régulation est manœuvré, une **onde de translation** se propage dans le canal à la célérité des ondes gravitaires de surface (renvoi note **0.1**, cascade dimensionnelle et équations de Saint-Venant) :
+
+$$c = \sqrt{g \cdot h}$$
+
+Pour une hauteur d'eau de 1 m, $c \approx 3$ m/s — soit 200 à 400 fois plus lente qu'une onde de pression en conduite ($c \approx 1\,000$ m/s). Un canal de 5 km répond à une manœuvre de vanne en $\sim 30$ min : la gestion opérationnelle est prévisible, mais exige un modèle transitoire pour tout problème de régulation.
+
+```{python}
+#| label: fig-onde-translation
+#| fig-cap: "Propagation d'une onde de translation dans un canal gravitaire à la suite d'une ouverture partielle d'une vanne de tête (débit augmenté de 20 % à $t = 0$). Les profils de hauteur d'eau à trois instants successifs ($t = 5$, $15$, $30$ min) montrent le front d'onde se déplaçant vers l'aval à la célérité $c = \\sqrt{gh} \\approx 2{,}8$ m/s. La comparaison avec un coup de bélier en conduite (onde acoustique, $c \\approx 1000$ m/s) illustre la différence d'échelle de temps entre les deux régimes — et donc les différences d'enjeux de protection et de régulation."
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.ndimage import gaussian_filter1d
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+L = 5000  # m
+x = np.linspace(0, L, 500)
+h0 = 0.80  # hauteur normale (m)
+c_wave = np.sqrt(9.81 * h0)  # ~2.8 m/s
+
+t_vals = [0, 300, 900, 1800]  # secondes
+colors_t = ["#aaa", "#6baed6", C_CHARGE, "#08306b"]
+labels_t = ["$t=0$", "$t=5$ min", "$t=15$ min", "$t=30$ min"]
+dh = 0.10  # amplitude onde (m)
+
+fig, ax = plt.subplots(figsize=(9, 4.0))
+for t, col, lbl in zip(t_vals, colors_t, labels_t):
+    x_front = c_wave * t
+    h = h0 + dh * 0.5 * (1 + np.tanh((x_front - x) / 150))
+    h_smooth = gaussian_filter1d(h, sigma=5)
+    ax.plot(x/1000, h_smooth, color=col, lw=2.0, label=lbl)
+
+ax.axhline(h0, color="#bbb", lw=1, ls=":")
+ax.text(4.8, h0+0.005, f"$h_0 = {h0}$ m", fontsize=8.5, color="#888", ha="right")
+ax.annotate(f"$c = \\sqrt{{gh}} \\approx {c_wave:.1f}$ m/s",
+            xy=(2.5, h0+0.055), fontsize=8.5, color=C_ACCENT,
+            bbox=dict(boxstyle="round,pad=0.2", fc="#fff5f5", ec=C_ACCENT, alpha=0.85))
+
+ax.set_xlabel("Distance (km)", fontsize=9)
+ax.set_ylabel("Hauteur d'eau $h$ (m)", fontsize=9)
+ax.set_title("Onde de translation en canal gravitaire — Ouverture de vanne en tête", fontsize=10)
+ax.legend(fontsize=8.5, loc="lower right")
+ax.set_xlim(0, 5); ax.set_ylim(0.70, 0.95)
+ax.grid(alpha=0.2); ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-note}
+## Régime permanent ou transitoire pour un canal gravitaire ?
+
+Pour le **dimensionnement** (section, pente, débit de pleine section), le régime permanent suffit : on calcule les profils en long et on vérifie les hauteurs normales et critiques. Pour la **régulation** (manœuvre de vannes, gestion des tours d'eau, propagation d'une variation de débit en tête), le transitoire est indispensable. C'est une distinction que les logiciels spécialisés (SIC, HEC-RAS) gèrent nativement — renvoi note **2.C1** pour les détails.
+:::
+
+---
+
+## Irrigation sous pression : physique et contraintes spécifiques
+
+### Une topologie ramifiée, pas maillée
+
+Un réseau d'irrigation sous pression est quasi-systématiquement **arborescent** (ramifié) : une conduite principale alimente des conduites secondaires, puis tertiaires, au bout desquelles se trouvent les émetteurs. Il n'y a pas de boucles.
+
+Cette topologie simplifie la résolution hydraulique par rapport à un réseau AEP maillé : le sens des débits est déterminé par la topologie, et le système peut être résolu tronçon par tronçon de l'amont vers l'aval. La résolution reste itérative car les débits aux émetteurs dépendent des pressions (loi puissance) — mais sans les équations de maille du système AEP (renvoi note **1.A** pour la comparaison).
+
+### L'émetteur : une condition aux limites spécifique
+
+La grande différence avec un réseau AEP réside dans la nature de la condition aux limites terminale. En AEP, le nœud terminal est un point de soutirage à débit **imposé** (demande nodale). En irrigation sous pression, le nœud terminal est un **émetteur** dont le débit **résulte** de la pression locale :
+
+$$q = k \cdot h^x$$
+
+où $q$ est le débit de l'émetteur (L/h), $h$ la pression de service (m), $k$ le coefficient de débit, et $x$ l'exposant de débit ($x = 0{,}5$ pour un asperseur, $x \approx 0{,}5$–$0{,}7$ pour un goutteur, $x \approx 1$ pour une buse non régulée).
+
+Cette loi rend le système couplé : la pression dépend du débit, et le débit dépend de la pression. La résolution nécessite une itération.
+
+```{python}
+#| label: fig-loi-emetteur
+#| fig-cap: "Courbes débit-pression d'émetteurs courants : asperseur ($x = 0{,}5$), goutteur ($x = 0{,}6$) et buse non régulée ($x = 1{,}0$). La pression nominale de service est 1 bar (10 m). La zone verte délimite la plage de pression admissible pour respecter la règle Keller-Karmeli ($\\pm 10\\,\\%$ autour de la pression nominale, correspondant à $\\Delta h \\leq 20\\,\\%$). L'asperseur à exposant $x = 0{,}5$ est le moins sensible aux variations de pression — c'est pourquoi il est utilisé préférentiellement dans les systèmes d'aspersion de grande uniformité."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+h = np.linspace(2, 25, 300)  # m
+h_nom = 10.0
+
+k_vals = {
+    "Asperseur ($x=0{,}5$, $k=150$)": (150, 0.5, C_CHARGE, "-"),
+    "Goutteur ($x=0{,}6$, $k=30$)":   (30,  0.6, C_PIEZO,  "--"),
+    "Buse non régulée ($x=1{,}0$, $k=6$)": (6, 1.0, C_ACCENT, "-."),
+}
+
+fig, ax = plt.subplots(figsize=(8, 4.2))
+for lbl, (k, x, col, ls) in k_vals.items():
+    q = k * h**x
+    ax.plot(h, q, color=col, lw=2.2, ls=ls, label=lbl)
+
+# Zone admissible (±10% autour h_nom)
+ax.axvspan(h_nom*0.90, h_nom*1.10, alpha=0.12, color=C_PIEZO,
+           label="Plage admissible Keller-Karmeli (±10 %)")
+ax.axvline(h_nom, color="#aaa", lw=1.2, ls=":")
+ax.text(h_nom+0.2, 5, f"$h_{{nom}} = {h_nom:.0f}$ m", fontsize=8.5, color="#555")
+
+ax.set_xlabel("Pression de service $h$ (m)", fontsize=9)
+ax.set_ylabel("Débit émetteur $q = k \\cdot h^x$ (L/h)", fontsize=9)
+ax.set_title("Loi émetteur $q = k \\cdot h^x$ — Sensibilité à la pression", fontsize=10)
+ax.legend(fontsize=8.5)
+ax.set_xlim(2, 25); ax.set_ylim(0, None)
+ax.grid(alpha=0.2); ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+### Uniformité de pression et uniformité de débit
+
+Le dimensionnement d'un réseau d'irrigation sous pression vise à minimiser l'hétérogénéité de pression entre émetteurs. La règle de Keller et Karmeli fixe la variation de pression admissible à **20 % de la pression nominale** :
+
+$$\Delta h_{admissible} \leq 0{,}2 \times h_{nominal}$$
+
+Cette contrainte guide le choix des diamètres et se répartit entre pertes de charge hydrauliques et dénivelé topographique. Sur terrain accidenté, les deux peuvent se compenser ou s'aggraver, ce qui complique significativement le dimensionnement.
+
+::: {.callout-important}
+## Les pertes singulières : souvent sous-estimées
+
+En réseau d'irrigation sous pression, les raccords, filtres, compteurs et vannes génèrent des pertes de charge singulières représentant 20 à 40 % des pertes totales sur les conduites tertiaires. Les ignorer conduit à sous-estimer les pertes et à surdimensionner les pressions — avec une hétérogénéité réelle supérieure à celle prédite par le modèle. La prise en compte systématique des singularités est une discipline plus exigeante qu'en AEP car les conduites tertiaires sont courtes et les accessoires nombreux.
+:::
+
+### Le coup de bélier en irrigation sous pression : une menace fréquente
+
+L'intermittence de l'irrigation — ouvertures et fermetures répétées de vannes, démarrages et arrêts de pompes — est une source de **coups de bélier bien plus fréquente qu'en AEP**. Sur un réseau AEP, les manœuvres de vannes sont rares et encadrées. Sur un réseau d'irrigation, elles sont quotidiennes, parfois réalisées par des agriculteurs sans formation hydraulique spécifique.
+
+Les réseaux en PVC ou PE ont une célérité des ondes de 300 à 500 m/s (contre 800 à 1 200 m/s pour la fonte ou l'acier) — ce qui atténue l'amplitude des coups de bélier, mais leur résistance à la pression est aussi plus faible. Renvoi note **2.C3** pour le calcul complet des transitoires en irrigation.
+
+---
+
+## Les régimes temporels en irrigation
+
+| Système | Étude de dimensionnement | Étude de régulation / exploitation |
+|---|---|---|
+| Canal gravitaire | Régime permanent (profils en long, sections) | Transitoire (ondes de translation, manœuvres) |
+| Réseau sous pression | Régime permanent (pressions, uniformité) | Transitoire (coups de bélier, remplissage) |
+| Système mixte | Les deux selon le tronçon | Les deux selon l'ouvrage |
+
+: Régimes temporels selon le type de système et l'objectif d'étude {#tbl-regimes-irrig}
+
+```{python}
+#| label: fig-frise-irrigation
+#| fig-cap: "Frise temporelle logarithmique des phénomènes hydrauliques en irrigation, à comparer aux frises analogues des notes 0.1 et 1.A. La frise irrigation se distingue par la présence de deux zones actives distinctes : les transitoires répétés à gauche (coups de bélier lors des manœuvres quotidiennes de vannes et de pompes) et les cycles d'exploitation à droite (tours d'eau, cycles saisonniers). La zone médiane (remplissage de canal, propagation d'onde de translation) est spécifique à l'irrigation gravitaire et est absente en AEP."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+fig, ax = plt.subplots(figsize=(10, 3.5))
+
+ax.axvspan(np.log10(0.01), np.log10(10),    alpha=0.15, color=C_ACCENT, label="Transitoire obligatoire")
+ax.axvspan(np.log10(10),   np.log10(1800),  alpha=0.15, color="#888",   label="Zone d'ambiguïté")
+ax.axvspan(np.log10(1800), np.log10(5e6),   alpha=0.15, color=C_PIEZO,  label="Quasi-permanent / campagne")
+
+events = [
+    (0.05,   "Coup de\nbélier",          C_ACCENT),
+    (3,      "Fermeture\nvanne irrig.",   C_ACCENT),
+    (60,     "Remplissage\nconduite",     "#888"),
+    (900,    "Propagation\nonde canal",   "#555"),
+    (3600,   "Tour d'eau\n(quelques h)",  C_PIEZO),
+    (86400,  "Cycle\njournalier",         C_PIEZO),
+    (604800, "Tour\nhebdomadaire",        C_PIEZO),
+    (2.6e6,  "Campagne\nirrig. (mois)",   C_PIEZO),
+]
+for t, lbl, col in events:
+    ax.axvline(np.log10(t), color=col, lw=1.8, ls="--", alpha=0.7)
+    ax.text(np.log10(t), 0.88, lbl, ha="center", va="top", fontsize=7.5,
+            color=col, rotation=35, transform=ax.get_xaxis_transform())
+
+ax.set_xlabel("Durée caractéristique (échelle log)", fontsize=9)
+ax.set_xlim(np.log10(0.03), np.log10(8e6))
+ax.set_xticks([np.log10(v) for v in [0.1, 1, 10, 60, 600, 3600, 86400, 2.6e6]])
+ax.set_xticklabels(["0,1 s","1 s","10 s","1 min","10 min","1 h","1 j","1 mois"],
+                   fontsize=8.5)
+ax.set_yticks([]); ax.set_ylim(0, 1)
+ax.legend(fontsize=8.5, loc="lower right")
+ax.set_title("Frise temporelle irrigation — Phénomènes et régimes de modélisation", fontsize=10)
+ax.grid(axis="x", alpha=0.15)
+fig.tight_layout()
+plt.show()
+```
+
+### L'intermittence comme source de transitoires répétés
+
+Un réseau d'irrigation sous pression peut subir **plusieurs cycles complets de remplissage et de vidange par jour**, en fonction du tour d'eau. Chaque cycle génère des transitoires à l'ouverture (remplissage d'une conduite à l'air libre, coup de bélier) et à la fermeture (onde de dépression). Cette répétition impose une attention particulière à la **protection contre les coups de bélier** (ventouses, soupapes, réservoirs d'air) et génère une **fatigue des conduites** sur le long terme.
+
+---
+
+## Les données nécessaires
+
+### Données topographiques et géométriques
+
+**Pour l'irrigation gravitaire :** topographie et tracé des canaux (MNT, levé GPS), sections transversales (forme, dimensions, état des berges), cotes des ouvrages, coefficient de Strickler selon le revêtement et l'entretien.
+
+**Pour l'irrigation sous pression :** tracé des conduites et cotes altimétriques des nœuds, diamètres intérieurs et matériaux (PVC, PE, PEHD, amiante-ciment), longueurs de tronçons et pertes de charge singulières, courbes caractéristiques des pompes $H(Q)$ et $\eta(Q)$ — renvoi note **2.D** (pompes et turbines).
+
+### Données agronomiques et climatiques
+
+- **ETP de référence** : série chronologique journalière ou mensuelle (Météo-France, CLIMWAT)
+- **Coefficients culturaux** $K_c$ par culture et par stade phénologique
+- **Calendrier d'irrigation** : tours d'eau, durées d'arrosage, fréquences
+- **Caractéristiques des émetteurs** : courbe débit-pression, espacement, coefficient $k$ et exposant $x$
+
+### Données de calage
+
+- Mesures de débit à l'entrée du réseau et aux prises secondaires (débitmètres, compteurs)
+- Mesures de pression en points représentatifs (manomètres, enregistreurs)
+- Mesures d'uniformité sur le terrain : collecte aux émetteurs, calcul du $CU$ mesuré vs simulé
+
+---
+
+## Les outils de modélisation
+
+### Irrigation gravitaire
+
+| Outil | Éditeur | Points distinctifs |
+|---|---|---|
+| **HEC-RAS** | US Army Corps of Engineers (libre) | Polyvalent, 1D et 2D, canaux d'irrigation à grande échelle |
+| **SIC** | INRAE (libre) | Spécialisé canaux d'irrigation, régulation automatique, référence francophone |
+| **Mike 11** | DHI | Complet, couplage qualité d'eau et transport sédimentaire |
+
+: Outils de modélisation pour l'irrigation gravitaire {#tbl-outils-grav}
+
+### Irrigation sous pression
+
+| Outil | Éditeur | Points distinctifs |
+|---|---|---|
+| **EPANET** | US EPA (libre) | Polyvalent, fonction émetteur native ($q = k h^x$), scriptable |
+| **WaterGEMS** | Bentley | Interface avancée, modules de dimensionnement automatique |
+| **Irricad** | Lincoln Agritech | Spécialisé irrigation, calcul du $CU$ intégré |
+| **Netafim Design** | Netafim | Très orienté goutte-à-goutte, limité aux systèmes Netafim |
+
+: Outils de modélisation pour l'irrigation sous pression {#tbl-outils-pression}
+
+::: {.callout-tip}
+## EPANET pour l'irrigation : une adaptation nécessaire
+
+EPANET est un outil généraliste conçu pour l'AEP. Il peut être utilisé pour l'irrigation sous pression, mais avec des adaptations : les émetteurs se modélisent via la fonction « émetteur » d'EPANET (qui implémente nativement la loi $q = k \cdot h^x$), et l'intermittence doit être gérée par des règles de contrôle temporelles. Pour des systèmes complexes avec régulation automatique ou simulation longue durée, les outils spécialisés irrigation sont plus adaptés.
+:::
+
+---
+
+## Ce que le modèle ne peut pas faire
+
+**Il ne prédit pas la performance agronomique réelle.** Le modèle calcule l'uniformité de distribution ($CU$), mais la relation entre $CU$ hydraulique et rendement agricole dépend de l'hétérogénéité du sol, de la profondeur racinaire, du stress hydrique cumulé et de la stratégie d'irrigation. La connexion nécessite des modèles de culture couplés (AquaCrop, STICS).
+
+**Il ne modélise pas le colmatage des émetteurs.** En goutte-à-goutte, le colmatage progressif (dépôts calcaires, algues, particules fines) modifie le coefficient $k$ de chaque émetteur individuellement. Un réseau parfaitement uniforme à la conception peut devenir très hétérogène après quelques saisons. → Renvoi note **3.1** pour les procédures de recalage.
+
+**Il ne quantifie pas les pertes par infiltration dans les canaux en terre.** Les modèles hydrauliques classiques traitent ces pertes comme un terme source négatif distribué, mais leur quantification nécessite des essais de terrain (méthode des bilans de débit entrant/sortant) et des modèles spécifiques (équation de Kostiakov, modèle de Philip). → Renvoi note **3.4** pour le transport solide associé.
+
+**Il ne simule pas la qualité de l'eau d'irrigation.** La salinité, la teneur en éléments fertilisants (fertigation) ou en agents pathogènes (réutilisation des eaux usées traitées) nécessitent un module de transport de solutés couplé. → Renvoi note **3.3** (qualité de l'eau et transport couplé à l'hydraulique).
+
+**Il ne gère pas la variabilité spatiale du sol.** L'infiltration après application dépend de la texture, de la structure et de l'état hydrique initial du sol — paramètres variables à l'échelle de quelques mètres. Cette variabilité, invisible pour le modèle hydraulique, est souvent la principale source d'hétérogénéité réelle observée sur le terrain.
+
+---
+
+## Conclusion
+
+La modélisation en irrigation est la plus hétérogène des trois grandes familles de réseaux hydrauliques. Elle exige une double compétence : hydraulique bien sûr, mais aussi **agroclimatique**, pour comprendre ce que le réseau est censé accomplir au-delà du simple transport d'eau. C'est la finalité agronomique — apporter la bonne dose à la bonne plante au bon moment — qui fixe les exigences d'uniformité et qui donne son sens au modèle.
+
+La complexité spécifique de l'irrigation réside dans trois points : la dualité physique (gravitaire vs sous pression) qui impose des outils différents, l'intermittence de la demande qui génère des transitoires répétés, et la demande pilotée par le climat qui impose de travailler sur des scénarios multiples plutôt qu'un unique scénario de pointe.
+
+---
+
+## Pour aller plus loin dans cette série
+
+**Fondements**
+
+- **Note 0.1** — *Généralités sur la modélisation* : cascade dimensionnelle, régimes permanent et transitoire, fente de Preissmann — prérequis de cette note
+- **Note 0.2** — *Énergie, charge et dégradation* : fonde Manning-Strickler, la pente de frottement et la notion de charge en surface libre
+- **Note 0.3** — *Ouvrages et conditions aux limites* : vannes, seuils, déversoirs, siphons — formalisation des ouvrages de régulation du canal
+- **Note 0.4** — *Analyse dimensionnelle et similitude* : célérité d'onde $c = \sqrt{gh}$, nombre de Froude, similitude des modèles de canaux
+
+**Applications**
+
+- **Note 2.C1** — *Modélisation des réseaux d'irrigation gravitaire* : Saint-Venant en canal, ondes de translation, régulation automatique, SIC en pratique — suite directe de cette note
+- **Note 2.C2** — *Modélisation des réseaux d'irrigation sous pression* : réseau ramifié, loi émetteur, calcul du $CU$, dimensionnement sous contrainte d'uniformité
+- **Note 2.C3** — *Transitoires en irrigation* : méthode des caractéristiques, protection contre les coups de bélier, intermittence et fatigue des conduites
+- **Note 2.D** — *Pompes et turbines* : courbes $H(Q)$ et point de fonctionnement — données d'entrée des stations de pompage d'irrigation
+
+**Transversales**
+
+- **Note 3.1** — *Calage et validation* : indicateurs de performance, recalage sur mesures d'uniformité, plan de mesures terrain
+- **Note 3.3** — *Qualité de l'eau et thermique* : salinité, fertigation, transport de solutés dans les canaux et réseaux d'irrigation
+- **Note 3.4** — *Transport solide* : dépôts dans les canaux en terre, critère de non-dépôt en irrigation gravitaire
+- **Note 3.6** — *Limites et responsabilité* : vieillissement des modèles d'irrigation, variabilité climatique, traçabilité des hypothèses agronomiques

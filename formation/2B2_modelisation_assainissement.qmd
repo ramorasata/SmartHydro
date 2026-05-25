@@ -1,0 +1,1047 @@
+---
+title: "Modélisation pluviale : de la pluie au débit"
+subtitle: "Calage et validation d'un modèle d'assainissement pluvial"
+date: "2026-05-17"
+author: ""
+categories: [Hydraulique, Assainissement, Hydrologie, Modélisation, Ingénierie]
+page-layout: article
+toc: true
+toc-title: "Sommaire"
+toc-depth: 3
+number-sections: true
+lang: fr
+format:
+  html:
+    embed-resources: true
+    html-math-method: katex
+    theme: cosmo
+execute:
+  echo: false
+  warning: false
+  fig-format: svg
+  fig-responsive: true
+  fig-width: 8
+  fig-height: 4.5
+jupyter: python3
+---
+
+::: {.callout-note}
+## Note de la série
+Cette note fait partie d'une série sur la modélisation des réseaux hydrauliques. Elle suppose la lecture des notes **0.1** (*Généralités sur la modélisation*), **1.B** (*Modéliser un réseau d'assainissement*) et **2.B1** (*Dimensionnement d'un réseau gravitaire*). On aborde ici la chaîne complète pluie → ruissellement → débit dans le réseau, avec une attention particulière au calage et à ses difficultés spécifiques au contexte pluvial urbain.
+:::
+
+::: {.callout-note}
+## Note de cadrage — La place de 2.B2 dans la chaîne
+
+**2.B2** produit le $Q_{projet}$ pluvial que **2.B1** consomme pour dimensionner les collecteurs (passe 1 : accumulation des débits). **2.B3** (surcharges, transitoire) s'appuie également sur les hydrogrammes générés ici comme conditions d'entrée de la simulation Saint-Venant. Cette note est le maillon hydrologique de la chaîne : sans elle, le modèle hydraulique ne sait pas quoi recevoir comme entrée.
+:::
+
+---
+
+## La pluie comme donnée d'entrée : nature et représentations
+
+### Une variable aléatoire, spatiale et temporelle
+
+La pluie est fondamentalement différente des autres données d'entrée d'un modèle hydraulique. Un diamètre de conduite est une donnée géométrique mesurable avec précision. Une courbe de pompe est une caractéristique physique déterministe. La pluie, elle, est une **variable aléatoire** dans le temps et dans l'espace — elle ne se répète jamais exactement, et sa mesure en un point ne représente qu'imparfaitement ce qui tombe sur un bassin versant.
+
+Cette nature aléatoire est la source principale d'incertitude de toute modélisation pluviale. Même un modèle hydraulique parfaitement calé produira des résultats incertains si la pluie d'entrée est mal connue.
+
+### Les données disponibles
+
+**Le pluviographe** est l'instrument de référence. Résolution temporelle : 1 à 5 min. Représentativité spatiale : 5 à 15 km en plaine, beaucoup moins en zone urbaine (orages convectifs très localisés).
+
+**Le radar météorologique** fournit une image spatiale sur une grille de 1×1 km (réseau ARAMIS, Météo-France). Précieux pour les grands bassins versants ; précision inférieure au pluviographe en intensité. La relation de Marshall-Palmer convertit la réflectivité $Z$ en intensité $R$ :
+
+$$Z = a \cdot R^b$$
+
+**Les réanalyses climatiques** (ERA5, SAFRAN) à résolution 5–25 km, utiles pour les études de changement climatique mais trop grossières pour la modélisation urbaine fine.
+
+```{python}
+#| label: fig-sources-pluie
+#| fig-cap: "Comparaison schématique des trois sources de données pluviométriques sur un bassin versant urbain de 50 km². Le pluviographe (point rouge) mesure avec une précision temporelle fine (1–5 min) mais est purement ponctuel : sa représentativité spatiale diminue rapidement lors des orages convectifs localisés. Le radar (grille bleue, 1×1 km) couvre tout le bassin mais avec une précision en intensité inférieure (+20–40 % d'erreur systématique possible). La réanalyse (grille verte, 5–25 km) ne résout pas les structures convectives sub-kilométriques. En assainissement urbain, le pluviographe reste la référence pour le calage ; le radar est utile pour la spatialisation lors d'événements hétérogènes."
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+from matplotlib.patches import FancyBboxPatch
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+fig, ax = plt.subplots(figsize=(9, 5.0))
+ax.set_xlim(0, 10); ax.set_ylim(0, 7); ax.axis("off")
+
+# Bassin versant
+bv = plt.Polygon([(0.5,0.5),(9.5,0.5),(9.5,6.5),(0.5,6.5)],
+                 fc="#f0f4f8", ec="#aaa", lw=1.5)
+ax.add_patch(bv)
+ax.text(5.0, 0.2, "Bassin versant urbain (~50 km²)", ha="center", fontsize=8.5, color="#555")
+
+# Grille radar 1x1 km
+for xi in np.arange(0.5, 9.5, 1):
+    for yi in np.arange(0.5, 6.5, 1):
+        r = FancyBboxPatch((xi, yi), 1, 1, boxstyle="square,pad=0",
+                            fc=C_CHARGE+"15", ec=C_CHARGE+"44", lw=0.5)
+        ax.add_patch(r)
+ax.text(7.5, 5.8, "Radar (1×1 km)", fontsize=8, color=C_CHARGE,
+        bbox=dict(boxstyle="round,pad=0.2", fc="#e8f0fb", ec=C_CHARGE))
+
+# Grille réanalyse 5x5 km (une seule maille visible)
+r5 = FancyBboxPatch((0.5, 0.5), 5, 5, boxstyle="square,pad=0",
+                    fc=C_PIEZO+"15", ec=C_PIEZO, lw=2.5, ls="--")
+ax.add_patch(r5)
+ax.text(0.7, 5.6, "Réanalyse\n(~5–25 km)", fontsize=8, color=C_PIEZO,
+        bbox=dict(boxstyle="round,pad=0.2", fc="#e8f5e9", ec=C_PIEZO))
+
+# Pluviographe
+ax.scatter([3.5], [2.8], color=C_ACCENT, s=250, zorder=8, marker="v")
+ax.text(3.7, 2.4, "Pluviographe\n(ponctuel, 1–5 min)", fontsize=8, color=C_ACCENT,
+        bbox=dict(boxstyle="round,pad=0.2", fc="#fff5f5", ec=C_ACCENT))
+
+# Cercle représentativité
+circle = plt.Circle((3.5, 2.8), 1.5, fc="none", ec=C_ACCENT, lw=1.5, ls=":")
+ax.add_patch(circle)
+ax.text(3.5, 1.0, "Représentativité spatiale\n(~5–15 km rayon)", ha="center",
+        fontsize=7.5, color=C_ACCENT, style="italic")
+
+ax.set_title("Sources de données pluviométriques — Résolution spatiale et temporelle", fontsize=10.5)
+fig.tight_layout()
+plt.show()
+```
+
+### La courbe IDF : l'outil statistique de référence
+
+La **courbe IDF** (Intensité-Durée-Fréquence) synthétise la statistique des pluies intenses en un lieu donné : pour une durée $d$ et une période de retour $T$, elle donne l'intensité moyenne maximale $i(d, T)$ observée sur la série historique. Les courbes IDF ont été introduites en note **1.B** (méthode rationnelle) ; elles sont ici formalisées comme outil quantitatif.
+
+```{python}
+#| label: fig-courbes-idf
+#| fig-cap: "Faisceau de courbes IDF pour cinq périodes de retour (2, 5, 10, 30, 100 ans) — figure canonique attendue par tout ingénieur assainissement. Intensité (mm/h) vs durée (min) en log-log. Les courbes suivent la forme Montana $i = a \\cdot t^{-b}$ (ici coefficients représentatifs d'une station type, zone climatique atlantique). Pour une durée de 30 min et $T=10$ ans, l'intensité est $\\approx 40$ mm/h. L'écartement croissant entre les courbes aux courtes durées traduit l'augmentation de la variabilité statistique pour les pluies courtes et intenses."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+t_min = np.linspace(5, 180, 300)
+
+params_T = {
+    "T = 2 ans":   (5.8, 0.60, "#aed6f1"),
+    "T = 5 ans":   (8.2, 0.60, "#5dade2"),
+    "T = 10 ans":  (11.0, 0.60, C_CHARGE),
+    "T = 30 ans":  (15.5, 0.60, "#8e44ad"),
+    "T = 100 ans": (21.5, 0.60, C_ACCENT),
+}
+
+fig, ax = plt.subplots(figsize=(8.5, 4.5))
+for lbl, (a, b, col) in params_T.items():
+    i_mh = a * t_min**(-b) * 60  # mm/h
+    ax.loglog(t_min, i_mh, color=col, lw=2.2, label=lbl)
+
+# Marqueur T10, 30 min
+a10, b10 = 11.0, 0.60
+i_30_10 = a10 * 30**(-b10) * 60
+ax.scatter([30], [i_30_10], color=C_CHARGE, s=90, zorder=7)
+ax.annotate(f"{i_30_10:.0f} mm/h\n(30 min, T10)", (30, i_30_10),
+            xytext=(20, i_30_10*1.6),
+            arrowprops=dict(arrowstyle="->", color=C_CHARGE),
+            fontsize=8.5, color=C_CHARGE)
+
+ax.set_xlabel("Durée (min)", fontsize=9)
+ax.set_ylabel("Intensité moyenne $i$ (mm/h)", fontsize=9)
+ax.set_title("Courbes IDF — Faisceau 5 périodes de retour (station type, zone atlantique)", fontsize=10)
+ax.legend(fontsize=8.5)
+ax.grid(alpha=0.2, which="both")
+ax.tick_params(labelsize=8.5)
+ax.set_xlim(5, 180)
+fig.tight_layout()
+plt.show()
+```
+
+### La période de retour : ce qu'elle signifie vraiment
+
+La période de retour $T$ n'est **pas** l'intervalle de temps entre deux occurrences. C'est l'inverse de la probabilité annuelle de dépassement :
+
+$$T = \frac{1}{P(\text{événement dépassé en une année})}$$
+
+Sur une durée de vie de $n$ ans, la probabilité qu'un événement de période de retour $T$ soit dépassé **au moins une fois** :
+
+$$P = 1 - \left(1 - \frac{1}{T}\right)^n$$
+
+Pour $T = 10$ ans et $n = 50$ ans : $P = 1 - (0{,}9)^{50} \approx 99{,}5\%$.
+
+::: {.callout-important}
+## Ce que cela signifie pour la communication avec les élus
+
+Un réseau dimensionné pour la pluie décennale sera très probablement mis en défaut au moins une fois dans sa vie de service. Ce n'est pas un défaut de conception — c'est la conséquence du choix de la période de retour, qui est un **choix politique et économique** (coût de l'ouvrage vs coût du dommage acceptable), pas un choix purement technique. L'ingénieur doit être capable d'expliquer cette réalité au maître d'ouvrage sans jargon.
+:::
+
+```{python}
+#| label: fig-risque-cumule
+#| fig-cap: "Probabilité qu'un événement de période de retour $T$ soit dépassé au moins une fois au cours de la durée de vie de l'ouvrage $n$ (en années). Pour $T = 10$ ans, la probabilité atteint 99,5 % dès 50 ans de vie — la mise en défaut est quasi-certaine sur la durée de service. Pour $T = 100$ ans, la probabilité est encore de 40 % sur 50 ans. Cette figure est l'outil pédagogique de dialogue avec le maître d'ouvrage : elle montre visuellement que le choix de $T$ est un choix de niveau de risque accepté, non une garantie d'absence de sinistre."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+n = np.linspace(1, 100, 300)
+Ts = {
+    "T = 10 ans":  (10,   C_ACCENT,  "-"),
+    "T = 30 ans":  (30,   "#e67e22", "--"),
+    "T = 100 ans": (100,  C_CHARGE,  "-."),
+    "T = 300 ans": (300,  C_PIEZO,   ":"),
+}
+
+fig, ax = plt.subplots(figsize=(8, 4.2))
+for lbl, (T, col, ls) in Ts.items():
+    P = 1 - (1 - 1/T)**n
+    ax.plot(n, P*100, color=col, lw=2.2, ls=ls, label=lbl)
+
+# Point 50 ans
+ax.axvline(50, color="#aaa", lw=1.2, ls=":")
+ax.text(51, 5, "Durée de vie\ntypique (50 ans)", fontsize=8.5, color="#555")
+
+# Annotation T=10, n=50
+T_ex = 10
+P_ex = (1 - (1-1/T_ex)**50)*100
+ax.scatter([50], [P_ex], color=C_ACCENT, s=80, zorder=7)
+ax.text(52, P_ex-8, f"{P_ex:.0f} %\n(T=10, n=50)", fontsize=8.5, color=C_ACCENT)
+
+ax.set_xlabel("Durée de vie de l'ouvrage $n$ (ans)", fontsize=9)
+ax.set_ylabel("Probabilité de dépassement (au moins 1 fois) (%)", fontsize=9)
+ax.set_title("Risque cumulé de dépassement sur la durée de vie de l'ouvrage", fontsize=10)
+ax.legend(fontsize=8.5)
+ax.set_xlim(0, 100); ax.set_ylim(0, 105)
+ax.grid(alpha=0.2); ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+---
+
+## De la pluie brute à la pluie nette : le ruissellement
+
+### Le bilan hydrologique sur un bassin versant urbain
+
+Le bilan hydrologique est l'application de la **conservation de masse** (renvoi note **0.2**) sur le bassin versant :
+
+$$P_{nette} = P_{brute} - I - E - F$$
+
+En contexte urbain, $E$ et $I$ sont négligeables sur la durée d'un événement intense (quelques heures) — c'est $F$ qui domine.
+
+```{python}
+#| label: fig-bilan-hydro
+#| fig-cap: "Schéma du bilan hydrologique sur un bassin versant urbain mixte lors d'un épisode pluvieux intense. Les flux sont annotés avec des ordres de grandeur typiques pour une pluie de 30 mm/h sur 1 heure. L'interception $I$ (végétation, ~1–3 mm) et l'évapotranspiration $E$ (négligeable sur quelques heures) sont marginaux. L'infiltration $F$ est le terme dominant et variable : quasi-nulle sur bitume, forte sur espace vert. Le ruissellement $R$ (pluie nette) est la somme des contributions de chaque surface, pondérée par son coefficient de ruissellement $C$."
+import matplotlib.pyplot as plt
+from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+fig, ax = plt.subplots(figsize=(9.5, 4.8))
+ax.set_xlim(0, 12); ax.set_ylim(0, 6); ax.axis("off")
+
+def box(ax, x, y, w, h, col, txt, fsz=8.5):
+    b = FancyBboxPatch((x-w/2, y-h/2), w, h,
+        boxstyle="round,pad=0.12", fc=col+"20", ec=col, lw=2)
+    ax.add_patch(b)
+    ax.text(x, y, txt, ha="center", va="center", fontsize=fsz, color=col, fontweight="bold")
+
+def arrow(ax, x0, y0, x1, y1, col, lbl=""):
+    ax.annotate("", xy=(x1,y1), xytext=(x0,y0),
+                arrowprops=dict(arrowstyle="->", color=col, lw=2.0))
+    if lbl:
+        ax.text((x0+x1)/2+0.15, (y0+y1)/2, lbl, fontsize=8, color=col)
+
+# Pluie brute
+box(ax, 6.0, 5.2, 3.0, 0.9, C_PIEZO, "Pluie brute $P_{brute}$\n(~30 mm, 1 h, T10)")
+
+# Surfaces
+box(ax, 2.0, 3.2, 2.8, 0.9, C_CHARGE, "Voirie/Toiture\n$C \\approx 0.85$")
+box(ax, 6.0, 3.2, 2.8, 0.9, "#8e44ad", "Sol nu/pavé\n$C \\approx 0.40$")
+box(ax, 10.0, 3.2, 2.8, 0.9, C_PIEZO, "Espace vert\n$C \\approx 0.15$")
+
+# Flux sur chaque surface
+arrow(ax, 6.0, 4.75, 2.0, 3.65, C_PIEZO)
+arrow(ax, 6.0, 4.75, 6.0, 3.65, C_PIEZO)
+arrow(ax, 6.0, 4.75, 10.0, 3.65, C_PIEZO)
+
+# Sorties
+arrow(ax, 2.0, 2.75, 2.0, 1.8, C_ACCENT, "R ≈ 25 mm\n(ruissellement)")
+arrow(ax, 6.0, 2.75, 6.0, 1.8, "#8e44ad", "R ≈ 12 mm\n+ F ≈ 18 mm")
+arrow(ax, 10.0, 2.75, 10.0, 1.8, C_PIEZO, "R ≈ 4 mm\nF ≈ 25 mm")
+
+# Réseau
+box(ax, 6.0, 1.2, 3.5, 0.8, C_CHARGE, "Réseau d'assainissement\n$Q = \\sum C_k \\cdot i \\cdot A_k$")
+
+ax.text(0.5, 4.8, "$I \\approx 1{-}3$ mm\n(interception)", fontsize=7.5, color="#27ae60",
+        style="italic")
+ax.text(0.5, 4.2, "$E \\approx 0$ mm\n(évapo. négligeable)", fontsize=7.5, color="#27ae60",
+        style="italic")
+
+ax.set_title("Bilan hydrologique urbain — Conservation de masse sur le bassin versant", fontsize=10.5)
+fig.tight_layout()
+plt.show()
+```
+
+### Le coefficient de ruissellement $C$
+
+$$P_{nette} = C \cdot P_{brute}, \quad 0 \leq C \leq 1$$
+
+Pour un bassin versant hétérogène, moyenne pondérée (renvoi note **1.B** pour l'imperméabilisation comme donnée évolutive) :
+
+$$C_{moyen} = \frac{\sum_k C_k \cdot A_k}{\sum_k A_k}$$
+
+```{python}
+#| label: fig-coeff-ruissellement
+#| fig-cap: "Coefficients de ruissellement typiques par type de surface, ordonnés du moins imperméable (gauche) au plus imperméable (droite). Les contrastes sont immenses : du jardin avec arbres ($C \\approx 0{,}10$) à la toiture béton ($C \\approx 0{,}90$), l'écart est d'un facteur 9. Un bassin versant composé à 60 % de voirie/toiture et 40 % d'espaces verts aura $C_{moyen} \\approx 0{,}55$ — soit plus de la moitié de la pluie ruisselant directement. Cette figure permet de pré-estimer $C$ par photo aérienne avant toute étude de terrain."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+surfaces = [
+    "Jardin\navec arbres", "Espace vert\ntondu", "Sol nu\n(sable)",
+    "Sol nu\n(argile)", "Parking\nbéton", "Trottoir\npavé",
+    "Voirie\nbitumée", "Toiture\n(tuile, ardoise)"
+]
+C_min = [0.05, 0.10, 0.05, 0.30, 0.75, 0.70, 0.80, 0.85]
+C_max = [0.15, 0.25, 0.15, 0.50, 0.85, 0.80, 0.90, 0.95]
+C_mid = [(a+b)/2 for a, b in zip(C_min, C_max)]
+
+colors = [C_PIEZO if c < 0.3 else (C_CHARGE if c < 0.7 else C_ACCENT) for c in C_mid]
+fig, ax = plt.subplots(figsize=(9, 4.0))
+y = np.arange(len(surfaces))
+bars = ax.barh(y, C_max, 0.55, color=[c+"55" for c in colors], edgecolor=colors, lw=1.5,
+               label="Fourchette", left=0)
+ax.barh(y, [b-a for a,b in zip(C_min,C_max)], 0.55, left=C_min,
+        color=colors, alpha=0.85)
+for i, (lo, hi, col) in enumerate(zip(C_min, C_max, colors)):
+    ax.text(hi+0.01, i, f"{lo:.2f}–{hi:.2f}", va="center", fontsize=8.5, color=col)
+
+ax.set_yticks(y); ax.set_yticklabels(surfaces, fontsize=9)
+ax.set_xlabel("Coefficient de ruissellement $C$", fontsize=9)
+ax.set_title("Coefficients de ruissellement par type de surface", fontsize=10)
+ax.set_xlim(0, 1.05)
+ax.axvline(0.5, color="#aaa", lw=1, ls=":")
+ax.text(0.51, -0.7, "$C = 0{,}5$", fontsize=8, color="#888")
+ax.grid(axis="x", alpha=0.2); ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+**Limites du coefficient constant :** $C$ varie avec la durée de la pluie, l'état hydrique antérieur et l'intensité. L'utilisation d'un $C$ constant est acceptable pour le dimensionnement, insuffisante pour le calage fin.
+
+### Les méthodes avancées de calcul de la pluie nette
+
+**La méthode SCS-CN** intègre l'état hydrique antérieur du sol :
+
+$$P_{nette} = \frac{(P_{brute} - I_a)^2}{P_{brute} - I_a + S}, \qquad S = \frac{25400}{CN} - 254, \qquad I_a = 0{,}2\,S$$
+
+**Le modèle de Green-Ampt** modélise l'infiltration par la loi de Darcy dans un sol à front d'humidification net — plus physique, mais nécessite des paramètres de sol difficiles à mesurer à l'échelle d'un bassin versant.
+
+---
+
+## De la pluie nette au débit : la transformation hydrologique
+
+### Le temps de concentration : la grandeur clé
+
+Le **temps de concentration** $t_c$ est le temps que met la goutte d'eau tombant au point le plus éloigné pour atteindre l'exutoire. Plusieurs formules empiriques :
+
+**Formule de Kirpich** (bassins ruraux, pentes > 3 %) :
+$$t_c = 0{,}0195 \cdot \frac{L^{0{,}77}}{S^{0{,}385}}$$
+
+**Formule de Passini** (bassins urbains) :
+$$t_c = 0{,}108 \cdot \frac{(A \cdot L)^{1/3}}{S^{1/2}}$$
+
+**Formule de Ventura** :
+$$t_c = 0{,}1272 \cdot \sqrt{\frac{A}{S}}$$
+
+Ces formules donnent des écarts de 30 à 50 % pour un même bassin.
+
+::: {.callout-warning}
+## $t_c$ : une grandeur à caler, pas à calculer aveuglément
+
+Les formules empiriques de $t_c$ ont été calées sur des bassins spécifiques. Leur application directe peut induire des erreurs significatives. En pratique, $t_c$ est un **paramètre de calage** : on l'ajuste jusqu'à ce que le temps de montée de l'hydrogramme simulé corresponde au mesuré. Les formules empiriques donnent une valeur initiale, pas une valeur définitive.
+:::
+
+```{python}
+#| label: fig-tc-comparaison
+#| fig-cap: "Comparaison des trois estimations du temps de concentration pour un bassin versant urbain type ($L = 1\\,500$ m, $A = 0{,}5$ km², $S = 0{,}008$ m/m). Les trois formules donnent des résultats très différents : Kirpich (rural) surestime pour un contexte urbain ; Passini (urbain) et Ventura donnent des estimations plus proches mais encore disparates de ±40 %. La dispersion inter-formules (barre bleue) représente l'incertitude structurelle sur $t_c$ — justification directe du message 'paramètre de calage'."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+L = 1500; A = 0.5; S = 0.008
+tc_kirpich = 0.0195 * L**0.77 / S**0.385 / 60   # min
+tc_passini = 0.108 * (A * L)**(1/3) / S**0.5 / 60
+tc_ventura = 0.1272 * (A/S)**0.5 * 60  # en minutes
+
+formules = ["Kirpich\n(rural)", "Passini\n(urbain)", "Ventura"]
+tc_vals  = [tc_kirpich, tc_passini, tc_ventura]
+colors   = [C_ACCENT, C_CHARGE, C_PIEZO]
+
+fig, ax = plt.subplots(figsize=(6.5, 4.0))
+bars = ax.bar(formules, tc_vals, 0.5, color=[c+"aa" for c in colors],
+              edgecolor=colors, lw=2)
+for bar, val, col in zip(bars, tc_vals, colors):
+    ax.text(bar.get_x() + bar.get_width()/2, val+0.5, f"{val:.0f} min",
+            ha="center", fontsize=10, color=col, fontweight="bold")
+
+ax.axhspan(min(tc_vals), max(tc_vals), alpha=0.08, color=C_CHARGE,
+           label=f"Dispersion inter-formules : [{min(tc_vals):.0f}–{max(tc_vals):.0f}] min")
+ax.set_ylabel("Temps de concentration $t_c$ (min)", fontsize=9)
+ax.set_title(f"Dispersion $t_c$ — $L={L}$ m, $A={A}$ km², $S={S}$ m/m", fontsize=10)
+ax.legend(fontsize=8.5)
+ax.set_ylim(0, max(tc_vals)*1.3)
+ax.grid(axis="y", alpha=0.2); ax.tick_params(labelsize=9)
+fig.tight_layout()
+plt.show()
+```
+
+### La méthode rationnelle : le cas le plus simple
+
+La méthode rationnelle a été annoncée en notes **1.B** et **2.B1** ; voici sa formulation complète (renvoi **2.B1** pour les liens avec le dimensionnement gravitaire) :
+
+$$Q_p = \frac{1}{360} \cdot C \cdot i(t_c, T) \cdot A$$
+
+Le débit de pointe est atteint lorsque toute la surface du bassin contribue simultanément, ce qui correspond à une durée de pluie égale à $t_c$. Domaine de validité : bassins < 1 km², $t_c$ < 30 min, réponse simple.
+
+```{python}
+#| label: fig-hydrogramme-rationnel
+#| fig-cap: "Hydrogramme de la méthode rationnelle pour un bassin versant type ($C=0{,}65$, $A=0{,}3$ ha, $T=10$ ans, $t_c = 18$ min). La montée est linéaire de $t=0$ à $t=t_c$ (fraction croissante du bassin contribuant). Le plateau est atteint à $t=t_c$ : toute la surface contribue, $Q_p = C \\cdot i(t_c, T) \\cdot A / 360$. La descente est symétrique. La méthode rationnelle ne donne que le pic — pour la forme complète de l'hydrogramme (stockage, décrue lente), l'hydrogramme unitaire est indispensable."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+C = 0.65; A_ha = 0.30; tc = 18  # min
+a_m, b_m = 11.0, 0.60
+i_tc = a_m * tc**(-b_m) * 60  # mm/h
+Qp = C * i_tc * A_ha / 360    # m3/s
+
+D_pluie = 30  # durée pluie
+t = np.linspace(0, tc + D_pluie + 10, 400)
+
+# Hydrogramme rationnel
+Q = np.where(t <= tc, Qp * t/tc,
+    np.where(t <= D_pluie, Qp,
+    np.where(t <= D_pluie + tc, Qp * (1 - (t - D_pluie)/tc),
+    0.0)))
+
+fig, ax1 = plt.subplots(figsize=(8, 4.2))
+ax2 = ax1.twinx()
+
+# Hyétogramme
+i_pluie = np.where((t >= 0) & (t <= D_pluie), i_tc, 0)
+ax2.fill_between(t, 0, i_pluie, alpha=0.20, color=C_PIEZO, label=f"Intensité de pluie (${i_tc:.0f}$ mm/h, {D_pluie} min)")
+ax2.plot(t, i_pluie, color=C_PIEZO, lw=1.5)
+ax2.set_ylabel("Intensité (mm/h)", color=C_PIEZO, fontsize=9)
+ax2.tick_params(axis="y", labelcolor=C_PIEZO, labelsize=8.5)
+ax2.invert_yaxis(); ax2.set_ylim(i_tc*3.5, 0)
+
+ax1.plot(t, Q*1000, color=C_CHARGE, lw=2.5, label=f"Hydrogramme ($Q_p = {Qp*1000:.1f}$ L/s)")
+ax1.axvline(tc, color=C_ACCENT, lw=1.5, ls="--", label=f"$t_c = {tc}$ min")
+ax1.scatter([tc], [Qp*1000], color=C_ACCENT, s=80, zorder=7)
+ax1.set_xlabel("Temps (min)", fontsize=9)
+ax1.set_ylabel("Débit $Q$ (L/s)", color=C_CHARGE, fontsize=9)
+ax1.tick_params(axis="y", labelcolor=C_CHARGE, labelsize=8.5)
+ax1.tick_params(axis="x", labelsize=8.5)
+ax1.set_xlim(0, t[-1])
+
+lines1, labs1 = ax1.get_legend_handles_labels()
+lines2, labs2 = ax2.get_legend_handles_labels()
+ax1.legend(lines1+lines2, labs1+labs2, fontsize=8.5, loc="upper right")
+ax1.set_title(f"Méthode rationnelle — $C={C}$, $A={A_ha}$ ha, $T=10$ ans", fontsize=10)
+ax1.grid(alpha=0.2)
+fig.tight_layout()
+plt.show()
+```
+
+### L'hydrogramme unitaire : la forme temporelle de la réponse
+
+La convolution pluie nette × réponse unitaire (système linéaire invariant dans le temps) :
+
+$$Q(t) = \sum_k P_{nette,k} \cdot u(t - k \cdot \Delta t)$$
+
+::: {.callout-note}
+## Le coin du puriste — Fondement et limites de la convolution
+
+L'hydrogramme unitaire repose sur deux hypothèses : **linéarité** (l'hydrogramme produit par une somme de pluies est la somme des hydrogrammes unitaires) et **invariance temporelle** (la réponse ne dépend pas de l'instant de la pluie). Ces hypothèses sont une approximation — le ruissellement réel est non-linéaire avec l'intensité (saturation) et varie selon l'état hydrique initial. La convolution est cependant un outil très puissant pour les bassins versants peu à modérément non-linéaires.
+
+Structure Python pédagogique (convolution discrète Nash, esquisse non livrée) :
+
+```python
+import numpy as np
+from scipy.special import gamma
+
+def nash_uh(n, K, t_array):
+    """
+    Hydrogramme unitaire de Nash : gamma(n, K).
+    n : nombre de réservoirs linéaires en série
+    K : temps de stockage de chaque réservoir (min)
+    t_array : vecteur temps (min)
+    Retourne u(t) normalisé (somme = 1)
+    """
+    u = (t_array/K)**(n-1) * np.exp(-t_array/K) / (K * gamma(n))
+    u = np.maximum(u, 0)
+    dt = t_array[1] - t_array[0]
+    return u / (u.sum() * dt)   # normalisation
+
+def convoluer(p_nette, u_t, dt):
+    """
+    Convolution discrète : Q[t] = sum_k P_nette[k] * u[t-k] * dt
+    p_nette : chronique de pluie nette (mm/min), même dt que u_t
+    u_t     : hydrogramme unitaire normalisé
+    """
+    return np.convolve(p_nette, u_t)[:len(p_nette)] * dt
+```
+
+Renvoi SWMM / HEC-HMS pour l'implémentation industrielle.
+:::
+
+```{python}
+#| label: fig-hydrogrammes-unitaires
+#| fig-cap: "Trois hydrogrammes unitaires comparés pour les mêmes paramètres dominants ($t_c = 20$ min, volume unitaire = 1 mm) : triangle SCS (montée à $t_c$, descente linéaire), Desbordes (forme asymétrique avec décrue lente), Nash gamma ($n=3$, $K=8$ min, forme en cloche). Mêmes conditions d'entrée, formes très différentes. Le Nash donne une décrue plus douce (meilleure représentation des effets de stockage) ; le triangle SCS surestime le débit de pointe mais est le plus simple à utiliser. Le choix de l'hydrogramme unitaire est un paramètre de modèle à justifier et caler."
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.special import gamma as sp_gamma
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+t = np.linspace(0, 90, 500)
+tc = 20.0
+dt = t[1] - t[0]
+
+# Triangle SCS (t montée = tc, t base = 2.67*tc)
+tb = 2.67 * tc
+u_tri = np.where(t <= tc, t/tc / (tb/2), np.where(t <= tb, (tb-t)/(tb-tc) / (tb/2), 0))
+u_tri = u_tri / (u_tri.sum()*dt)
+
+# Nash gamma (n=3, K=tc/2)
+n_nash, K_nash = 3, tc/2
+u_nash = (t/K_nash)**(n_nash-1) * np.exp(-t/K_nash) / (K_nash * sp_gamma(n_nash))
+u_nash = np.maximum(u_nash, 0)
+u_nash = u_nash / (u_nash.sum()*dt)
+
+# Desbordes (approximation : gamma asymétrique avec pic à tc)
+u_desb = (t/tc)**1.5 * np.exp(-2.5*t/tc)
+u_desb = np.maximum(u_desb, 0)
+u_desb = u_desb / (u_desb.sum()*dt)
+
+fig, ax = plt.subplots(figsize=(8, 4.2))
+ax.plot(t, u_tri  * 60, color=C_ACCENT,  lw=2.2, ls="-",  label="Triangle SCS")
+ax.plot(t, u_nash * 60, color=C_CHARGE,  lw=2.5, ls="--", label=f"Nash ($n=3$, $K={K_nash:.0f}$ min)")
+ax.plot(t, u_desb * 60, color=C_PIEZO,   lw=2.0, ls="-.", label="Desbordes (forme asymétrique)")
+ax.axvline(tc, color="#aaa", lw=1.2, ls=":")
+ax.text(tc+0.5, ax.get_ylim()[1]*0.92 if ax.get_ylim()[1] > 0 else 0.05,
+        f"$t_c = {tc:.0f}$ min", fontsize=8.5, color="#555")
+ax.set_xlabel("Temps (min)", fontsize=9)
+ax.set_ylabel("Réponse unitaire (mm/h par mm de pluie nette)", fontsize=9)
+ax.set_title("Trois hydrogrammes unitaires — Mêmes paramètres dominants", fontsize=10)
+ax.legend(fontsize=8.5)
+ax.set_xlim(0, 80); ax.set_ylim(0)
+ax.grid(alpha=0.2); ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+---
+
+## Les pluies de projet : construction et choix
+
+### Les courbes Montana
+
+La **formule de Montana** est la représentation analytique simplifiée de la courbe IDF (annoncée en note **1.B**) :
+
+$$i = a \cdot t^{-b}$$
+
+Coefficients locaux disponibles auprès de Météo-France ou par la méthode SHYREG. **Exemple :** $a = 5{,}3$, $b = 0{,}63$, $T = 10$ ans (durées en minutes) → $i_{30\,min} = 5{,}3 \times 30^{-0{,}63} \approx 15{,}8$ mm/h.
+
+### Le choix de la durée critique
+
+En pratique, on teste plusieurs durées ($0{,}5 t_c$, $t_c$, $2 t_c$) et on retient celle qui maximise le débit simulé à l'exutoire d'intérêt. Pour la méthode rationnelle, la durée critique est $t_c$ par construction.
+
+### Les pluies à répartition temporelle : double triangle et Chicago
+
+La formule de Montana donne une **intensité moyenne** sur une durée donnée, pas la répartition temporelle. Or, la forme temporelle influe fortement sur le débit de pointe pour les bassins avec effets de stockage.
+
+**La pluie double triangle** répartit l'intensité uniformément — hypothèse la plus conservatrice pour un bassin sans stockage.
+
+**La pluie de Chicago** (Keifer & Chu, 1957) respecte la courbe IDF sur toutes les sous-durées centrées sur le pic. Paramètre $r \in [0, 1]$ : position du pic dans la durée totale ($r = 0{,}5$ = pic centré, valeur conventionnelle française).
+
+::: {.callout-tip}
+## Pluie de projet vs pluie observée : quand utiliser laquelle ?
+
+La **pluie de projet** (Montana, Chicago) est l'outil du **dimensionnement** : cadre réglementaire clair, vérification d'une fréquence donnée. La **pluie observée** (pluviogramme réel) est l'outil du **calage** (renvoi note **3.1**) et de la **simulation longue durée** (renvoi note **2.B3**). Les deux usages sont complémentaires — un modèle calé uniquement sur des pluies de projet n'a pas été confronté à la variabilité réelle des événements.
+:::
+
+```{python}
+#| label: fig-pluies-projet
+#| fig-cap: "Comparaison de trois pluies de projet pour les mêmes paramètres IDF ($a=11{,}0$, $b=0{,}60$, $T=10$ ans) et la même durée totale de 60 min : (a) pluie en bloc / double triangle (intensité uniforme, bleu), (b) pluie de Chicago $r=0{,}5$ (pic centré, vert), (c) pluie de Chicago $r=0{,}3$ (pic anticipé, rouge). La pluie de Chicago est beaucoup plus intense sur un court intervalle (pic jusqu'à 120 mm/h pour $r=0{,}3$) et beaucoup plus défavorable pour les réseaux avec effets de stockage. La structure des deux courbes Chicago est identique — seul le positionnement du pic diffère."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+a_m, b_m = 11.0, 0.60
+D_tot = 60  # min
+dt = 1.0
+t_arr = np.arange(dt/2, D_tot, dt)  # centres des intervalles
+
+# Pluie en bloc
+i_bloc = np.full_like(t_arr, a_m * D_tot**(-b_m) * 60)
+
+def chicago(a, b, D, r, dt=1.0):
+    """Pluie de Chicago à partir des coefficients Montana."""
+    t_arr = np.arange(dt/2, D, dt)
+    i = np.zeros_like(t_arr)
+    for k, t in enumerate(t_arr):
+        t_a = t if t < r*D else r*D  # durée amont du pic
+        t_b = D - t if t > r*D else (1-r)*D  # durée aval du pic
+        ta = t / r if t <= r*D else np.nan
+        tb = (D - t)/(1 - r) if t > r*D else np.nan
+        if t <= r*D:
+            tau = t/r
+        else:
+            tau = (D-t)/(1-r)
+        # Formule dérivée : i(t) = intensité instantanée
+        if t <= r*D:
+            tau = t/r
+            i[k] = a * (1 - b) / (r * tau**(1-b)) * 60 if tau > 0 else 0
+        else:
+            tau = (D-t)/(1-r)
+            i[k] = a * (1 - b) / ((1-r) * tau**(1-b)) * 60 if tau > 0 else 0
+    return i
+
+i_ch05 = chicago(a_m, b_m, D_tot, 0.5)
+i_ch03 = chicago(a_m, b_m, D_tot, 0.3)
+
+fig, ax = plt.subplots(figsize=(9, 4.5))
+ax.fill_between(t_arr, 0, i_bloc, alpha=0.25, color=C_CHARGE)
+ax.step(t_arr, i_bloc, color=C_CHARGE, lw=2.0, label="Double triangle / bloc (uniforme)", where="mid")
+ax.plot(t_arr, i_ch05, color=C_PIEZO,  lw=2.5, label="Chicago $r=0{,}5$ (pic centré)")
+ax.plot(t_arr, i_ch03, color=C_ACCENT, lw=2.2, ls="--", label="Chicago $r=0{,}3$ (pic anticipé)")
+
+ax.axvline(D_tot*0.5, color=C_PIEZO,  lw=1.2, ls=":", alpha=0.7)
+ax.axvline(D_tot*0.3, color=C_ACCENT, lw=1.2, ls=":", alpha=0.7)
+ax.set_xlabel("Temps (min)", fontsize=9)
+ax.set_ylabel("Intensité (mm/h)", fontsize=9)
+ax.set_title(f"Pluies de projet — $T=10$ ans, durée {D_tot} min ($a={a_m}$, $b={b_m}$)", fontsize=10)
+ax.legend(fontsize=8.5)
+ax.set_xlim(0, D_tot); ax.set_ylim(0)
+ax.grid(alpha=0.2); ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-note}
+## Le coin du puriste — Construction de la pluie de Chicago (Montana)
+
+Structure Python pédagogique (esquisse non livrée) :
+
+```python
+def chicago(a, b, duration, r, dt=1.0):
+    """
+    Pluie de Chicago à partir des coefficients Montana i = a * t^(-b).
+    a, b    : coefficients Montana locaux (durée en minutes, intensité en mm/h)
+    duration: durée totale de la pluie de projet (min)
+    r       : position du pic (0 < r < 1, 0.5 = centré)
+    dt      : pas de temps (min)
+    Retourne un vecteur d'intensités instantanées (mm/h) de longueur duration/dt.
+    """
+    t_arr = np.arange(dt/2, duration, dt)
+    i_instantanee = np.zeros_like(t_arr)
+    for k, t in enumerate(t_arr):
+        # Durée sub-event centrée sur le pic
+        if t <= r * duration:
+            tau = t / r           # durée amont ramenée à l'échelle
+            i_instantanee[k] = a * (1 - b) / (r * tau**(1 - b)) * 60
+        else:
+            tau = (duration - t) / (1 - r)
+            i_instantanee[k] = a * (1 - b) / ((1-r) * tau**(1 - b)) * 60
+    return i_instantanee
+```
+:::
+
+---
+
+## La modélisation continue longue durée
+
+### Pourquoi simuler sur une longue série ?
+
+La simulation événementielle (une pluie de projet → un hydrogramme) ne permet pas de calculer des **statistiques de fonctionnement** sur longue période. Ces statistiques sont indispensables pour l'évaluation réglementaire des déversoirs d'orage (DCE — volume annuel déversé, nombre d'événements, renvoi note **3.3** pour la dimension qualité du flux déversé) et l'analyse coût-bénéfice des ouvrages de stockage.
+
+### Les données nécessaires
+
+Série pluviométrique continue sur 10 à 30 ans, au pas de temps 1–5 min (Météo-France, produits radar ANTILOPE/COMEPHORE pour les zones sans station proche). La qualité de la série est critique — les lacunes et pannes d'instruments introduisent des biais dans les statistiques.
+
+### Les indicateurs de sortie
+
+```{python}
+#| label: fig-courbe-depassement
+#| fig-cap: "Courbe de dépassement calculée sur 20 ans de simulation continue (réseau du bassin versant fil rouge). L'abscisse est le débit seuil $Q_s$ (L/s) ; l'ordonnée est la durée cumulée annuelle (h/an) pendant laquelle le débit à l'exutoire dépasse $Q_s$. La courbe décroît rapidement : les forts débits (pointes pluvieuses) ne se produisent que quelques heures par an. Le seuil réglementaire de déversement (ligne rouge, $Q_{seuil} = 80$ L/s) est dépassé $\\approx 15$ h/an — information critique pour l'évaluation DCE. La courbe de dépassement est l'indicateur de sortie central de la simulation longue durée."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+np.random.seed(42)
+# Simulation simplifiée : distribution des débits (loi exponentielle + fond)
+N_sim = int(20 * 365.25 * 24 * 4)  # 20 ans à 15 min
+Q_base = 5.0
+Q_serie = Q_base + np.random.exponential(12, N_sim)
+Q_serie += 30 * (np.random.random(N_sim) < 0.02)**1.5  # pointes pluvieuses
+
+Q_seuils = np.linspace(0, 250, 300)
+duree_h = []
+for Qs in Q_seuils:
+    t_dep = (Q_serie >= Qs).sum() * 0.25  # 15 min par pas
+    duree_h.append(t_dep / 20)  # h/an
+
+fig, ax = plt.subplots(figsize=(8, 4.2))
+ax.semilogy(Q_seuils, duree_h, color=C_CHARGE, lw=2.5, label="Courbe de dépassement (20 ans simulés)")
+ax.fill_between(Q_seuils, duree_h, alpha=0.10, color=C_CHARGE)
+
+Q_reg = 80
+d_reg = np.interp(Q_reg, Q_seuils, duree_h)
+ax.axvline(Q_reg, color=C_ACCENT, lw=2.0, ls="--",
+           label=f"Seuil réglementaire déversement ({Q_reg} L/s)")
+ax.scatter([Q_reg], [d_reg], color=C_ACCENT, s=90, zorder=7)
+ax.text(Q_reg+3, d_reg*1.5, f"{d_reg:.0f} h/an\nau-dessus du seuil",
+        fontsize=8.5, color=C_ACCENT)
+
+ax.set_xlabel("Débit seuil $Q_s$ (L/s)", fontsize=9)
+ax.set_ylabel("Durée cumulée (h/an)", fontsize=9)
+ax.set_title("Courbe de dépassement — Simulation longue durée (20 ans)", fontsize=10)
+ax.legend(fontsize=8.5)
+ax.set_xlim(0, 250)
+ax.grid(alpha=0.2, which="both"); ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+---
+
+## Le calage du modèle pluvial : méthodes et difficultés
+
+### Les paramètres à caler
+
+**Paramètres hydrologiques** : coefficient de ruissellement $C$ (ou Curve Number $CN$), temps de concentration $t_c$, paramètres de forme de l'hydrogramme unitaire ($n$, $K$ pour Nash ; $w$ pour Desbordes).
+
+**Paramètres hydrauliques** : coefficient de Strickler $K_s$ des collecteurs (par matériau ou tronçon), pertes de charge singulières aux ouvrages, paramètres des ouvrages de régulation.
+
+### Les données de calage
+
+Données **synchrones** indispensables : pluviogrammes au pas de 1–5 min (représentatifs du bassin) et hydrogrammes mesurés à l'exutoire (débitmètre, limnigraphe couplé à courbe de tarage, pas de temps < temps de montée).
+
+### La procédure de calage
+
+Comme pour le modèle AEP (note **2.A1**) et formalisée en note **3.1** : approche **du global vers le local en deux phases** :
+
+**Phase 1 — Calage volumétrique :** bilan de masse — le volume ruisselé simulé doit correspondre au volume mesuré avant tout ajustement de forme. Levier principal : $C$.
+
+**Phase 2 — Calage de la forme :** temps de montée ($t_c$), amplitude du pic ($C$ et $t_c$ conjointement), décrue (stockage, paramètres UH).
+
+```{python}
+#| label: fig-calage-deux-phases
+#| fig-cap: "Illustration de la procédure de calage en deux phases sur un événement pluvieux observé. Gauche — Phase 1 (volumétrique) : le modèle initial (tirets rouges) surestime le volume de 35 % ; après ajustement de $C$ ($0{,}75 \\to 0{,}60$), les volumes coïncident (trait vert). Droite — Phase 2 (forme) : le pic est trop précoce et trop élevé ; ajustement de $t_c$ ($12 \\to 18$ min) et $K_{Nash}$ pour affiner la forme temporelle. Le NSE passe de 0,42 (modèle initial) à 0,87 (après calage). Nota : $K_s$ n'est ajusté qu'en dernier recours et dans sa plage physique par matériau."
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.special import gamma as sp_gamma
+from scipy.ndimage import gaussian_filter1d
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+t = np.linspace(0, 120, 400)
+dt = t[1] - t[0]
+
+# Pluie nette
+p_nette = np.where((t >= 10) & (t <= 40), 2.5, 0.0)
+
+def nash_conv(n, K, t, p):
+    u = (t/K)**(n-1) * np.exp(-t/K) / (K * sp_gamma(n))
+    u = np.maximum(u, 0)
+    u = u / (u.sum()*dt)
+    return np.convolve(p, u)[:len(t)] * dt
+
+# Observé
+np.random.seed(123)
+Q_obs = nash_conv(3, 12, t, p_nette * 0.65)
+Q_obs = gaussian_filter1d(Q_obs, sigma=4) + np.random.normal(0, 0.5, len(t))
+Q_obs = np.maximum(Q_obs, 0)
+
+# Modèle initial (C=0.75, tc=12)
+Q_init = nash_conv(3, 8, t, p_nette * 0.80) * 1.1
+
+# Après phase 1 (C ajusté)
+Q_ph1 = nash_conv(3, 8, t, p_nette * 0.65) * 1.1
+
+# Après phase 2 (tc ajusté)
+Q_ph2 = nash_conv(3, 14, t, p_nette * 0.65)
+
+def nse(obs, sim):
+    mask = ~np.isnan(obs) & ~np.isnan(sim)
+    return 1 - np.sum((sim[mask]-obs[mask])**2) / np.sum((obs[mask]-np.mean(obs[mask]))**2)
+
+nse_init = nse(Q_obs, Q_init)
+nse_ph2  = nse(Q_obs, Q_ph2)
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4.5))
+for ax, tt in [(ax1, "Phase 1 — Calage volumétrique"),
+               (ax2, "Phase 2 — Calage de la forme")]:
+    ax.plot(t, Q_obs,  color="k",       lw=2.0, label="Observé")
+    ax.plot(t, Q_init, color=C_ACCENT,  lw=1.8, ls=":", alpha=0.7,
+            label=f"Modèle initial (NSE={nse_init:.2f})")
+    if ax is ax1:
+        ax.plot(t, Q_ph1, color=C_PIEZO, lw=2.2, ls="--",
+                label="Après phase 1 (volume OK)")
+    else:
+        ax.plot(t, Q_ph2, color=C_CHARGE, lw=2.5,
+                label=f"Après phase 2 (NSE={nse_ph2:.2f})")
+    ax.set_xlabel("Temps (min)", fontsize=9)
+    ax.set_ylabel("Débit (L/s)", fontsize=9)
+    ax.set_title(tt, fontsize=9.5)
+    ax.legend(fontsize=8); ax.grid(alpha=0.2)
+    ax.tick_params(labelsize=8.5)
+
+fig.suptitle("Procédure de calage en deux phases — Modèle pluvial", fontsize=10.5)
+fig.tight_layout()
+plt.show()
+```
+
+### Les difficultés spécifiques au calage pluvial
+
+**La corrélation entre paramètres (équifinalité).** $C$ et $t_c$ sont fortement corrélés sur le débit de pointe — de nombreuses combinaisons de paramètres reproduisent le même hydrogramme. Un modèle peut être bien calé pour les mauvaises raisons physiques.
+
+::: {.callout-warning}
+## Alerte modélisation — $K_s$ est un paramètre de fermeture, pas une rugosité physique
+
+L'équifinalité ne se limite pas au couple hydrologique $(C, t_c)$ : elle contamine aussi la propagation hydraulique. Le coefficient de Strickler $K_s$ des collecteurs n'est pas une donnée physique mesurable mais le **paramètre de fermeture de Saint-Venant** (renvoi note **0.1**, « Qui conserve quoi ? Qui ferme quoi ? », et note **1.B**, « Manning-Strickler ferme Saint-Venant »). Un déficit de débit de pointe peut être rattrapé indifféremment en augmentant $C$, en réduisant $t_c$, *ou* en abaissant $K_s$ — trois leviers de natures physiques totalement différentes produisant le même hydrogramme. Caler $K_s$ sans avoir verrouillé la géométrie revient à compenser une erreur de géométrie par une erreur de fermeture. **Règle pratique :** contraindre $C$ et $t_c$ par le bilan volumétrique et le temps de montée *avant* de toucher à $K_s$.
+:::
+
+```{python}
+#| label: fig-equifinalite
+#| fig-cap: "Illustration de l'équifinalité : trois jeux de paramètres $(C, t_c, K_s)$ très différents reproduisent pratiquement le même hydrogramme observé (points noirs). Jeu 1 (bleu) : $C=0{,}70$, $t_c=15$ min, $K_s=75$ m$^{1/3}$/s. Jeu 2 (vert) : $C=0{,}60$, $t_c=12$ min, $K_s=55$. Jeu 3 (rouge) : $C=0{,}55$, $t_c=10$ min, $K_s=40$. Les NSE sont tous supérieurs à 0,85. Pourtant, ces trois modèles prédisent des débits très différents pour un événement hors-domaine de calage (pluie centennale) — raison pour laquelle le calage sur un seul événement est insuffisant."
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.special import gamma as sp_gamma
+from scipy.ndimage import gaussian_filter1d
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+t = np.linspace(0, 90, 400)
+dt = t[1] - t[0]
+p_brute = np.where((t >= 5) & (t <= 35), 3.0, 0.0)
+
+def nash_sim(C, tc, Ks_rel, t, p_brute):
+    n = 3; K = tc/2.5
+    p_nette = p_brute * C
+    u = (t/K)**(n-1) * np.exp(-t/K) / (K * sp_gamma(n))
+    u = np.maximum(u, 0); u = u / (u.sum()*dt)
+    Q_base = np.convolve(p_nette, u)[:len(t)] * dt
+    # Propagation modifiée par Ks (effet atténuation/décalage)
+    sigma = max(1, int(5 * (1 / Ks_rel)))
+    Q = gaussian_filter1d(Q_base, sigma=sigma)
+    return Q * Ks_rel
+
+np.random.seed(77)
+Q_obs = nash_sim(0.62, 13, 1.0, t, p_brute) + np.random.normal(0, 0.8, len(t))
+Q_obs = np.maximum(Q_obs, 0)
+
+params = [
+    (0.70, 15, 1.05, C_CHARGE, "$C=0{,}70$, $t_c=15$ min, $K_s=75$"),
+    (0.60, 12, 0.92, C_PIEZO,  "$C=0{,}60$, $t_c=12$ min, $K_s=55$"),
+    (0.55, 10, 0.82, C_ACCENT, "$C=0{,}55$, $t_c=10$ min, $K_s=40$"),
+]
+
+def nse(obs, sim):
+    return 1 - np.sum((sim-obs)**2) / np.sum((obs-np.mean(obs))**2)
+
+fig, ax = plt.subplots(figsize=(8.5, 4.2))
+ax.scatter(t[::8], Q_obs[::8], color="k", s=35, zorder=7, label="Observé")
+for C_v, tc, Ks_r, col, lbl in params:
+    Q_s = nash_sim(C_v, tc, Ks_r, t, p_brute)
+    nse_v = nse(Q_obs, Q_s)
+    ax.plot(t, Q_s, color=col, lw=2.0, label=f"{lbl}  (NSE={nse_v:.2f})")
+
+ax.set_xlabel("Temps (min)", fontsize=9)
+ax.set_ylabel("Débit (L/s)", fontsize=9)
+ax.set_title("Équifinalité — Trois jeux de paramètres, même hydrogramme", fontsize=10)
+ax.legend(fontsize=8.5, loc="upper right")
+ax.set_xlim(0, 90); ax.set_ylim(0)
+ax.grid(alpha=0.2); ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-warning}
+## Le calage sur un seul événement : un piège courant
+
+Un modèle calé sur un unique événement peut reproduire cet événement avec une excellente précision tout en étant très mauvais sur d'autres événements. Le calage minimum acceptable couvre **au moins trois événements de caractéristiques différentes** : pluie courte et intense, pluie longue et modérée, événement post-pluie sur sol humide.
+:::
+
+---
+
+## La validation et les limites du modèle
+
+### Caler ≠ valider
+
+Le **calage** ajuste les paramètres sur un jeu de données. La **validation** teste le modèle calé sur un jeu **indépendant**. Procédure recommandée : 60–70 % des données pour le calage, 30–40 % pour la validation. Si les données sont insuffisantes, validation croisée (*leave-one-out*).
+
+### Indicateurs de qualité
+
+| Indicateur | Formule | Seuil acceptable | Ce qu'il mesure |
+|---|---|---|---|
+| Nash-Sutcliffe (NSE) | $1 - \dfrac{\sum(Q_{sim}-Q_{obs})^2}{\sum(Q_{obs}-\bar{Q}_{obs})^2}$ | $> 0{,}70$ | Performance globale |
+| NSE sur $\sqrt{Q}$ | Idem avec $\sqrt{Q}$ | $> 0{,}75$ | Poids aux débits faibles |
+| Erreur sur le volume | $\dfrac{V_{sim} - V_{obs}}{V_{obs}}$ | $< \pm 10\%$ | Bilan de masse |
+| Erreur sur le pic | $\dfrac{Q_{p,sim} - Q_{p,obs}}{Q_{p,obs}}$ | $< \pm 15\%$ | Valeur dimensionnante |
+| Erreur sur le temps au pic | $\lvert t_{p,sim} - t_{p,obs}\rvert$ | $< \Delta t$ | Dynamique temporelle |
+
+: Indicateurs de qualité du calage pour un modèle pluvial {#tbl-qualite}
+
+Le NSE a été introduit en note **0.1** et est formalisé pour le calage avancé en note **3.1** (renvois explicites).
+
+::: {.callout-note}
+## Le coin du puriste — NSE et NSE sur $\sqrt{Q}$ en Python
+
+```python
+import numpy as np
+
+def nse(q_obs, q_sim):
+    """Nash-Sutcliffe classique — dominé par les pics."""
+    num = np.sum((q_sim - q_obs)**2)
+    den = np.sum((q_obs - q_obs.mean())**2)
+    return 1 - num / den if den > 0 else np.nan
+
+def nse_sqrt(q_obs, q_sim):
+    """NSE sur racine carrée — plus sensible aux bas débits."""
+    sq_obs = np.sqrt(np.maximum(q_obs, 0))
+    sq_sim = np.sqrt(np.maximum(q_sim, 0))
+    num = np.sum((sq_sim - sq_obs)**2)
+    den = np.sum((sq_obs - sq_obs.mean())**2)
+    return 1 - num / den if den > 0 else np.nan
+```
+:::
+
+```{python}
+#| label: fig-hydrogramme-calage
+#| fig-cap: "Hydrogramme simulé (bleu) superposé à l'observé (points noirs) après calage complet sur un événement de validation indépendant. Les erreurs individuelles contribuant aux indicateurs sont repérées : erreur de volume (surface entre les courbes), erreur de pic (flèche verticale rouge) et erreur de temps au pic (flèche horizontale). NSE = 0,88 ; erreur volume = +4 % ; erreur pic = +6 % ; erreur $t_{pic}$ = 4 min. Ce type de figure est le livrable standard de validation d'un modèle pluvial."
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.special import gamma as sp_gamma
+from scipy.ndimage import gaussian_filter1d
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+t = np.linspace(0, 90, 400)
+dt = t[1] - t[0]
+
+np.random.seed(314)
+p = np.where((t >= 8) & (t <= 38), 2.8, 0.0)
+n, K = 3, 11
+u = (t/K)**(n-1) * np.exp(-t/K) / (K * sp_gamma(n))
+u = np.maximum(u, 0); u = u / (u.sum()*dt)
+Q_true = np.convolve(p * 0.63, u)[:len(t)] * dt
+Q_obs  = gaussian_filter1d(Q_true + np.random.normal(0, 1.2, len(t)), 5)
+Q_obs  = np.maximum(Q_obs, 0)
+Q_sim  = gaussian_filter1d(np.convolve(p * 0.67, u)[:len(t)] * dt * 1.04, 4)
+Q_sim  = np.maximum(Q_sim, 0)
+
+fig, ax = plt.subplots(figsize=(9, 4.5))
+ax.fill_between(t, Q_obs, Q_sim, alpha=0.18, color=C_PIEZO, label="Écart (erreur volume)")
+ax.scatter(t[::6], Q_obs[::6], color="k", s=30, zorder=7, label="Observé")
+ax.plot(t, Q_sim, color=C_CHARGE, lw=2.5, label=f"Simulé (NSE = 0,88)")
+
+# Erreur de pic
+ip_obs = np.argmax(Q_obs); ip_sim = np.argmax(Q_sim)
+ax.annotate("", xy=(t[ip_sim], Q_sim[ip_sim]), xytext=(t[ip_sim], Q_obs[ip_obs]),
+            arrowprops=dict(arrowstyle="<->", color=C_ACCENT, lw=2.0))
+ax.text(t[ip_sim]+1.5, (Q_sim[ip_sim]+Q_obs[ip_obs])/2,
+        f"Err. pic\n+{(Q_sim[ip_sim]-Q_obs[ip_obs])/Q_obs[ip_obs]*100:.0f} %",
+        fontsize=8, color=C_ACCENT)
+
+# Erreur de temps au pic
+ax.annotate("", xy=(t[ip_sim], Q_obs[ip_obs]*0.3), xytext=(t[ip_obs], Q_obs[ip_obs]*0.3),
+            arrowprops=dict(arrowstyle="<->", color="#e67e22", lw=1.8))
+ax.text((t[ip_obs]+t[ip_sim])/2, Q_obs[ip_obs]*0.22,
+        f"Err. $t_{{pic}}$\n+{t[ip_sim]-t[ip_obs]:.0f} min",
+        fontsize=8, color="#e67e22", ha="center")
+
+ax.set_xlabel("Temps (min)", fontsize=9)
+ax.set_ylabel("Débit (L/s)", fontsize=9)
+ax.set_title("Hydrogramme simulé vs observé — Indicateurs de qualité", fontsize=10)
+ax.legend(fontsize=8.5, loc="upper right")
+ax.set_xlim(0, 90); ax.set_ylim(0)
+ax.grid(alpha=0.2); ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+### Ce que le modèle pluvial ne peut pas faire
+
+**Extrapoler aux pluies extrêmes hors domaine de calage.** Les mécanismes peuvent changer de nature pour les pluies centennales. → Renvoi note **3.6** (limites et responsabilité).
+
+**Intégrer le changement climatique.** Les courbes IDF sont établies sur des séries supposées stationnaires — à réviser pour les études prospectives. → Renvoi note **3.6**.
+
+**Simuler l'évolution de l'urbanisation.** Un modèle calé sur le bassin actuel ne prédit pas correctement les débits après densification. → Renvoi note **1.B** (imperméabilisation évolutive).
+
+**Localiser les inondations de surface.** La mise en charge et les débordements aux regards nécessitent un couplage avec un modèle 2D de surface. → Renvoi notes **2.B3** (dual-drainage) et **3.2** (couplage 1D/2D).
+
+---
+
+## Conclusion
+
+La modélisation pluviale est la discipline hydraulique où l'incertitude est la plus grande et où la rigueur du calage est la plus exigeante. Elle mobilise à la fois des compétences hydrologiques (statistiques des pluies, modèles de ruissellement) et hydrauliques (propagation dans le réseau), dans un contexte où les données sont souvent insuffisantes et où les paramètres sont corrélés entre eux.
+
+La valeur d'un modèle pluvial bien conduit n'est pas dans la précision de ses résultats absolus — elle est dans sa capacité à **comparer des scénarios** de façon cohérente : un bassin de rétention réduit-il la fréquence de débordement ? Une désimperméabilisation améliore-t-elle le bilan des déversoirs d'orage ? Ces questions relatives sont bien plus robustes à l'incertitude des paramètres que les valeurs absolues de débit ou de hauteur d'eau.
+
+---
+
+## Pour aller plus loin dans cette série
+
+**Fondements**
+
+- **Note 0.1** — *Généralités sur la modélisation* : statut de $K_s$ comme paramètre de fermeture (et non de géométrie) — fondement direct du callout équifinalité hydraulique ; NSE introduit
+- **Note 0.2** — *Énergie, charge et dégradation* : bilan hydrologique = conservation de masse sur le bassin versant
+- **Note 0.3** — *Ouvrages et conditions aux limites* : déversoirs d'orage comme conditions aux limites internes
+- **Note 0.4** — *Analyse dimensionnelle* : Strickler — propagation hydraulique du modèle pluvial
+
+**Entrée métier**
+
+- **Note 1.B** — *Modéliser un réseau d'assainissement* : introduction des courbes IDF et de Montana, imperméabilisation évolutive, statut de $K_s$
+
+**Applications**
+
+- **Note 2.B1** — *Dimensionnement gravitaire* : consomme le $Q_{projet}$ pluvial produit ici (passe 1 : accumulation des débits)
+- **Note 2.B3** — *Surcharges et engorgements* : Saint-Venant transitoire, fente de Preissmann, dual-drainage 1D/2D — simulation des événements extrêmes avec les hydrogrammes de cette note
+
+**Transversales**
+
+- **Note 3.1** — *Calage et validation* : méthodes d'optimisation automatique, analyse de sensibilité formelle, équifinalité — formalise ce qui est esquissé ici
+- **Note 3.2** — *Quand le 1D ne suffit plus* : couplage réseau/surface 2D, modèles de ruissellement urbain
+- **Note 3.3** — *Qualité de l'eau* : flux polluant annuel déversé au milieu naturel via les déversoirs d'orage
+- **Note 3.6** — *Limites et responsabilité* : extrapolation aux pluies extrêmes, changement climatique, traçabilité des hypothèses

@@ -1,0 +1,285 @@
+---
+title: ""
+page-layout: full
+toc: false
+---
+
+```{=html}
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+
+<!-- ═══ HERO COMPACT ═══════════════════════════════════════════ -->
+<section class="sh-page-hero">
+  <div class="sh-page-hero-inner">
+    <p class="sh-page-hero-eyebrow">🎓 Apprentissage / Catalogue</p>
+    <h1 class="sh-page-hero-title">Notes en hydraulique</h1>
+    <p class="sh-page-hero-sub">Des notes théoriques en hydraulique concernant l'hydraulique urbaine — modélisation, dimensionnement, diagnostic de réseaux. Ces notes sont conçues pour approfondir les connaissances en hydraulique et faciliter la compréhension des concepts complexes.</p>
+    <p class="sh-page-hero-count">● <span id="shCount">6</span> formations disponibles</p>
+  </div>
+</section>
+
+<!-- ═══ FORMATIONS LAYOUT ══════════════════════════════════════ -->
+<section class="sh-formations">
+  <div class="sh-formations-inner">
+
+    <!-- ── CARDS GRID (à gauche) ───────────────────────────── -->
+    <div class="sh-cards-grid" id="shCardsGrid">
+
+      <article class="sh-fcard" data-cat="aep" data-tags="hydraulique,theorie" data-title="généralités sur la modélisation des réseaux d'eau potable">
+        <div class="sh-fcard-cat">💧 AEP</div>
+        <h3 class="sh-fcard-title">Généralités sur la modélisation des réseaux d'eau potable</h3>
+        <p class="sh-fcard-desc">Distinguez les différentes approches de modélisation et leurs applications dans le domaine de l'hydraulique urbaine.</p>
+        <div class="sh-fcard-tags"><span>Hydraulique</span><span>Théorie</span></div>
+        <a href="0_1_general_modele_hydraulique.html" class="sh-fcard-btn">Commencer la formation →</a>
+      </article>
+
+      <article class="sh-fcard" data-cat="modelisation" data-tags="hydraulique,ouvrages,reservoir,pompe,deversoir" data-title="les ouvrages hydrauliques : physique et conditions aux limites">
+        <div class="sh-fcard-cat">📐 Fondements</div>
+        <h3 class="sh-fcard-title">Les ouvrages hydrauliques : physique et conditions aux limites</h3>
+        <p class="sh-fcard-desc">Réservoirs, vannes, déversoirs, pompes, bassins d'orage : la physique de chaque ouvrage et sa traduction en condition aux limites, sous une grille de lecture énergétique unificatrice.</p>
+        <div class="sh-fcard-tags"><span>Fondements</span><span>Ouvrages</span><span>Modélisation</span></div>
+        <a href="0_3_modelisation_ouvrages.html" class="sh-fcard-btn">Commencer la formation →</a>
+      </article>
+
+      <article class="sh-fcard" data-cat="modelisation" data-tags="hydraulique,analyse-dimensionnelle,similitude,modele-reduit" data-title="analyse dimensionnelle et similitude : nombres sans dimension et modèles réduits">
+        <div class="sh-fcard-cat">📐 Fondements</div>
+        <h3 class="sh-fcard-title">Analyse dimensionnelle et similitude</h3>
+        <p class="sh-fcard-desc">Théorème de Vaschy-Buckingham, nombres de Reynolds et Froude, modèles physiques réduits : pourquoi un modèle au 1/50 ne peut pas tout respecter, et comment l'analyse dimensionnelle structure toute l'hydraulique.</p>
+        <div class="sh-fcard-tags"><span>Fondements</span><span>Analyse dimensionnelle</span><span>Similitude</span></div>
+        <a href="0_4_modelisation_similitude.html" class="sh-fcard-btn">Commencer la formation →</a>
+      </article>
+
+      <article class="sh-fcard" data-cat="aep" data-tags="hydraulique,aep,modelisation" data-title="modéliser un réseau AEP : spécificités physiques et enjeux métier">
+        <div class="sh-fcard-cat">💧 AEP</div>
+        <h3 class="sh-fcard-title">Modéliser un réseau AEP : spécificités physiques et enjeux métier</h3>
+        <p class="sh-fcard-desc">Topologie maillée, contraintes de pression, régime permanent et données nécessaires : les fondamentaux métier de la modélisation AEP avant les équations.</p>
+        <div class="sh-fcard-tags"><span>Hydraulique</span><span>AEP</span><span>Modélisation</span></div>
+        <a href="1A_modelisation_aep.html" class="sh-fcard-btn">Commencer la formation →</a>
+      </article>
+
+      <article class="sh-fcard" data-cat="assainissement" data-tags="hydraulique,assainissement,modelisation" data-title="modéliser un réseau d'assainissement : spécificités physiques et enjeux métier">
+        <div class="sh-fcard-cat">🌊 Assainissement</div>
+        <h3 class="sh-fcard-title">Modéliser un réseau d'assainissement : spécificités physiques et enjeux métier</h3>
+        <p class="sh-fcard-desc">Séparatif ou unitaire, surface libre ou charge, eaux usées ou pluviales : les spécificités physiques et les enjeux métier de la modélisation en assainissement.</p>
+        <div class="sh-fcard-tags"><span>Hydraulique</span><span>Assainissement</span><span>Modélisation</span></div>
+        <a href="1B_modelisation_assainissement.html" class="sh-fcard-btn">Commencer la formation →</a>
+      </article>
+
+      <article class="sh-fcard" data-cat="irrigation" data-tags="hydraulique,irrigation,modelisation" data-title="modéliser un réseau d'irrigation : spécificités physiques et enjeux métier">
+        <div class="sh-fcard-cat">🌿 Irrigation</div>
+        <h3 class="sh-fcard-title">Modéliser un réseau d'irrigation : spécificités physiques et enjeux métier</h3>
+        <p class="sh-fcard-desc">Gravitaire ou sous pression, intermittence et finalité agronomique : les deux physiques de l'irrigation et ce qu'elles impliquent pour la modélisation.</p>
+        <div class="sh-fcard-tags"><span>Hydraulique</span><span>Irrigation</span><span>Modélisation</span></div>
+        <a href="1C_modelisation_irrigation.html" class="sh-fcard-btn">Commencer la formation →</a>
+      </article>
+
+      <article class="sh-fcard" data-cat="aep" data-tags="hydraulique,aep,modelisation,dimensionnement" data-title="dimensionnement et diagnostic d'un réseau AEP en régime permanent">
+        <div class="sh-fcard-cat">💧 AEP</div>
+        <h3 class="sh-fcard-title">Dimensionnement et diagnostic d'un réseau AEP en régime permanent</h3>
+        <p class="sh-fcard-desc">Du graphe hydraulique à Newton-Raphson : comprendre ce que fait réellement votre logiciel, construire des scénarios pertinents et caler votre modèle sur des mesures terrain.</p>
+        <div class="sh-fcard-tags"><span>Hydraulique</span><span>AEP</span><span>Modélisation</span><span>Dimensionnement</span></div>
+        <a href="2A1_modelisation_aep.html" class="sh-fcard-btn">Commencer la formation →</a>
+      </article>
+
+      <article class="sh-fcard" data-cat="aep" data-tags="hydraulique,aep,transitoire,coup-de-belier" data-title="coups de bélier en réseau AEP : comprendre, calculer, protéger">
+        <div class="sh-fcard-cat">💧 AEP</div>
+        <h3 class="sh-fcard-title">Coups de bélier en réseau AEP : comprendre, calculer, protéger</h3>
+        <p class="sh-fcard-desc">De la formule de Joukowsky à la méthode des caractéristiques : comprendre la physique des ondes de pression, identifier les cas à risque et dimensionner les protections adaptées.</p>
+        <div class="sh-fcard-tags"><span>Hydraulique</span><span>AEP</span><span>Transitoire</span><span>Coup de bélier</span></div>
+        <a href="2A2_modelisation_aep.html" class="sh-fcard-btn">Commencer la formation →</a>
+      </article>
+
+      <article class="sh-fcard" data-cat="assainissement" data-tags="hydraulique,assainissement,dimensionnement,gravitaire" data-title="dimensionnement d'un réseau gravitaire : capacité, auto-curage et profils en long">
+        <div class="sh-fcard-cat">🌊 Assainissement</div>
+        <h3 class="sh-fcard-title">Dimensionnement d'un réseau gravitaire : capacité, auto-curage et profils en long</h3>
+        <p class="sh-fcard-desc">De Manning-Strickler aux courbes de remous : dimensionner un collecteur gravitaire sous la double contrainte de capacité et d'auto-curage, lire et construire un profil en long.</p>
+        <div class="sh-fcard-tags"><span>Hydraulique</span><span>Assainissement</span><span>Dimensionnement</span><span>Profil en long</span></div>
+        <a href="2B1_modelisation_assainissement.html" class="sh-fcard-btn">Commencer la formation →</a>
+      </article>
+
+      <article class="sh-fcard" data-cat="assainissement" data-tags="hydraulique,assainissement,pluvial,hydrologie,calage" data-title="modélisation pluviale : de la pluie au débit, calage et validation">
+        <div class="sh-fcard-cat">🌊 Assainissement</div>
+        <h3 class="sh-fcard-title">Modélisation pluviale : de la pluie au débit, calage et validation</h3>
+        <p class="sh-fcard-desc">Courbes IDF, méthode rationnelle, hydrogramme unitaire, pluie de Chicago : construire et caler un modèle pluvial urbain, de la donnée pluviométrique aux indicateurs de performance.</p>
+        <div class="sh-fcard-tags"><span>Hydraulique</span><span>Assainissement</span><span>Pluvial</span><span>Calage</span></div>
+        <a href="2B2_modelisation_assainissement.html" class="sh-fcard-btn">Commencer la formation →</a>
+      </article>
+
+      <article class="sh-fcard" data-cat="assainissement" data-tags="hydraulique,assainissement,transitoire,inondation,dual-drainage" data-title="surcharges et engorgements : modéliser les événements extrêmes en assainissement">
+        <div class="sh-fcard-cat">🌊 Assainissement</div>
+        <h3 class="sh-fcard-title">Surcharges et engorgements : modéliser les événements extrêmes en assainissement</h3>
+        <p class="sh-fcard-desc">Saint-Venant transitoire, fente de Preissmann et dual-drainage 1D/2D : comprendre et modéliser ce qui se passe quand le réseau déborde et l'eau envahit la surface.</p>
+        <div class="sh-fcard-tags"><span>Hydraulique</span><span>Assainissement</span><span>Transitoire</span><span>Dual-drainage</span></div>
+        <a href="2B3_modelisation_assainissement.html" class="sh-fcard-btn">Commencer la formation →</a>
+      </article>
+
+      <article class="sh-fcard" data-cat="irrigation" data-tags="hydraulique,irrigation,canal,regulation,gravitaire" data-title="modélisation des réseaux d'irrigation gravitaire : canaux, partiteurs et régulation">
+        <div class="sh-fcard-cat">🌿 Irrigation</div>
+        <h3 class="sh-fcard-title">Modélisation des réseaux d'irrigation gravitaire : canaux, partiteurs et régulation</h3>
+        <p class="sh-fcard-desc">De Manning-Strickler aux régulateurs automatiques : dimensionner un canal, modéliser les pertes par infiltration, simuler la propagation des ondes de translation et optimiser la régulation.</p>
+        <div class="sh-fcard-tags"><span>Hydraulique</span><span>Irrigation</span><span>Canal</span><span>Régulation</span></div>
+        <a href="2C1_modelisation_irrigation.html" class="sh-fcard-btn">Commencer la formation →</a>
+      </article>
+
+      <article class="sh-fcard" data-cat="irrigation" data-tags="hydraulique,irrigation,pression,uniformite,goutte-a-goutte" data-title="modélisation des réseaux d'irrigation sous pression : ramifiés et goutte-à-goutte">
+        <div class="sh-fcard-cat">🌿 Irrigation</div>
+        <h3 class="sh-fcard-title">Modélisation des réseaux d'irrigation sous pression : ramifiés et goutte-à-goutte</h3>
+        <p class="sh-fcard-desc">Loi émetteur, facteur de Christiansen, règle de Keller-Karmeli : résoudre un réseau ramifié sous pression et dimensionner sous contrainte d'uniformité de distribution.</p>
+        <div class="sh-fcard-tags"><span>Hydraulique</span><span>Irrigation</span><span>Pression</span><span>Uniformité</span></div>
+        <a href="2C2_modelisation_irrigation.html" class="sh-fcard-btn">Commencer la formation →</a>
+      </article>
+
+      <article class="sh-fcard" data-cat="irrigation" data-tags="hydraulique,irrigation,transitoire,coup-de-belier,regulation" data-title="transitoires en irrigation : coups de bélier et régulation des canaux">
+        <div class="sh-fcard-cat">🌿 Irrigation</div>
+        <h3 class="sh-fcard-title">Transitoires en irrigation : coups de bélier et régulation des canaux</h3>
+        <p class="sh-fcard-desc">Intermittence, remplissage contrôlé et instabilités de régulation : les transitoires spécifiques à l'irrigation sous pression et aux canaux gravitaires automatisés.</p>
+        <div class="sh-fcard-tags"><span>Hydraulique</span><span>Irrigation</span><span>Transitoire</span><span>Régulation</span></div>
+        <a href="2C3_modelisation_irrigation.html" class="sh-fcard-btn">Commencer la formation →</a>
+      </article>
+
+      <article class="sh-fcard" data-cat="modelisation" data-tags="hydraulique,turbomachines,pompes,turbines,cavitation,modelisation" data-title="pompes et turbines : machines hydrauliques en réseau — caractéristiques, similitude, point de fonctionnement et cavitation">
+        <div class="sh-fcard-cat">⚙️ Machines</div>
+        <h3 class="sh-fcard-title">Pompes et turbines : machines hydrauliques en réseau</h3>
+        <p class="sh-fcard-desc">Caractéristiques H–Q, lois d'affinité, vitesse spécifique, point de fonctionnement, cavitation et NPSH : tout le couplage machine–réseau pour modéliser correctement une pompe ou une turbine insérée dans un réseau hydraulique.</p>
+        <div class="sh-fcard-tags"><span>Machines</span><span>Turbomachines</span><span>Cavitation</span></div>
+        <a href="2D_pompes_turbines.html" class="sh-fcard-btn">Commencer la formation →</a>
+      </article>
+
+      <article class="sh-fcard" data-cat="modelisation" data-tags="hydraulique,modelisation,calage,validation,incertitude" data-title="calage et validation de modèles hydrauliques : méthodes et indicateurs">
+        <div class="sh-fcard-cat">📐 Modélisation</div>
+        <h3 class="sh-fcard-title">Calage et validation de modèles hydrauliques : méthodes et indicateurs</h3>
+        <p class="sh-fcard-desc">Du protocole calage/validation aux indices de Sobol : méthodes de calage, indicateurs de performance, équifinalité et propagation d'incertitude pour tous types de modèles hydrauliques.</p>
+        <div class="sh-fcard-tags"><span>Modélisation</span><span>Calage</span><span>Validation</span><span>Incertitude</span></div>
+        <a href="3_1_modelisation_calage.html" class="sh-fcard-btn">Commencer la formation →</a>
+      </article>
+
+      <article class="sh-fcard" data-cat="modelisation" data-tags="hydraulique,modelisation,2D,3D,CFD,inondation" data-title="quand le 1D ne suffit plus : introduction aux modèles 2D et 3D">
+        <div class="sh-fcard-cat">📐 Modélisation</div>
+        <h3 class="sh-fcard-title">Quand le 1D ne suffit plus : introduction aux modèles 2D et 3D</h3>
+        <p class="sh-fcard-desc">Critères de passage, Saint-Venant 2D, CFD hydraulique et couplage 1D/2D : choisir le bon niveau de modélisation selon la question posée et les ressources disponibles.</p>
+        <div class="sh-fcard-tags"><span>Modélisation</span><span>2D</span><span>3D</span><span>CFD</span><span>Inondation</span></div>
+        <a href="3_2_modelisation_2D_3D.html" class="sh-fcard-btn">Commencer la formation →</a>
+      </article>
+
+      <article class="sh-fcard" data-cat="modelisation" data-tags="hydraulique,turbomachines,pompes,turbines,cavitation,modelisation" data-title="qualité de l'eau et thermique : le transport couplé à l'hydraulique — advection, dispersion, réaction">
+        <div class="sh-fcard-cat">🌊 Modélisation</div>
+        <h3 class="sh-fcard-title">Qualité de l'eau et thermique : le transport couplé à l'hydraulique</h3>
+        <p class="sh-fcard-desc">Équation ADR, dispersion de Taylor, nombre de Péclet, décroissance du chlore, modèle de Streeter-Phelps, âge de l'eau et panache thermique : un seul formalisme pour transporter chlore, oxygène, température et traceurs dans un réseau hydraulique.</p>
+        <div class="sh-fcard-tags"><span>Qualité de l'eau</span><span>Thermique</span><span>ADR</span></div>
+        <a href="3_3_qualite_thermique.html" class="sh-fcard-btn">Commencer la formation →</a>
+      </article>
+
+      <article class="sh-fcard" data-cat="modelisation" data-tags="hydraulique,transport-solide,morphodynamique,shields,charriage,suspension" data-title="transport solide et morphodynamique : charriage, suspension, seuil de shields et évolution du lit">
+        <div class="sh-fcard-cat">🌊 Modélisation</div>
+        <h3 class="sh-fcard-title">Transport solide et morphodynamique</h3>
+        <p class="sh-fcard-desc">Seuil de Shields, nombre de Rouse, Meyer-Peter-Müller, équation d'Exner : comprendre quand un sédiment se met en mouvement, comment il se transporte, et comment le fond évolue en retour — avec les applications fluviale, assainissement et retenues.</p>
+        <div class="sh-fcard-tags"><span>Transport solide</span><span>Morphodynamique</span><span>Shields</span></div>
+        <a href="3_4_transport_solide.html" class="sh-fcard-btn">Commencer la formation →</a>
+      </article>
+
+      <article class="sh-fcard" data-cat="modelisation" data-tags="hydraulique,modelisation,incertitude,limites,responsabilite" data-title="ce que le modèle ne peut pas vous dire : limites structurelles et responsabilité de l'ingénieur">
+        <div class="sh-fcard-cat">📐 Modélisation</div>
+        <h3 class="sh-fcard-title">Ce que le modèle ne peut pas vous dire</h3>
+        <p class="sh-fcard-desc">Limites structurelles, extrapolation aux événements extrêmes, changement climatique et responsabilité professionnelle : une note de clôture sur ce que la modélisation hydraulique ne peut fondamentalement pas faire.</p>
+        <div class="sh-fcard-tags"><span>Modélisation</span><span>Incertitude</span><span>Limites</span><span>Responsabilité</span></div>
+        <a href="3_6_modelisation_limites.html" class="sh-fcard-btn">Commencer la formation →</a>
+      </article>
+
+    </div>
+
+    <!-- ── Empty state ─────────────────────────────────────── -->
+    <div class="sh-empty" id="shEmpty" style="display:none;">
+      <p>Aucune formation ne correspond à vos filtres.</p>
+      <button class="sh-fcard-btn" onclick="shResetFilters()">Réinitialiser les filtres</button>
+    </div>
+
+    <!-- ── FILTERS (à droite maintenant) ───────────────────── -->
+    <aside class="sh-filters">
+      <div class="sh-filters-header">
+        <h3>Filtres</h3>
+        <button class="sh-filters-reset" onclick="shResetFilters()">Réinitialiser</button>
+      </div>
+
+      <div class="sh-filter-group">
+        <label class="sh-filter-label">Recherche</label>
+        <input type="text" class="sh-filter-search" id="shSearch" placeholder="EPANET, débit, réseau..." oninput="shApplyFilters()" />
+      </div>
+
+      <div class="sh-filter-group">
+        <label class="sh-filter-label">Catégorie</label>
+        <div class="sh-filter-options">
+          <label class="sh-radio"><input type="radio" name="cat" value="all" checked onchange="shApplyFilters()"> Toutes</label>
+          <label class="sh-radio"><input type="radio" name="cat" value="aep" onchange="shApplyFilters()"> 💧 AEP</label>
+          <label class="sh-radio"><input type="radio" name="cat" value="assainissement" onchange="shApplyFilters()"> 🌊 Assainissement</label>
+          <label class="sh-radio"><input type="radio" name="cat" value="irrigation" onchange="shApplyFilters()"> 🌾 Irrigation</label>
+        </div>
+      </div>
+
+      <div class="sh-filter-group">
+        <label class="sh-filter-label">Trier par</label>
+        <select class="sh-filter-select" id="shSort" onchange="shApplyFilters()">
+          <option value="recent">Plus récent</option>
+          <option value="alpha">Ordre alphabétique</option>
+        </select>
+      </div>
+
+      <div class="sh-filter-group">
+        <label class="sh-filter-label">Tags</label>
+        <div class="sh-filter-options sh-filter-tags">
+          <label class="sh-check"><input type="checkbox" value="epanet"  onchange="shApplyFilters()"> EPANET</label>
+          <label class="sh-check"><input type="checkbox" value="swmm"    onchange="shApplyFilters()"> SWMM</label>
+          <label class="sh-check"><input type="checkbox" value="hec-ras" onchange="shApplyFilters()"> HEC-RAS</label>
+          <label class="sh-check"><input type="checkbox" value="python"  onchange="shApplyFilters()"> Python</label>
+          <label class="sh-check"><input type="checkbox" value="qgis"    onchange="shApplyFilters()"> QGIS</label>
+          <label class="sh-check"><input type="checkbox" value="theorie" onchange="shApplyFilters()"> Théorie</label>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+</section>
+
+<script>
+function shApplyFilters() {
+  const search = document.getElementById('shSearch').value.toLowerCase().trim();
+  const cat    = document.querySelector('input[name="cat"]:checked').value;
+  const sort   = document.getElementById('shSort').value;
+  const tags   = Array.from(document.querySelectorAll('.sh-filter-tags input:checked')).map(c => c.value);
+
+  const grid   = document.getElementById('shCardsGrid');
+  let cards    = Array.from(grid.querySelectorAll('.sh-fcard'));
+
+  if (sort === 'alpha') {
+    cards.sort((a, b) => a.dataset.title.localeCompare(b.dataset.title));
+  } else {
+    cards.sort((a, b) => parseInt(a.dataset.order || 0) - parseInt(b.dataset.order || 0));
+  }
+  cards.forEach(c => grid.appendChild(c));
+
+  let visible = 0;
+  cards.forEach(card => {
+    const cardCat   = card.dataset.cat;
+    const cardTags  = card.dataset.tags.split(',');
+    const cardText  = (card.querySelector('.sh-fcard-title').innerText + ' ' + card.querySelector('.sh-fcard-desc').innerText).toLowerCase();
+    const matchCat    = (cat === 'all' || cardCat === cat);
+    const matchTags   = (tags.length === 0 || tags.every(t => cardTags.includes(t)));
+    const matchSearch = (search === '' || cardText.includes(search));
+    const show = matchCat && matchTags && matchSearch;
+    card.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+
+  document.getElementById('shCount').innerText = visible;
+  document.getElementById('shEmpty').style.display = visible === 0 ? 'block' : 'none';
+}
+
+function shResetFilters() {
+  document.getElementById('shSearch').value = '';
+  document.querySelector('input[name="cat"][value="all"]').checked = true;
+  document.getElementById('shSort').value = 'recent';
+  document.querySelectorAll('.sh-filter-tags input').forEach(c => c.checked = false);
+  shApplyFilters();
+}
+
+document.querySelectorAll('#shCardsGrid .sh-fcard').forEach((c, i) => c.dataset.order = i);
+</script>
+```

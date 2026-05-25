@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="fr" xml:lang="fr"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="">
+
+<title>Quand le 1D ne suffit plus – Johary - Ingénieur Hydraulicien</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../static/avatar.jpg" rel="icon" type="image/jpeg">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-23bbe8b5e4efc1e257f6d59dce478b08.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-7f128302b46659ec05c1cdf12d27b5f1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-fcb2e74b6da07224c5b59afd36009af3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-7f128302b46659ec05c1cdf12d27b5f1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "Pas de résultats",
+    "search-matching-documents-text": "documents trouvés",
+    "search-copy-link-title": "Copier le lien vers la recherche",
+    "search-hide-matches-text": "Cacher les correspondances additionnelles",
+    "search-more-match-text": "correspondance de plus dans ce document",
+    "search-more-matches-text": "correspondances de plus dans ce document",
+    "search-clear-button-title": "Effacer",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Annuler",
+    "search-submit-button-title": "Envoyer",
+    "search-label": "Recherche"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../styles.css">
+</head>
+
+<body class="nav-sidebar floating quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Basculer la barre latérale" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item">
+      Johary - Ingénieur Hydraulicien
+      </li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Basculer la barre latérale" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Recherche" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Johary - Ingénieur Hydraulicien</a> 
+        <div class="sidebar-tools-main">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Basculer le mode sombre"><i class="bi"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Recherche"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🏠 Accueil</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../formation/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🌊 Formation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../etudes-de-cas/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">📐 Études de cas</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../geomatique/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🌍 Géomatique</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../programmation/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🐍 Programmation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../parcours/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🗺️ Parcours</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../contact.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">✉️ Contact</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Sommaire</h2>
+   
+  <ul>
+  <li><a href="#les-limites-du-1d-un-rappel-structuré" id="toc-les-limites-du-1d-un-rappel-structuré" class="nav-link active" data-scroll-target="#les-limites-du-1d-un-rappel-structuré"><span class="header-section-number">1</span> Les limites du 1D : un rappel structuré</a>
+  <ul class="collapse">
+  <li><a href="#les-hypothèses-fondatrices-du-1d" id="toc-les-hypothèses-fondatrices-du-1d" class="nav-link" data-scroll-target="#les-hypothèses-fondatrices-du-1d"><span class="header-section-number">1.1</span> Les hypothèses fondatrices du 1D</a></li>
+  <li><a href="#les-situations-où-les-hypothèses-sont-violées" id="toc-les-situations-où-les-hypothèses-sont-violées" class="nav-link" data-scroll-target="#les-situations-où-les-hypothèses-sont-violées"><span class="header-section-number">1.2</span> Les situations où les hypothèses sont violées</a></li>
+  <li><a href="#les-signaux-qui-indiquent-le-besoin-de-plus-que-le-1d" id="toc-les-signaux-qui-indiquent-le-besoin-de-plus-que-le-1d" class="nav-link" data-scroll-target="#les-signaux-qui-indiquent-le-besoin-de-plus-que-le-1d"><span class="header-section-number">1.3</span> Les signaux qui indiquent le besoin de plus que le 1D</a></li>
+  <li><a href="#le-coût-du-passage-au-2d3d-une-décision-à-justifier" id="toc-le-coût-du-passage-au-2d3d-une-décision-à-justifier" class="nav-link" data-scroll-target="#le-coût-du-passage-au-2d3d-une-décision-à-justifier"><span class="header-section-number">1.4</span> Le coût du passage au 2D/3D : une décision à justifier</a></li>
+  </ul></li>
+  <li><a href="#de-1d-à-2d-quand-la-dimension-latérale-compte" id="toc-de-1d-à-2d-quand-la-dimension-latérale-compte" class="nav-link" data-scroll-target="#de-1d-à-2d-quand-la-dimension-latérale-compte"><span class="header-section-number">2</span> De 1D à 2D : quand la dimension latérale compte</a>
+  <ul class="collapse">
+  <li><a href="#les-équations-de-saint-venant-2d" id="toc-les-équations-de-saint-venant-2d" class="nav-link" data-scroll-target="#les-équations-de-saint-venant-2d"><span class="header-section-number">2.1</span> Les équations de Saint-Venant 2D</a></li>
+  <li><a href="#ce-que-le-2d-apporte-par-rapport-au-1d" id="toc-ce-que-le-2d-apporte-par-rapport-au-1d" class="nav-link" data-scroll-target="#ce-que-le-2d-apporte-par-rapport-au-1d"><span class="header-section-number">2.2</span> Ce que le 2D apporte par rapport au 1D</a></li>
+  <li><a href="#domaines-dapplication-du-2d" id="toc-domaines-dapplication-du-2d" class="nav-link" data-scroll-target="#domaines-dapplication-du-2d"><span class="header-section-number">2.3</span> Domaines d’application du 2D</a></li>
+  <li><a href="#la-résolution-numérique-2d" id="toc-la-résolution-numérique-2d" class="nav-link" data-scroll-target="#la-résolution-numérique-2d"><span class="header-section-number">2.4</span> La résolution numérique 2D</a></li>
+  </ul></li>
+  <li><a href="#les-outils-2d-positionnement-et-cas-dusage" id="toc-les-outils-2d-positionnement-et-cas-dusage" class="nav-link" data-scroll-target="#les-outils-2d-positionnement-et-cas-dusage"><span class="header-section-number">3</span> Les outils 2D : positionnement et cas d’usage</a>
+  <ul class="collapse">
+  <li><a href="#telemac-2d-la-référence-francophone-open-source" id="toc-telemac-2d-la-référence-francophone-open-source" class="nav-link" data-scroll-target="#telemac-2d-la-référence-francophone-open-source"><span class="header-section-number">3.1</span> Telemac-2D — La référence francophone open source</a></li>
+  <li><a href="#hec-ras-2d-lintégration-1d2d-native" id="toc-hec-ras-2d-lintégration-1d2d-native" class="nav-link" data-scroll-target="#hec-ras-2d-lintégration-1d2d-native"><span class="header-section-number">3.2</span> HEC-RAS 2D — L’intégration 1D/2D native</a></li>
+  <li><a href="#mike-21-la-suite-commerciale-complète" id="toc-mike-21-la-suite-commerciale-complète" class="nav-link" data-scroll-target="#mike-21-la-suite-commerciale-complète"><span class="header-section-number">3.3</span> MIKE 21 — La suite commerciale complète</a></li>
+  <li><a href="#infoworks-icm-swmm-pour-le-dual-drainage-urbain" id="toc-infoworks-icm-swmm-pour-le-dual-drainage-urbain" class="nav-link" data-scroll-target="#infoworks-icm-swmm-pour-le-dual-drainage-urbain"><span class="header-section-number">3.4</span> Infoworks ICM / SWMM pour le dual-drainage urbain</a></li>
+  </ul></li>
+  <li><a href="#le-maillage-2d-lenjeu-central" id="toc-le-maillage-2d-lenjeu-central" class="nav-link" data-scroll-target="#le-maillage-2d-lenjeu-central"><span class="header-section-number">4</span> Le maillage 2D : l’enjeu central</a>
+  <ul class="collapse">
+  <li><a href="#la-résolution-du-mnt-comme-donnée-critique" id="toc-la-résolution-du-mnt-comme-donnée-critique" class="nav-link" data-scroll-target="#la-résolution-du-mnt-comme-donnée-critique"><span class="header-section-number">4.1</span> La résolution du MNT comme donnée critique</a></li>
+  <li><a href="#raffinage-local-et-taille-du-maillage" id="toc-raffinage-local-et-taille-du-maillage" class="nav-link" data-scroll-target="#raffinage-local-et-taille-du-maillage"><span class="header-section-number">4.2</span> Raffinage local et taille du maillage</a></li>
+  </ul></li>
+  <li><a href="#de-2d-à-3d-quand-la-dimension-verticale-compte" id="toc-de-2d-à-3d-quand-la-dimension-verticale-compte" class="nav-link" data-scroll-target="#de-2d-à-3d-quand-la-dimension-verticale-compte"><span class="header-section-number">5</span> De 2D à 3D : quand la dimension verticale compte</a>
+  <ul class="collapse">
+  <li><a href="#les-limites-de-lhypothèse-hydrostatique" id="toc-les-limites-de-lhypothèse-hydrostatique" class="nav-link" data-scroll-target="#les-limites-de-lhypothèse-hydrostatique"><span class="header-section-number">5.1</span> Les limites de l’hypothèse hydrostatique</a></li>
+  <li><a href="#les-équations-de-navier-stokes-3d-et-les-modèles-de-turbulence" id="toc-les-équations-de-navier-stokes-3d-et-les-modèles-de-turbulence" class="nav-link" data-scroll-target="#les-équations-de-navier-stokes-3d-et-les-modèles-de-turbulence"><span class="header-section-number">5.2</span> Les équations de Navier-Stokes 3D et les modèles de turbulence</a></li>
+  </ul></li>
+  <li><a href="#la-cfd-appliquée-aux-ouvrages-hydrauliques" id="toc-la-cfd-appliquée-aux-ouvrages-hydrauliques" class="nav-link" data-scroll-target="#la-cfd-appliquée-aux-ouvrages-hydrauliques"><span class="header-section-number">6</span> La CFD appliquée aux ouvrages hydrauliques</a>
+  <ul class="collapse">
+  <li><a href="#quest-ce-que-la-cfd-en-hydraulique" id="toc-quest-ce-que-la-cfd-en-hydraulique" class="nav-link" data-scroll-target="#quest-ce-que-la-cfd-en-hydraulique"><span class="header-section-number">6.1</span> Qu’est-ce que la CFD en hydraulique</a></li>
+  <li><a href="#les-étapes-dune-étude-cfd" id="toc-les-étapes-dune-étude-cfd" class="nav-link" data-scroll-target="#les-étapes-dune-étude-cfd"><span class="header-section-number">6.2</span> Les étapes d’une étude CFD</a></li>
+  <li><a href="#les-outils-cfd-pour-lhydraulique" id="toc-les-outils-cfd-pour-lhydraulique" class="nav-link" data-scroll-target="#les-outils-cfd-pour-lhydraulique"><span class="header-section-number">6.3</span> Les outils CFD pour l’hydraulique</a></li>
+  <li><a href="#cas-dusage-typiques-en-hydraulique-des-ouvrages" id="toc-cas-dusage-typiques-en-hydraulique-des-ouvrages" class="nav-link" data-scroll-target="#cas-dusage-typiques-en-hydraulique-des-ouvrages"><span class="header-section-number">6.4</span> Cas d’usage typiques en hydraulique des ouvrages</a></li>
+  </ul></li>
+  <li><a href="#le-couplage-1d2d-et-1d3d" id="toc-le-couplage-1d2d-et-1d3d" class="nav-link" data-scroll-target="#le-couplage-1d2d-et-1d3d"><span class="header-section-number">7</span> Le couplage 1D/2D et 1D/3D</a>
+  <ul class="collapse">
+  <li><a href="#pourquoi-coupler-les-approches" id="toc-pourquoi-coupler-les-approches" class="nav-link" data-scroll-target="#pourquoi-coupler-les-approches"><span class="header-section-number">7.1</span> Pourquoi coupler les approches</a></li>
+  <li><a href="#les-interfaces-de-couplage-1d2d" id="toc-les-interfaces-de-couplage-1d2d" class="nav-link" data-scroll-target="#les-interfaces-de-couplage-1d2d"><span class="header-section-number">7.2</span> Les interfaces de couplage 1D/2D</a></li>
+  <li><a href="#les-défis-du-couplage" id="toc-les-défis-du-couplage" class="nav-link" data-scroll-target="#les-défis-du-couplage"><span class="header-section-number">7.3</span> Les défis du couplage</a></li>
+  </ul></li>
+  <li><a href="#choisir-le-bon-niveau-de-modélisation" id="toc-choisir-le-bon-niveau-de-modélisation" class="nav-link" data-scroll-target="#choisir-le-bon-niveau-de-modélisation"><span class="header-section-number">8</span> Choisir le bon niveau de modélisation</a>
+  <ul class="collapse">
+  <li><a href="#tableau-décisionnel" id="toc-tableau-décisionnel" class="nav-link" data-scroll-target="#tableau-décisionnel"><span class="header-section-number">8.1</span> Tableau décisionnel</a></li>
+  <li><a href="#le-principe-de-parcimonie-revisité" id="toc-le-principe-de-parcimonie-revisité" class="nav-link" data-scroll-target="#le-principe-de-parcimonie-revisité"><span class="header-section-number">8.2</span> Le principe de parcimonie revisité</a></li>
+  <li><a href="#la-complémentarité-des-approches" id="toc-la-complémentarité-des-approches" class="nav-link" data-scroll-target="#la-complémentarité-des-approches"><span class="header-section-number">8.3</span> La complémentarité des approches</a></li>
+  </ul></li>
+  <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion"><span class="header-section-number">9</span> Conclusion</a></li>
+  <li><a href="#pour-aller-plus-loin-dans-cette-série" id="toc-pour-aller-plus-loin-dans-cette-série" class="nav-link" data-scroll-target="#pour-aller-plus-loin-dans-cette-série"><span class="header-section-number">10</span> Pour aller plus loin dans cette série</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Quand le 1D ne suffit plus</h1>
+<p class="subtitle lead">Introduction aux modèles 2D et 3D en hydraulique appliquée</p>
+  <div class="quarto-categories">
+    <div class="quarto-category">Hydraulique</div>
+    <div class="quarto-category">Modélisation</div>
+    <div class="quarto-category">2D</div>
+    <div class="quarto-category">CFD</div>
+    <div class="quarto-category">Ingénierie</div>
+  </div>
+  </div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+    <div>
+    <div class="quarto-title-meta-heading">Date de publication</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">16 mai 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Note de la série
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Cette note est la deuxième note transversale de la série. Elle suppose la lecture de la note introductive <em>Généralités sur la modélisation des réseaux hydrauliques</em>, qui pose la cascade dimensionnelle 3D→2D→1D→0D. On approfondit ici les conditions dans lesquelles cette cascade doit être remontée — quand et pourquoi passer du 1D au 2D, puis du 2D au 3D — et on donne une introduction honnête aux outils associés.</p>
+</div>
+</div>
+<section id="les-limites-du-1d-un-rappel-structuré" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="les-limites-du-1d-un-rappel-structuré"><span class="header-section-number">1</span> Les limites du 1D : un rappel structuré</h2>
+<section id="les-hypothèses-fondatrices-du-1d" class="level3" data-number="1.1">
+<h3 data-number="1.1" class="anchored" data-anchor-id="les-hypothèses-fondatrices-du-1d"><span class="header-section-number">1.1</span> Les hypothèses fondatrices du 1D</h3>
+<p>La modélisation 1D repose sur trois hypothèses physiques dont la validité conditionne entièrement la pertinence du modèle :</p>
+<p><strong>Hypothèse de vitesse uniforme sur la section :</strong> le profil de vitesse est représenté par une vitesse débitante moyenne <span class="math inline">\(V = Q/A\)</span>. Les variations transversales de vitesse (gradient entre le centre et les berges, effets de courbure) sont ignorées ou absorbées dans les coefficients empiriques de rugosité.</p>
+<p><strong>Hypothèse de pression hydrostatique :</strong> la pression varie linéairement avec la profondeur, et les composantes verticales et transversales de la vitesse sont négligeables devant la composante longitudinale. Cette hypothèse est valide pour les écoulements à faible courbure de la ligne de courant dans le plan vertical.</p>
+<p><strong>Hypothèse de flux longitudinal dominant :</strong> l’écoulement principal est dans la direction de l’axe du canal ou de la conduite. Les échanges latéraux (apports latéraux, débordements en nappe) sont représentés comme des termes sources ponctuels, pas comme des flux réellement distribués dans l’espace.</p>
+<p>Ces trois hypothèses sont <strong>simultanément satisfaites</strong> dans la grande majorité des situations rencontrées en modélisation de réseaux : une conduite d’adduction d’eau, un collecteur d’assainissement, un canal d’irrigation — tous ces ouvrages ont une géométrie allongée dans laquelle le flux longitudinal domine largement.</p>
+</section>
+<section id="les-situations-où-les-hypothèses-sont-violées" class="level3" data-number="1.2">
+<h3 data-number="1.2" class="anchored" data-anchor-id="les-situations-où-les-hypothèses-sont-violées"><span class="header-section-number">1.2</span> Les situations où les hypothèses sont violées</h3>
+<p>Les hypothèses 1D sont violées dans des situations bien identifiées :</p>
+<p><strong>Débordement en nappe et expansion latérale :</strong> lorsqu’un cours d’eau déborde dans son lit majeur, l’eau s’étale latéralement sur des centaines de mètres à des kilomètres. La dimension transversale n’est plus négligeable — l’écoulement est intrinsèquement 2D dans le plan horizontal. Un modèle 1D peut calculer le volume débordé, mais pas la cartographie des hauteurs d’eau ni les vitesses dans le lit majeur.</p>
+<p><strong>Géométrie en plan complexe :</strong> une confluence à angle prononcé, un bassin d’expansion, une zone portuaire — ces géométries créent des circulations transversales et des tourbillons que le 1D ne peut pas représenter.</p>
+<p><strong>Courbure forte de la ligne de courant dans le plan vertical :</strong> un seuil à forte charge, un déversoir en nappe, une chute libre — dans ces situations, la pression n’est plus hydrostatique (les accélérations verticales sont significatives). Le 1D prédit mal les forces exercées sur les ouvrages et les profils de vitesse.</p>
+<p><strong>Stratification et effets 3D :</strong> dans les estuaires, les lacs de retenue et les zones côtières, la stratification thermique ou saline crée des variations verticales de vitesse et de densité qui ne sont pas représentables en 1D ni même en 2D intégré sur la verticale.</p>
+</section>
+<section id="les-signaux-qui-indiquent-le-besoin-de-plus-que-le-1d" class="level3" data-number="1.3">
+<h3 data-number="1.3" class="anchored" data-anchor-id="les-signaux-qui-indiquent-le-besoin-de-plus-que-le-1d"><span class="header-section-number">1.3</span> Les signaux qui indiquent le besoin de plus que le 1D</h3>
+<p>En pratique, plusieurs signaux indiquent qu’on a atteint la limite du 1D :</p>
+<ul>
+<li>Le modèle 1D produit des résultats instables ou oscillants dans certaines zones du réseau, malgré un calage soigneux</li>
+<li>Les mesures de terrain montrent des gradients transversaux significatifs (différence de niveau entre la rive gauche et la rive droite d’une rivière en crue)</li>
+<li>L’ouvrage à modéliser est un ouvrage ponctuel complexe (déversoir latéral, dissipateur d’énergie, jonction à angle droit à fort débit) dont le comportement est gouverné par des effets 3D</li>
+<li>La question posée nécessite une cartographie spatiale (zones inondées, vitesses en surface) que le 1D ne peut pas produire</li>
+</ul>
+</section>
+<section id="le-coût-du-passage-au-2d3d-une-décision-à-justifier" class="level3" data-number="1.4">
+<h3 data-number="1.4" class="anchored" data-anchor-id="le-coût-du-passage-au-2d3d-une-décision-à-justifier"><span class="header-section-number">1.4</span> Le coût du passage au 2D/3D : une décision à justifier</h3>
+<p>Le passage au 2D ou au 3D n’est pas une décision anodine. Il implique :</p>
+<ul>
+<li><strong>Des données supplémentaires</strong> : un MNT (Modèle Numérique de Terrain) haute résolution pour le 2D, une géométrie 3D précise des ouvrages pour la CFD</li>
+<li><strong>Un temps de calcul plus long</strong> : de quelques minutes (modèle 1D de réseau) à plusieurs heures voire jours (modèle 2D de grande plaine d’inondation, modèle CFD 3D d’un ouvrage)</li>
+<li><strong>Une expertise spécialisée</strong> : la construction et l’interprétation d’un modèle 2D ou 3D nécessitent des compétences que tous les ingénieurs hydrauliciens n’ont pas</li>
+<li><strong>Un calage plus difficile</strong> : les modèles 2D et 3D ont plus de paramètres et nécessitent des données de validation spatiales (cartographies d’inondation, mesures de vitesse en profil)</li>
+</ul>
+<p>Le principe de <strong>parcimonie</strong> doit guider le choix : utiliser le modèle le plus simple qui répond à la question posée. Un modèle 2D apporte une précision inutile si la question posée ne nécessite pas de cartographie spatiale. Un modèle CFD 3D est superflu si un modèle 1D avec une loi empirique d’ouvrage bien calée donne une réponse suffisante.</p>
+<hr>
+</section>
+</section>
+<section id="de-1d-à-2d-quand-la-dimension-latérale-compte" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="de-1d-à-2d-quand-la-dimension-latérale-compte"><span class="header-section-number">2</span> De 1D à 2D : quand la dimension latérale compte</h2>
+<section id="les-équations-de-saint-venant-2d" class="level3" data-number="2.1">
+<h3 data-number="2.1" class="anchored" data-anchor-id="les-équations-de-saint-venant-2d"><span class="header-section-number">2.1</span> Les équations de Saint-Venant 2D</h3>
+<p>Les <strong>équations de Saint-Venant 2D</strong> (ou équations des eaux peu profondes — <em>shallow water equations</em>) sont obtenues en intégrant les équations de Navier-Stokes sur la <strong>verticale</strong>, en conservant les deux dimensions horizontales <span class="math inline">\(x\)</span> et <span class="math inline">\(y\)</span>. L’hypothèse de pression hydrostatique est conservée.</p>
+<p><strong>Continuité :</strong></p>
+<p><span class="math display">\[\frac{\partial h}{\partial t} + \frac{\partial (hu)}{\partial x} + \frac{\partial (hv)}{\partial y} = q_s\]</span></p>
+<p><strong>Dynamique en <span class="math inline">\(x\)</span> :</strong></p>
+<p><span class="math display">\[\frac{\partial (hu)}{\partial t} + \frac{\partial (hu^2 + \frac{1}{2}gh^2)}{\partial x} + \frac{\partial (huv)}{\partial y} = gh(S_{0x} - S_{fx}) + \frac{\tau_{sx}}{\rho}\]</span></p>
+<p><strong>Dynamique en <span class="math inline">\(y\)</span> :</strong></p>
+<p><span class="math display">\[\frac{\partial (hv)}{\partial t} + \frac{\partial (huv)}{\partial x} + \frac{\partial (hv^2 + \frac{1}{2}gh^2)}{\partial y} = gh(S_{0y} - S_{fy}) + \frac{\tau_{sy}}{\rho}\]</span></p>
+<p>où <span class="math inline">\(h\)</span> est la hauteur d’eau, <span class="math inline">\(u\)</span> et <span class="math inline">\(v\)</span> les composantes de la vitesse moyennée sur la verticale dans les directions <span class="math inline">\(x\)</span> et <span class="math inline">\(y\)</span>, <span class="math inline">\(S_{0x}\)</span> et <span class="math inline">\(S_{0y}\)</span> les pentes de fond, <span class="math inline">\(S_{fx}\)</span> et <span class="math inline">\(S_{fy}\)</span> les pentes de frottement calculées par Manning-Strickler, et <span class="math inline">\(\tau_s\)</span> les contraintes de vent en surface.</p>
+<p>Ces équations sont <strong>hyperboliques</strong> — elles admettent des ondes qui se propagent dans toutes les directions du plan horizontal, avec une célérité <span class="math inline">\(c = \sqrt{gh}\)</span>. Cette bidirectionnalité est ce qui distingue fondamentalement le 2D du 1D : une perturbation locale se propage dans toutes les directions, pas seulement vers l’aval.</p>
+</section>
+<section id="ce-que-le-2d-apporte-par-rapport-au-1d" class="level3" data-number="2.2">
+<h3 data-number="2.2" class="anchored" data-anchor-id="ce-que-le-2d-apporte-par-rapport-au-1d"><span class="header-section-number">2.2</span> Ce que le 2D apporte par rapport au 1D</h3>
+<p>Le passage au 2D apporte trois capacités nouvelles que le 1D ne possède pas :</p>
+<p><strong>La cartographie spatiale des hauteurs d’eau et des vitesses :</strong> le modèle 2D produit, à chaque instant, une carte des hauteurs d’eau et des vecteurs vitesse sur l’ensemble du domaine. C’est le livrable central des études d’aléa inondation — impossible à obtenir avec un modèle 1D.</p>
+<p><strong>La propagation latérale des ondes :</strong> lors d’une crue, l’eau déborde du lit mineur et s’étale dans le lit majeur selon des chemins gouvernés par la microtopographie. Le modèle 2D capture ces chemins préférentiels d’écoulement (dépressions topographiques, routes, fossés) que le modèle 1D ignore.</p>
+<p><strong>Les interactions entre le lit mineur et le lit majeur :</strong> dans un modèle 1D de rivière, le lit majeur est souvent représenté comme une section supplémentaire de la géométrie transversale — une simplification qui peut conduire à des erreurs importantes sur les temps de transit des crues et les volumes stockés. Le modèle 2D représente explicitement les échanges entre lit mineur et lit majeur.</p>
+</section>
+<section id="domaines-dapplication-du-2d" class="level3" data-number="2.3">
+<h3 data-number="2.3" class="anchored" data-anchor-id="domaines-dapplication-du-2d"><span class="header-section-number">2.3</span> Domaines d’application du 2D</h3>
+<div id="tbl-domaines2D" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-domaines2D-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Domaines d’application typiques de la modélisation 2D
+</figcaption>
+<div aria-describedby="tbl-domaines2D-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Domaine</th>
+<th>Pourquoi le 2D est nécessaire</th>
+<th>Exemple d’outil</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Plaines d’inondation</td>
+<td>Propagation latérale, cartographie réglementaire (PPRi)</td>
+<td>Telemac-2D, HEC-RAS 2D</td>
+</tr>
+<tr class="even">
+<td>Estuaires et zones côtières</td>
+<td>Écoulements bidirectionnels, marée, gradient de salinité</td>
+<td>Telemac-2D, MIKE 21</td>
+</tr>
+<tr class="odd">
+<td>Ruissellement urbain (dual-drainage)</td>
+<td>Propagation de surface, chemins préférentiels entre les bâtiments</td>
+<td>Infoworks ICM 2D, SWMM</td>
+</tr>
+<tr class="even">
+<td>Bassins de retenue et réservoirs</td>
+<td>Circulation horizontale, gradients de température</td>
+<td>Telemac-2D</td>
+</tr>
+<tr class="odd">
+<td>Delta et zones humides</td>
+<td>Géométrie complexe, multiples chenaux</td>
+<td>Telemac-2D, MIKE 21</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+</section>
+<section id="la-résolution-numérique-2d" class="level3" data-number="2.4">
+<h3 data-number="2.4" class="anchored" data-anchor-id="la-résolution-numérique-2d"><span class="header-section-number">2.4</span> La résolution numérique 2D</h3>
+<p>Les équations de Saint-Venant 2D sont résolues numériquement sur un <strong>maillage</strong> du domaine spatial. Deux familles de schémas dominent :</p>
+<p><strong>Volumes finis sur maillage non structuré :</strong> le domaine est divisé en cellules polygonales (triangles, quadrilatères) dont la taille peut varier localement. Les flux entre cellules adjacentes sont calculés par des schémas de Riemann approchés (Roe, HLL). C’est l’approche adoptée par Telemac-2D et HEC-RAS 2D. Elle est particulièrement adaptée aux géométries complexes (berges irrégulières, îles, ouvrages).</p>
+<p><strong>Différences finies sur maillage structuré :</strong> le domaine est divisé en cellules rectangulaires régulières. Plus simple à implémenter, mais moins flexible pour les géométries complexes. Utilisé dans certains modèles côtiers et océaniques.</p>
+<p>Le schéma de volumes finis est <strong>conservatif par construction</strong> : la masse est exactement conservée entre cellules, même lors des fronts secs/mouillés (avancée de l’eau sur des zones initialement sèches). Cette propriété est critique pour les études d’inondation.</p>
+<hr>
+</section>
+</section>
+<section id="les-outils-2d-positionnement-et-cas-dusage" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="les-outils-2d-positionnement-et-cas-dusage"><span class="header-section-number">3</span> Les outils 2D : positionnement et cas d’usage</h2>
+<section id="telemac-2d-la-référence-francophone-open-source" class="level3" data-number="3.1">
+<h3 data-number="3.1" class="anchored" data-anchor-id="telemac-2d-la-référence-francophone-open-source"><span class="header-section-number">3.1</span> Telemac-2D — La référence francophone open source</h3>
+<p><strong>Telemac-2D</strong> est développé par le laboratoire national d’hydraulique et d’environnement (LNHE) d’EDF R&amp;D, en collaboration avec plusieurs partenaires européens. C’est le logiciel de référence en France et en Europe pour la modélisation hydraulique 2D à surface libre.</p>
+<p><strong>Points forts :</strong> - Open source (licence GNU GPL) — accès libre au code source - Maillage non structuré adaptatif — flexibilité géométrique maximale - Module de transport de sédiments, qualité d’eau, houle (couplage avec Telemac-3D) - Parallélisation efficace sur calculateurs multi-cœurs et clusters HPC - Communauté active, documentation complète en français et anglais</p>
+<p><strong>Limites :</strong> - Interface utilisateur moins intuitive que les outils commerciaux — courbe d’apprentissage significative - Pré-processing (création du maillage, conditions aux limites) nécessite des outils tiers (BlueKenue, SALOME) - Couplage 1D/2D moins natif que dans HEC-RAS</p>
+<p><strong>Cas d’usage typique :</strong> études d’inondation fluviale à grande échelle, cartographie réglementaire (PPRi), études d’impact de projets d’infrastructure sur les crues.</p>
+</section>
+<section id="hec-ras-2d-lintégration-1d2d-native" class="level3" data-number="3.2">
+<h3 data-number="3.2" class="anchored" data-anchor-id="hec-ras-2d-lintégration-1d2d-native"><span class="header-section-number">3.2</span> HEC-RAS 2D — L’intégration 1D/2D native</h3>
+<p><strong>HEC-RAS</strong> (Hydrologic Engineering Center — River Analysis System), développé par l’US Army Corps of Engineers, est historiquement un logiciel de modélisation 1D de rivières. Sa version 5.0 (2016) a introduit un <strong>moteur 2D natif</strong> et un <strong>couplage 1D/2D</strong> très bien intégré.</p>
+<p><strong>Points forts :</strong> - Couplage 1D/2D natif et stable — le lit mineur peut être modélisé en 1D, le lit majeur en 2D - Interface RASMapper pour la visualisation et l’animation des résultats cartographiques - Gratuit (logiciel du gouvernement américain) - Très large base d’utilisateurs et d’exemples documentés</p>
+<p><strong>Limites :</strong> - Maillage structuré (grille régulière) en 2D — moins flexible que Telemac pour les géométries très irrégulières - Performances moindres que Telemac sur les très grands domaines (&gt; 10⁶ cellules) - Modules qualité d’eau et transport de sédiments moins développés</p>
+<p><strong>Cas d’usage typique :</strong> études d’inondation fluviale et urbaine, couplage réseau d’assainissement/surface, cartographie FEMA (contexte américain) et études équivalentes en France.</p>
+</section>
+<section id="mike-21-la-suite-commerciale-complète" class="level3" data-number="3.3">
+<h3 data-number="3.3" class="anchored" data-anchor-id="mike-21-la-suite-commerciale-complète"><span class="header-section-number">3.3</span> MIKE 21 — La suite commerciale complète</h3>
+<p><strong>MIKE 21</strong>, développé par DHI (Danish Hydraulic Institute), est un logiciel commercial qui couvre l’ensemble des applications 2D en hydraulique : hydraulique fluviale, côtière, estuarienne, houle, transport de sédiments, qualité d’eau.</p>
+<p><strong>Points forts :</strong> - Suite logicielle complète et intégrée (MIKE FLOOD pour le couplage 1D/2D/3D) - Interface graphique très ergonomique - Très performant pour les applications côtières et estuariennes - Support commercial et formation disponibles</p>
+<p><strong>Limites :</strong> - Coût de licence élevé - Code source fermé — pas de possibilité de modification ou d’extension</p>
+<p><strong>Cas d’usage typique :</strong> études côtières et maritimes, estuaires, grands deltas, zones où les effets de marée et de vent sont dominants.</p>
+</section>
+<section id="infoworks-icm-swmm-pour-le-dual-drainage-urbain" class="level3" data-number="3.4">
+<h3 data-number="3.4" class="anchored" data-anchor-id="infoworks-icm-swmm-pour-le-dual-drainage-urbain"><span class="header-section-number">3.4</span> Infoworks ICM / SWMM pour le dual-drainage urbain</h3>
+<p>Pour les applications spécifiques du <strong>dual-drainage urbain</strong> (couplage réseau souterrain / surface, cf.&nbsp;note 2.B3), des logiciels spécialisés offrent un couplage 1D/2D natif optimisé pour les réseaux d’assainissement :</p>
+<p><strong>Infoworks ICM</strong> (Autodesk) : couplage natif entre le modèle 1D du réseau souterrain et un modèle 2D de surface sur maillage triangulaire. Largement utilisé pour les études d’inondation urbaine par débordement de réseau.</p>
+<p><strong>PCSWMM / SWMM5</strong> (EPA) : le moteur SWMM peut être couplé à des modules 2D de surface via des interfaces de programmation. Plusieurs implémentations open source du couplage SWMM/2D sont disponibles.</p>
+<hr>
+</section>
+</section>
+<section id="le-maillage-2d-lenjeu-central" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="le-maillage-2d-lenjeu-central"><span class="header-section-number">4</span> Le maillage 2D : l’enjeu central</h2>
+<section id="la-résolution-du-mnt-comme-donnée-critique" class="level3" data-number="4.1">
+<h3 data-number="4.1" class="anchored" data-anchor-id="la-résolution-du-mnt-comme-donnée-critique"><span class="header-section-number">4.1</span> La résolution du MNT comme donnée critique</h3>
+<p>Le maillage 2D représente la topographie du domaine — sa qualité est directement liée à la résolution et à la précision du <strong>Modèle Numérique de Terrain</strong> (MNT) utilisé.</p>
+<div id="tbl-mnt" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-mnt-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;2: Sources de MNT et leurs caractéristiques
+</figcaption>
+<div aria-describedby="tbl-mnt-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Source de MNT</th>
+<th>Résolution horizontale</th>
+<th>Précision verticale</th>
+<th>Usage typique</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>LiDAR aéroporté (dernière génération)</td>
+<td>0,5 — 1 m</td>
+<td>±5 — 10 cm</td>
+<td>Études d’inondation urbaine, dual-drainage</td>
+</tr>
+<tr class="even">
+<td>LiDAR aéroporté (standard)</td>
+<td>1 — 2 m</td>
+<td>±10 — 20 cm</td>
+<td>Plaines d’inondation, PPRi</td>
+</tr>
+<tr class="odd">
+<td>Photogrammétrie drone</td>
+<td>0,05 — 0,5 m</td>
+<td>±5 — 15 cm</td>
+<td>Ouvrages ponctuels, petits bassins versants</td>
+</tr>
+<tr class="even">
+<td>RGE ALTI® IGN (France)</td>
+<td>1 m (RGE) ou 5 m</td>
+<td>±20 — 50 cm</td>
+<td>Études régionales, pré-dimensionnement</td>
+</tr>
+<tr class="odd">
+<td>SRTM (NASA, mondial)</td>
+<td>30 m</td>
+<td>±5 — 10 m</td>
+<td>Études continentales, zones sans données</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>La résolution minimale du MNT nécessaire dépend de l’application :</p>
+<ul>
+<li><strong>Plaine d’inondation rurale</strong> : 2 à 5 m suffisent — les variations topographiques pertinentes (berges, remblais) sont à cette échelle</li>
+<li><strong>Inondation urbaine</strong> : 0,5 à 1 m nécessaire — les bâtiments, les murs de clôture et les trottoirs surélevés (obstacles à l’écoulement de surface de 10 à 30 cm) doivent être capturés</li>
+<li><strong>Dual-drainage</strong> : &lt; 0,5 m indispensable — la microtopographie des rues (profil en travers, caniveaux) gouverne les chemins d’écoulement</li>
+</ul>
+</section>
+<section id="raffinage-local-et-taille-du-maillage" class="level3" data-number="4.2">
+<h3 data-number="4.2" class="anchored" data-anchor-id="raffinage-local-et-taille-du-maillage"><span class="header-section-number">4.2</span> Raffinage local et taille du maillage</h3>
+<p>Sur un maillage non structuré, la taille des cellules peut varier localement — on utilise des cellules fines dans les zones critiques (lit mineur, ouvrages, zones urbaines denses) et des cellules plus grossières dans les zones moins sensibles (lit majeur éloigné, zones rurales).</p>
+<p>Cette stratégie de <strong>raffinage adaptatif</strong> permet de concentrer les ressources de calcul là où elles sont nécessaires, sans augmenter démesurément le nombre total de cellules.</p>
+<p><strong>Règle pratique pour estimer la taille du maillage :</strong></p>
+<p><span class="math display">\[N_{cellules} \approx \frac{A_{domaine}}{d_{maille}^2}\]</span></p>
+<p>Pour un domaine de 10 km² avec une maille de 10 m : <span class="math inline">\(N \approx 100\,000\)</span> cellules — temps de calcul de quelques minutes à quelques heures selon le logiciel et le pas de temps. Pour une maille de 2 m : <span class="math inline">\(N \approx 2{,}5 \times 10^6\)</span> cellules — temps de calcul de plusieurs heures à plusieurs jours.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Astuce</span>Le bon maillage : ni trop fin ni trop grossier
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Un maillage trop grossier rate les détails topographiques importants (remblais, digues, bâtiments) et peut produire des résultats très erronés. Un maillage trop fin est inutilement coûteux en temps de calcul et peut générer des instabilités numériques dans les zones sèches/mouillées. La bonne pratique est de commencer par un maillage grossier pour vérifier la configuration générale, puis de raffiner progressivement jusqu’à ce que les résultats ne changent plus significativement — c’est le critère de <strong>convergence de maillage</strong>.</p>
+</div>
+</div>
+<hr>
+</section>
+</section>
+<section id="de-2d-à-3d-quand-la-dimension-verticale-compte" class="level2" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="de-2d-à-3d-quand-la-dimension-verticale-compte"><span class="header-section-number">5</span> De 2D à 3D : quand la dimension verticale compte</h2>
+<section id="les-limites-de-lhypothèse-hydrostatique" class="level3" data-number="5.1">
+<h3 data-number="5.1" class="anchored" data-anchor-id="les-limites-de-lhypothèse-hydrostatique"><span class="header-section-number">5.1</span> Les limites de l’hypothèse hydrostatique</h3>
+<p>L’hypothèse de <strong>pression hydrostatique</strong> — conservée dans les équations de Saint-Venant 2D — suppose que les accélérations verticales sont négligeables devant <span class="math inline">\(g\)</span>. Cette hypothèse est valide pour les écoulements à surface libre à faible pente et à faible courbure de la ligne de courant. Elle est violée dans plusieurs situations :</p>
+<p><strong>Écoulements à forte courbure verticale :</strong> dans un saut hydraulique, une chute libre, ou au-dessus d’un seuil à forte charge, les lignes de courant ont une courbure importante dans le plan vertical. La pression n’est plus hydrostatique — les accélérations verticales contribuent significativement à la distribution de pression.</p>
+<p><strong>Jets et déflexions :</strong> lorsqu’un écoulement rencontre un obstacle (pile de pont, vanne inclinée), il est dévié verticalement. Les forces exercées sur l’obstacle dépendent du profil de vitesse vertical — non représentable en 2D hydrostatique.</p>
+<p><strong>Tourbillons et recirculations :</strong> dans les zones de séparation de couche limite (aval d’un obstacle, expansion brusque), des tourbillons tridimensionnels se forment. Leur influence sur le champ de pression et les forces sur les ouvrages nécessite une modélisation 3D.</p>
+<p><strong>Stratification verticale :</strong> dans les estuaires et les lacs, les gradients de densité (thermique ou haline) créent des courants de densité verticalement stratifiés que ni le 2D ni le 1D ne peuvent représenter.</p>
+</section>
+<section id="les-équations-de-navier-stokes-3d-et-les-modèles-de-turbulence" class="level3" data-number="5.2">
+<h3 data-number="5.2" class="anchored" data-anchor-id="les-équations-de-navier-stokes-3d-et-les-modèles-de-turbulence"><span class="header-section-number">5.2</span> Les équations de Navier-Stokes 3D et les modèles de turbulence</h3>
+<p>La modélisation 3D en hydraulique repose sur les équations de Navier-Stokes incompressibles (cf.&nbsp;note socle), résolues sur un maillage 3D du domaine. La turbulence — phénomène incontournable en hydraulique appliquée — est traitée par des <strong>modèles de turbulence</strong> qui approximent l’effet des fluctuations turbulentes sur l’écoulement moyen.</p>
+<p>Le spectre des approches, du plus simple au plus précis :</p>
+<p><strong>RANS</strong> (<em>Reynolds-Averaged Navier-Stokes</em>) : les équations sont moyennées dans le temps, et l’effet de la turbulence est modélisé par une viscosité turbulente. Les modèles <span class="math inline">\(k\)</span>-<span class="math inline">\(\varepsilon\)</span> et <span class="math inline">\(k\)</span>-<span class="math inline">\(\omega\)</span> SST sont les plus utilisés. Coût de calcul modéré, adapté aux études d’ingénierie courantes.</p>
+<p><strong>LES</strong> (<em>Large Eddy Simulation</em>) : les grands tourbillons sont résolus explicitement, les petits tourbillons (en dessous de la maille) sont modélisés. Plus précis que RANS pour les écoulements à forte séparation et les forces instationnaires. Coût de calcul élevé.</p>
+<p><strong>DNS</strong> (<em>Direct Numerical Simulation</em>) : tous les tourbillons sont résolus sans modèle de turbulence. Précision maximale, mais coût prohibitif pour les applications d’ingénierie — réservé à la recherche fondamentale sur de petits domaines à faible nombre de Reynolds.</p>
+<p>En hydraulique appliquée, <strong>RANS avec modèle <span class="math inline">\(k\)</span>-<span class="math inline">\(\varepsilon\)</span></strong> est le standard pour les études d’ouvrages. LES est utilisé pour les études de recherche et les cas avec des forces instationnaires importantes (vibrations d’ouvrages, fluctuations de pression sur des vannes).</p>
+<hr>
+</section>
+</section>
+<section id="la-cfd-appliquée-aux-ouvrages-hydrauliques" class="level2" data-number="6">
+<h2 data-number="6" class="anchored" data-anchor-id="la-cfd-appliquée-aux-ouvrages-hydrauliques"><span class="header-section-number">6</span> La CFD appliquée aux ouvrages hydrauliques</h2>
+<section id="quest-ce-que-la-cfd-en-hydraulique" class="level3" data-number="6.1">
+<h3 data-number="6.1" class="anchored" data-anchor-id="quest-ce-que-la-cfd-en-hydraulique"><span class="header-section-number">6.1</span> Qu’est-ce que la CFD en hydraulique</h3>
+<p>La <strong>CFD</strong> (<em>Computational Fluid Dynamics</em>) désigne la résolution numérique des équations de Navier-Stokes 3D sur un domaine discrétisé. En hydraulique appliquée, elle est utilisée pour modéliser des <strong>ouvrages ponctuels complexes</strong> dont le comportement est gouverné par des effets 3D que les modèles 1D et 2D ne peuvent pas capturer fidèlement.</p>
+<p>La CFD hydraulique se distingue de la modélisation 2D à surface libre sur un point fondamental : elle doit traiter l’<strong>interface air/eau</strong> — une frontière libre dont la position est une inconnue du problème. Deux approches dominent :</p>
+<p><strong>Méthode VOF</strong> (<em>Volume Of Fluid</em>) : chaque cellule du maillage contient une fraction <span class="math inline">\(\alpha \in [0, 1]\)</span> d’eau (<span class="math inline">\(\alpha = 1\)</span>) et d’air (<span class="math inline">\(\alpha = 0\)</span>). L’interface est une zone de transition où <span class="math inline">\(0 &lt; \alpha &lt; 1\)</span>. Simple à implémenter, robuste pour les interfaces fortement déformées (ressauts hydrauliques, jets en nappe). C’est l’approche utilisée par OpenFOAM et Flow-3D.</p>
+<p><strong>Méthode Level Set :</strong> l’interface est représentée comme la courbe de niveau zéro d’une fonction signée. Plus précise pour les interfaces lisses, mais plus délicate pour les interfaces fragmentées (embruns, bulles d’air).</p>
+</section>
+<section id="les-étapes-dune-étude-cfd" class="level3" data-number="6.2">
+<h3 data-number="6.2" class="anchored" data-anchor-id="les-étapes-dune-étude-cfd"><span class="header-section-number">6.2</span> Les étapes d’une étude CFD</h3>
+<p>Une étude CFD bien conduite suit une séquence rigoureuse :</p>
+<p><strong>Étape 1 — Définition du domaine et de la géométrie :</strong> CAO de l’ouvrage (déversoir, vanne, jonction), avec les entrées et sorties du domaine placées suffisamment loin de l’ouvrage pour ne pas perturber l’écoulement local.</p>
+<p><strong>Étape 2 — Maillage :</strong> discrétisation du domaine en cellules (hexaèdres, tétraèdres, polyèdres). Raffinage local à l’interface eau/air, aux parois, et dans les zones de fort gradient. La qualité du maillage (orthogonalité des cellules, rapport d’aspect) conditionne la précision et la stabilité du calcul.</p>
+<p><strong>Étape 3 — Conditions aux limites :</strong> débit imposé en entrée, pression imposée (ou niveau libre) en sortie, parois no-slip (vitesse nulle à la paroi) ou free-slip selon la rugosité. La définition des conditions aux limites est souvent la partie la plus délicate — une condition aux limites mal définie peut biaiser l’ensemble des résultats.</p>
+<p><strong>Étape 4 — Choix du modèle de turbulence :</strong> <span class="math inline">\(k\)</span>-<span class="math inline">\(\varepsilon\)</span> standard pour les écoulements attachés, <span class="math inline">\(k\)</span>-<span class="math inline">\(\varepsilon\)</span> réalisable ou <span class="math inline">\(k\)</span>-<span class="math inline">\(\omega\)</span> SST pour les écoulements avec séparation.</p>
+<p><strong>Étape 5 — Convergence :</strong> le calcul est itéré jusqu’à ce que les résidus (mesure de l’erreur sur les équations discrétisées) atteignent un seuil acceptable (typiquement <span class="math inline">\(10^{-4}\)</span> à <span class="math inline">\(10^{-6}\)</span>). La convergence n’est pas garantie — elle dépend de la qualité du maillage, des conditions aux limites et du modèle de turbulence.</p>
+<p><strong>Étape 6 — Vérification et validation :</strong> - <strong>Vérification</strong> : s’assurer que les équations ont été correctement résolues (indépendance aux maillage, résidus convergés) - <strong>Validation</strong> : comparer les résultats avec des mesures expérimentales ou des données de référence</p>
+</section>
+<section id="les-outils-cfd-pour-lhydraulique" class="level3" data-number="6.3">
+<h3 data-number="6.3" class="anchored" data-anchor-id="les-outils-cfd-pour-lhydraulique"><span class="header-section-number">6.3</span> Les outils CFD pour l’hydraulique</h3>
+<p><strong>OpenFOAM</strong> (open source) : suite CFD généraliste largement utilisée en recherche et en bureaux d’études avancés. Modulaire, extensible, parallélisable sur clusters. Interface en ligne de commande — courbe d’apprentissage significative. Le solveur <code>interFoam</code> (VOF) est particulièrement adapté aux écoulements à surface libre.</p>
+<p><strong>Flow-3D</strong> (Flow Science) : logiciel commercial spécialisé en hydraulique à surface libre. Interface graphique dédiée, nombreux modèles physiques hydrauliques intégrés (turbulence, sédiments, structures mobiles). Référence dans les bureaux d’études spécialisés en hydraulique des ouvrages.</p>
+<p><strong>Ansys Fluent / CFX</strong> : suites CFD commerciales généralistes, très complètes mais coûteuses. Utilisées principalement dans les grands groupes et les laboratoires de recherche.</p>
+</section>
+<section id="cas-dusage-typiques-en-hydraulique-des-ouvrages" class="level3" data-number="6.4">
+<h3 data-number="6.4" class="anchored" data-anchor-id="cas-dusage-typiques-en-hydraulique-des-ouvrages"><span class="header-section-number">6.4</span> Cas d’usage typiques en hydraulique des ouvrages</h3>
+<p><strong>Déversoir d’orage :</strong> la loi de déversement d’un déversoir latéral dépend de la forme de la crête, de l’angle d’attaque de l’écoulement, et des conditions de submersion — paramètres que la CFD calcule directement, alors que la modélisation 1D utilise des coefficients empiriques (<span class="math inline">\(\mu\)</span>) dont la précision est limitée pour les géométries non standard.</p>
+<p><strong>Seuil à forte charge :</strong> au-dessus d’un seuil, l’écoulement transite par la hauteur critique, puis accélère en régime torrentiel. La distribution de pression sur la crête du seuil (qui détermine les forces exercées sur l’ouvrage) nécessite une modélisation 3D pour les fortes charges.</p>
+<p><strong>Dissipateur d’énergie :</strong> bassin de dissipation, enrochements, blocs de chute — la CFD permet de vérifier que le ressaut hydraulique est bien stable dans le bassin et que les vitesses en aval sont acceptables.</p>
+<p><strong>Jonction à angle prononcé :</strong> dans un collecteur d’assainissement, une jonction à 90° à fort débit génère des tourbillons et des pertes de charge singulières difficiles à estimer par les formules empiriques. La CFD quantifie précisément ces pertes et optimise la géométrie de la jonction.</p>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Avertissement</span>La CFD n’est pas une boîte noire infaillible
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Un modèle CFD mal construit (maillage grossier, conditions aux limites incorrectes, modèle de turbulence inadapté) peut donner des résultats très éloignés de la réalité — avec une apparence de précision trompeuse (visualisations 3D colorées). La validation sur des données expérimentales et la vérification de l’indépendance aux maillage sont des étapes non négociables. Un résultat CFD non validé doit être traité avec la même prudence qu’un résultat de modèle 1D non calé.</p>
+</div>
+</div>
+<hr>
+</section>
+</section>
+<section id="le-couplage-1d2d-et-1d3d" class="level2" data-number="7">
+<h2 data-number="7" class="anchored" data-anchor-id="le-couplage-1d2d-et-1d3d"><span class="header-section-number">7</span> Le couplage 1D/2D et 1D/3D</h2>
+<section id="pourquoi-coupler-les-approches" class="level3" data-number="7.1">
+<h3 data-number="7.1" class="anchored" data-anchor-id="pourquoi-coupler-les-approches"><span class="header-section-number">7.1</span> Pourquoi coupler les approches</h3>
+<p>Dans la plupart des études complexes, <strong>aucune approche unique ne convient à l’ensemble du domaine</strong> :</p>
+<ul>
+<li>Le réseau de collecteurs d’assainissement se modélise en 1D (géométrie tubulaire, flux longitudinal dominant)</li>
+<li>La surface urbaine où l’eau déborde se modélise en 2D (écoulement en nappe, chemins multiples)</li>
+<li>Les ouvrages ponctuels critiques (déversoirs d’orage importants) peuvent nécessiter une CFD 3D</li>
+</ul>
+<p>Le <strong>couplage</strong> consiste à connecter ces modèles de natures différentes via des <strong>interfaces d’échange</strong> : à chaque pas de temps, le modèle 1D fournit des débits au modèle 2D (débordements par les regards), et le modèle 2D retourne des hauteurs d’eau au modèle 1D (réinjection depuis la surface).</p>
+</section>
+<section id="les-interfaces-de-couplage-1d2d" class="level3" data-number="7.2">
+<h3 data-number="7.2" class="anchored" data-anchor-id="les-interfaces-de-couplage-1d2d"><span class="header-section-number">7.2</span> Les interfaces de couplage 1D/2D</h3>
+<p>L’interface de couplage doit assurer la <strong>conservation de la masse</strong> entre les deux modèles. Les approches courantes :</p>
+<p><strong>Couplage par nœud d’échange :</strong> chaque regard du réseau 1D est couplé à une cellule du maillage 2D via la loi d’orifice (cf.&nbsp;note 2.B3). C’est l’approche utilisée dans HEC-RAS, Infoworks ICM et MIKE FLOOD.</p>
+<p><strong>Couplage par condition aux limites latérale :</strong> pour les rivières qui débordent dans un lit majeur 2D, la connexion se fait le long de la berge — la hauteur d’eau calculée en 1D dans le lit mineur est comparée à la cote de la berge, et le débit débordant est calculé par une loi de déversoir.</p>
+</section>
+<section id="les-défis-du-couplage" class="level3" data-number="7.3">
+<h3 data-number="7.3" class="anchored" data-anchor-id="les-défis-du-couplage"><span class="header-section-number">7.3</span> Les défis du couplage</h3>
+<p>Le couplage 1D/2D introduit des difficultés numériques spécifiques :</p>
+<p><strong>Instabilités aux interfaces :</strong> si le débit échangé entre le 1D et le 2D à chaque pas de temps est trop important (fort gradient hydraulique à l’interface), des oscillations numériques peuvent apparaître. Les logiciels utilisent des techniques de limitation du débit échangé et de sous-relaxation pour stabiliser le couplage.</p>
+<p><strong>Cohérence des pas de temps :</strong> le modèle 1D peut utiliser un pas de temps de quelques secondes à quelques minutes ; le modèle 2D a souvent un pas de temps contraint par la condition CFL à quelques secondes. La synchronisation des deux modèles à chaque pas de temps d’échange est critique pour la conservation de la masse.</p>
+<p><strong>Cohérence des niveaux de référence :</strong> les cotes altimétriques doivent être dans le même système de référence dans les deux modèles. Un décalage de quelques centimètres entre le niveau de référence du modèle 1D et celui du MNT du modèle 2D peut créer des débordements fictifs ou des injections incorrectes.</p>
+<hr>
+</section>
+</section>
+<section id="choisir-le-bon-niveau-de-modélisation" class="level2" data-number="8">
+<h2 data-number="8" class="anchored" data-anchor-id="choisir-le-bon-niveau-de-modélisation"><span class="header-section-number">8</span> Choisir le bon niveau de modélisation</h2>
+<section id="tableau-décisionnel" class="level3" data-number="8.1">
+<h3 data-number="8.1" class="anchored" data-anchor-id="tableau-décisionnel"><span class="header-section-number">8.1</span> Tableau décisionnel</h3>
+<div id="tbl-decision" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-decision-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;3: Tableau décisionnel pour le choix du niveau de modélisation
+</figcaption>
+<div aria-describedby="tbl-decision-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Question posée</th>
+<th>Outil recommandé</th>
+<th>Justification</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Pression aux nœuds d’un réseau AEP</td>
+<td>1D permanent (EPANET)</td>
+<td>Réseau tubulaire, flux longitudinal dominant</td>
+</tr>
+<tr class="even">
+<td>Capacité d’un collecteur gravitaire</td>
+<td>1D permanent (SWMM, CANOE)</td>
+<td>Idem</td>
+</tr>
+<tr class="odd">
+<td>Propagation d’une crue dans une rivière</td>
+<td>1D transitoire (HEC-RAS 1D)</td>
+<td>Si section transversale représentative suffisante</td>
+</tr>
+<tr class="even">
+<td>Cartographie des zones inondées en lit majeur</td>
+<td>2D (HEC-RAS 2D, Telemac-2D)</td>
+<td>Propagation latérale nécessaire</td>
+</tr>
+<tr class="odd">
+<td>Inondation urbaine par débordement de réseau</td>
+<td>1D/2D couplé (Infoworks ICM, HEC-RAS)</td>
+<td>Réseau souterrain en 1D + surface en 2D</td>
+</tr>
+<tr class="even">
+<td>Dimensionnement d’un déversoir d’orage</td>
+<td>CFD 3D (Flow-3D, OpenFOAM)</td>
+<td>Effets 3D sur la loi de déversement</td>
+</tr>
+<tr class="odd">
+<td>Dissipateur d’énergie en pied de barrage</td>
+<td>CFD 3D</td>
+<td>Ressaut hydraulique, forces sur l’ouvrage</td>
+</tr>
+<tr class="even">
+<td>Estuaire avec influence de marée</td>
+<td>2D (Telemac-2D, MIKE 21)</td>
+<td>Écoulements bidirectionnels, gradient de densité</td>
+</tr>
+<tr class="odd">
+<td>Transport de sédiments en rivière</td>
+<td>1D ou 2D + module morphodynamique</td>
+<td>Selon l’échelle spatiale</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+</section>
+<section id="le-principe-de-parcimonie-revisité" class="level3" data-number="8.2">
+<h3 data-number="8.2" class="anchored" data-anchor-id="le-principe-de-parcimonie-revisité"><span class="header-section-number">8.2</span> Le principe de parcimonie revisité</h3>
+<p>Le tableau décisionnel ci-dessus est un guide, pas une règle absolue. Le principe directeur reste le <strong>principe de parcimonie</strong> : choisir le modèle le plus simple qui répond à la question posée avec la précision requise.</p>
+<p>En pratique, ce principe se décline en trois questions à se poser avant de choisir un niveau de modélisation :</p>
+<p><strong>Question 1 — La sortie nécessaire est-elle spatiale ?</strong> Si la réponse à la question posée est “oui/non” ou “quelle valeur en ce point précis”, un modèle 1D suffit souvent. Si la réponse nécessite une carte (où l’eau atteint-elle ? quelles surfaces sont inondées ?), le 2D est nécessaire.</p>
+<p><strong>Question 2 — Les hypothèses du modèle simplifié sont-elles valides dans le cas considéré ?</strong> Si les hypothèses 1D (vitesse uniforme, pression hydrostatique) sont clairement violées (ouvrage complexe, géométrie en plan torturée), le passage au niveau supérieur est physiquement justifié.</p>
+<p><strong>Question 3 — La précision supplémentaire justifie-t-elle le surcoût ?</strong> Passer de 1D à 2D peut multiplier le temps d’étude par 3 à 5 (construction du maillage, calage, temps de calcul). Ce surcoût est justifié pour une étude réglementaire (PPRi) ou une décision d’investissement majeure. Il ne l’est pas pour un pré-dimensionnement ou une étude de faisabilité.</p>
+</section>
+<section id="la-complémentarité-des-approches" class="level3" data-number="8.3">
+<h3 data-number="8.3" class="anchored" data-anchor-id="la-complémentarité-des-approches"><span class="header-section-number">8.3</span> La complémentarité des approches</h3>
+<p>Dans les études complexes, les différents niveaux de modélisation sont <strong>complémentaires plutôt que concurrents</strong> :</p>
+<ul>
+<li>Le modèle 1D du réseau fournit les débits de débordement au modèle 2D de surface</li>
+<li>Le modèle 2D de plaine d’inondation fournit les conditions aux limites aval au modèle 1D de rivière</li>
+<li>Le modèle CFD d’un ouvrage ponctuel fournit les coefficients de perte de charge singulière au modèle 1D du réseau</li>
+</ul>
+<p>Cette <strong>hiérarchie de modèles</strong> — du réseau global au détail local — est l’approche la plus efficace pour les études complexes : on utilise le 1D pour l’ensemble du réseau, on zoome en 2D sur les zones où la dimension latérale compte, et on zoome en 3D sur les ouvrages ponctuels critiques.</p>
+<hr>
+</section>
+</section>
+<section id="conclusion" class="level2" data-number="9">
+<h2 data-number="9" class="anchored" data-anchor-id="conclusion"><span class="header-section-number">9</span> Conclusion</h2>
+<p>Le passage du 1D au 2D, puis du 2D au 3D, n’est pas un progrès automatique — c’est une décision raisonnée guidée par la physique du problème, la question posée, et les ressources disponibles. Un modèle 1D bien calé répond mieux à une question de capacité de réseau qu’un modèle 2D mal construit. Un modèle CFD 3D mal validé est moins fiable qu’une formule empirique bien choisie pour un ouvrage standard.</p>
+<p>La compétence de l’ingénieur hydraulicien dans ce domaine se mesure à trois capacités : savoir <strong>identifier</strong> les situations où le 1D atteint ses limites, savoir <strong>choisir</strong> le niveau de modélisation adapté à la question et aux ressources, et savoir <strong>interpréter</strong> les résultats des modèles 2D et 3D avec le même esprit critique que pour les modèles 1D.</p>
+<hr>
+</section>
+<section id="pour-aller-plus-loin-dans-cette-série" class="level2" data-number="10">
+<h2 data-number="10" class="anchored" data-anchor-id="pour-aller-plus-loin-dans-cette-série"><span class="header-section-number">10</span> Pour aller plus loin dans cette série</h2>
+<ul>
+<li><strong>Note 3.3</strong> — <em>Données et modèles : SIG, capteurs, vers le jumeau numérique hydraulique</em> : MNT haute résolution, intégration SIG, IoT réseau, notion de jumeau numérique</li>
+<li><strong>Note 3.4</strong> — <em>Incertitudes en modélisation hydraulique : ce que le modèle ne peut pas vous dire</em> : analyse de sensibilité avancée, propagation d’incertitudes, limites structurelles des modèles</li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copié");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copié");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<script src="../site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

@@ -1,0 +1,903 @@
+---
+title: "Généralités sur la modélisation des réseaux hydrauliques"
+subtitle: "De Navier-Stokes aux applications opérationnelles : charge et surface libre"
+date: "2026-05-17"
+author: ""
+categories: [Hydraulique, Modélisation, Ingénierie]
+page-layout: article
+toc: true
+toc-title: "Sommaire"
+toc-depth: 3
+number-sections: true
+lang: fr
+format:
+  html:
+    embed-resources: true
+    html-math-method: katex
+    theme: cosmo
+execute:
+  echo: false
+  warning: false
+  fig-format: svg
+  fig-responsive: true
+  fig-width: 8
+  fig-height: 4.5
+jupyter: python3
+---
+
+::: {.callout-note}
+## Note-mère de la série — La généalogie commune de tous les modèles
+
+Cette note est le **point d'entrée de toute la série**. Elle établit la généalogie commune dont toutes les autres notes sont des spécialisations : les équations de Navier-Stokes sont l'ancêtre, la cascade d'approximations est le tronc, et chaque famille de modèles opérationnels (en charge, à surface libre, 0D, 2D) est une branche.
+
+Trois notes de fondement prolongent directement celle-ci : **0.2** (énergie, charge, dégradation — l'énergétique du fond), **0.3** (ouvrages et conditions aux limites — comment le réseau s'articule), **0.4** (analyse dimensionnelle et similitude — pourquoi Reynolds, Froude et Moody ne tombent pas du ciel).
+
+**L'équation dont tout découle :**
+
+$$\rho\!\left(\frac{\partial \mathbf{u}}{\partial t} + (\mathbf{u}\cdot\nabla)\mathbf{u}\right) = -\nabla p + \mu\nabla^{2}\mathbf{u} + \rho\mathbf{g}$$
+
+Bernoulli, Saint-Venant, Darcy-Weisbach : ce sont des formes dégradées de cette équation, obtenues par intégration successive sur les dimensions jugées superflues.
+
+La compétence de l'ingénieur hydraulicien ne réside pas dans la maîtrise d'un logiciel — elle réside dans le **choix raisonné du niveau de modèle** adapté au problème posé. C'est le fil rouge de cette note et de toute la série.
+:::
+
+---
+
+## Introduction : pourquoi modélise-t-on ?
+
+Dans le quotidien de l'ingénieur, le modèle numérique est un outil d'aide à la décision incontournable. Qu'il s'agisse de concevoir une infrastructure, de diagnostiquer un dysfonctionnement ou d'anticiper une crise, la simulation permet de traduire la complexité physique du terrain — topographie, rugosité, singularités — en un système d'équations mathématiques résolubles par un ordinateur.
+
+Les quatre objectifs métier (dimensionner, diagnostiquer, optimiser, prévoir) structurent respectivement les niveaux 1, 2 et 2bis de la série : les notes de niveau 1 posent les enjeux par domaine, les notes de niveau 2 développent les outils de calcul, et les notes 2bis traitent les machines hydrauliques comme organes actifs du réseau.
+
+::: {.callout-warning}
+## Alerte modélisation — Le domaine métier ne dicte pas le régime physique
+
+Un réseau d'assainissement n'est pas « forcément à surface libre » : il contient des refoulements en charge, des collecteurs temporairement engorgés, des tronçons mixtes. Un réseau AEP n'est pas « forcément en charge » : il peut comporter des canaux d'amenée, des bassins de décantation, des brise-charges à surface libre. Associer mécaniquement un domaine métier à un seul régime physique est la première erreur de modélisation à éviter.
+:::
+
+| Domaine | Régime dominant | Mais aussi… |
+|---|---|---|
+| Adduction d'eau potable (AEP) | En charge (maintien de pression) | Canaux d'amenée, bassins de décantation, brise-charges |
+| Irrigation | En charge ou surface libre selon le système | Canaux gravitaires, périmètres irrigués, goutte-à-goutte sous pression |
+| Assainissement / Pluvial | Surface libre (gravité, économie) | Refoulements, collecteurs temporairement engorgés |
+
+: Régimes d'écoulement par domaine d'application {#tbl-domaines}
+
+La modélisation n'est jamais une fin en soi. Elle est au service d'un objectif métier précis : dimensionner, diagnostiquer, optimiser, ou prévoir. Garder cet objectif en tête est le premier réflexe de l'ingénieur compétent.
+
+```{python}
+#| label: fig-domaines-regimes
+#| fig-cap: "Croisement domaines métier × régimes physiques dominants. Chaque barre représente la proportion approximative de situations relevant de chaque régime dans un projet-type du domaine. L'absence de correspondance 1:1 illustre le piège classique : un projet d'assainissement mobilise fréquemment des tronçons en charge (refoulements) et un projet AEP peut comporter des ouvrages à surface libre. Le régime mixte est la règle dans les projets complexes, pas l'exception."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+domaines = ["AEP", "Irrigation", "Assainissement\n/ Pluvial"]
+charge   = [0.85, 0.45, 0.20]
+surface  = [0.10, 0.45, 0.70]
+mixte    = [0.05, 0.10, 0.10]
+
+x = np.arange(len(domaines))
+w = 0.55
+
+fig, ax = plt.subplots(figsize=(8, 4.0))
+b1 = ax.barh(x, charge,  w, color=C_CHARGE, label="En charge")
+b2 = ax.barh(x, surface, w, left=charge,    color=C_PIEZO,  label="Surface libre")
+b3 = ax.barh(x, mixte,   w, left=[c+s for c,s in zip(charge,surface)],
+             color=C_ACCENT, label="Mixte / transitoire")
+
+ax.set_yticks(x); ax.set_yticklabels(domaines, fontsize=10)
+ax.set_xlabel("Proportion approximative des situations de projet", fontsize=9)
+ax.set_title("Domaines métier × régimes physiques — pas de correspondance 1:1", fontsize=10)
+ax.set_xlim(0, 1)
+ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v*100:.0f} %"))
+ax.legend(fontsize=8.5, loc="lower right")
+ax.grid(axis="x", alpha=0.2)
+ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+---
+
+## Le tronc commun : les équations de Navier-Stokes
+
+### Deux principes, une seule origine
+
+Toute l'hydraulique appliquée — qu'elle soit en charge ou à surface libre — est une branche dérivée de la mécanique des fluides. À la base de tous nos modèles se trouvent les **équations de Navier-Stokes**. Pour un fluide newtonien incompressible (hypothèse pleinement justifiée pour l'eau en conditions normales), elles traduisent localement deux principes universels :
+
+**Conservation de la masse** (continuité) :
+
+$$\nabla \cdot \mathbf{u} = 0$$
+
+**Conservation de la quantité de mouvement** ($\mathbf{F} = m\mathbf{a}$ appliqué à un fluide visqueux), avec identification terme à terme :
+
+$$\underbrace{\rho\frac{\partial \mathbf{u}}{\partial t}}_{\text{instationnaire}} + \underbrace{\rho(\mathbf{u}\cdot\nabla)\mathbf{u}}_{\text{advection}} = \underbrace{-\nabla p}_{\text{pression}} + \underbrace{\mu\nabla^{2}\mathbf{u}}_{\text{diffusion visqueuse}} + \underbrace{\rho\mathbf{g}}_{\text{gravité}}$$
+
+Chacun de ces termes a un destin propre dans la cascade d'approximations : le terme instationnaire disparaît en régime permanent, l'advection est négligée en onde diffusive, la diffusion visqueuse est remplacée par un frottement empirique de paroi. Comprendre ce que l'on coupe — et pourquoi — est l'essentiel de cette note.
+
+::: {.callout-note}
+## Le coin du puriste — L'incompressibilité tombe lors du coup de bélier
+
+L'hypothèse $\nabla\cdot\mathbf{u}=0$ (incompressibilité) est la première à tomber en régime transitoire rapide : lors d'un arrêt brutal de pompe, la compressibilité de l'eau ($K \approx 2{,}2$ GPa) et l'élasticité de la conduite créent une onde de pression se propageant à $c \approx 1\,000$ m/s. Le **nombre de Mach hydraulique** $Ma = V/c$ (cousin de Reynolds et Froude — renvoi note 0.4) n'est plus négligeable : c'est le domaine du coup de bélier, traité en note **2.A2**. L'incompressibilité est une excellente hypothèse pour le permanent ; elle interdit de modéliser les transitoires rapides.
+:::
+
+### Pourquoi ne pas résoudre directement Navier-Stokes ?
+
+Ces équations sont **tridimensionnelles, non linéaires, et couplées**. Elles n'admettent aucune solution analytique générale. Leur résolution numérique directe (DNS, *Direct Numerical Simulation*) exige un nombre de mailles proportionnel à $Re^{9/4}$ : pour un écoulement en conduite à $Re = 10^5$ (courant en AEP), cela représente environ $10^{11}$ mailles — soit des années de calcul sur les supercalculateurs actuels pour un seul tronçon. À l'échelle d'un réseau de plusieurs centaines de kilomètres, c'est computationnellement hors de portée pour encore plusieurs décennies. Renvoi note **3.5** pour les méthodes numériques avancées (LES, RANS).
+
+### La cascade dimensionnelle : de la 3D à la 1D
+
+C'est ici que réside le saut conceptuel fondamental que tout ingénieur doit avoir en tête. Les modèles opérationnels — Bernoulli, Saint-Venant, pertes de charge — ne sont pas des lois indépendantes : ce sont des **formes dégradées de Navier-Stokes**, obtenues par intégration successive sur les dimensions spatiales superflues.
+
+| Niveau | Équations | Hypothèses clés | Usage typique |
+|---|---|---|---|
+| **3D** | Navier-Stokes complets | Aucune simplification spatiale | CFD : ouvrages ponctuels, déversoirs, jonctions complexes |
+| **2D** | Saint-Venant 2D (plan horizontal) | Pression hydrostatique, vitesse uniforme sur la verticale | Plaines d'inondation, estuaires, retenues |
+| **1D** | Saint-Venant 1D / Bernoulli | Section mouillée représentative, vitesse uniforme sur la section | Réseaux de canaux, collecteurs, conduites |
+| **0D** | Bilan de volume (réservoirs) | Pas de gradient spatial, mélange parfait | Réservoirs, bassins de rétention |
+
+: Cascade de simplification depuis les équations de Navier-Stokes {#tbl-cascade}
+
+::: {.callout-note}
+## Le coin du puriste — Ce que coûte chaque intégration : les coefficients $\alpha$ et $\beta$
+
+Le passage 3D → 1D s'effectue par une moyenne sur la section $\langle\cdot\rangle = \frac{1}{A}\int_A \cdot\,dA$. Cette opération fait apparaître deux coefficients qui mesurent l'**écart entre le profil de vitesse réel et l'hypothèse de vitesse uniforme** :
+
+$$\alpha = \frac{1}{A\,V^{3}}\int_A u^{3}\,dA \;\;(\ge 1) \qquad \beta = \frac{1}{A\,V^{2}}\int_A u^{2}\,dA \;\;(\ge 1)$$
+
+$\alpha$ (coefficient de Coriolis) pondère le terme d'énergie cinétique dans Bernoulli ; $\beta$ (coefficient de Boussinesq) pondère le terme d'inertie dans Saint-Venant. Pour un profil logarithmique turbulent, $\alpha \approx 1{,}04$–$1{,}10$ et $\beta \approx 1{,}01$–$1{,}05$ — différences modestes, souvent négligées. Mais en régime laminaire (Poiseuille), $\alpha = 2$ et $\beta = 4/3$ : prendre $\alpha = \beta = 1$ introduit une erreur de 100 % sur le terme d'énergie cinétique. C'est aussi cette même hypothèse de vitesse uniforme qui produit la dispersion de Taylor en transport (note **3.3**) : le prix de la réduction 1D n'est jamais nul.
+:::
+
+::: {.callout-warning}
+## Alerte modélisation — $\alpha = \beta = 1$ : valide en turbulent, faux en laminaire
+
+L'hypothèse de vitesse uniforme sur la section ($\alpha = \beta = 1$) est une très bonne approximation pour les écoulements turbulents développés (erreur < 5 %). Elle devient fausse en régime laminaire (grandes conduites à faible vitesse, fortes viscosités) ou en présence d'un fort gradient transversal (après une jonction, une singularité). Dans ces cas, omettre $\alpha$ et $\beta$ fausse les bilans d'énergie et de quantité de mouvement. Vérifier $Re > 4\,000$ avant d'appliquer les lois en charge sans correction.
+:::
+
+```{python}
+#| label: fig-cascade-dimensionnelle
+#| fig-cap: "La cascade dimensionnelle en escalier : chaque marche vers le bas correspond à une hypothèse supplémentaire qui réduit la dimensionnalité des équations (et donc le coût de calcul) au prix d'une perte de richesse physique. La flèche montante à gauche rappelle que remonter la cascade (passer du 1D au 3D) est toujours possible mais coûteux — c'est la démarche de la CFD d'ouvrage (note 3.2). La figure signature de cette note : comprendre où l'on se situe dans cet escalier est le premier acte de compétence du modélisateur."
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+fig, ax = plt.subplots(figsize=(10, 5.0))
+ax.set_xlim(0, 12); ax.set_ylim(0, 6.5); ax.axis("off")
+
+steps = [
+    (0.5, 5.2, 2.5, 1.0, C_CHARGE,   "3D — Navier-Stokes",
+     "Aucune hypothèse spatiale\nCFD, ouvrages ponctuels"),
+    (2.5, 3.8, 3.0, 1.0, "#2980b9",  "2D — Saint-Venant 2D",
+     "Pression hydrostatique\nVitesse uniforme sur la verticale\nPlaines d'inondation, estuaires"),
+    (5.0, 2.4, 3.5, 1.0, C_PIEZO,    "1D — Bernoulli / Saint-Venant 1D",
+     "Vitesse uniforme sur la section\nRéseaux, canaux, collecteurs"),
+    (8.0, 1.0, 3.5, 1.0, "#8e44ad",  "0D — Bilan de volume",
+     "Pas de gradient spatial\nRéservoirs, bassins"),
+]
+
+for x0, y0, w, h, col, title, subtitle in steps:
+    b = FancyBboxPatch((x0, y0), w, h,
+        boxstyle="round,pad=0.08", fc=col+"22", ec=col, lw=2.0)
+    ax.add_patch(b)
+    ax.text(x0 + w/2, y0 + h*0.65, title,
+            ha="center", va="center", fontsize=9.5, color=col, fontweight="bold")
+    ax.text(x0 + w/2, y0 + h*0.22, subtitle,
+            ha="center", va="center", fontsize=7.5, color=col, style="italic")
+
+# Flèches vers le bas (cascade)
+arrow_kw = dict(arrowstyle="->", lw=1.8, color="#555")
+ax.annotate("", xy=(3.0, 4.8), xytext=(2.0, 4.8),
+            arrowprops=dict(arrowstyle="->", color="#555", lw=1.5,
+                            connectionstyle="arc3,rad=0"))
+connections = [
+    ((1.75, 5.2), (3.5,  4.8)),
+    ((4.0,  3.8), (6.25, 3.4)),
+    ((6.75, 2.4), (9.75, 2.0)),
+]
+for (x0,y0),(x1,y1) in connections:
+    ax.annotate("", xy=(x1,y1), xytext=(x0,y0),
+                arrowprops=dict(arrowstyle="->", color="#555", lw=2.0))
+
+# Annotations sur les flèches (hypothèses coupées)
+hyp_labels = [
+    (2.7, 4.6, "Moyenne sur\nla verticale\n(hyp. hydrostatique)"),
+    (5.2, 3.1, "Moyenne sur\nla section\n($\\alpha,\\beta \\to 1$)"),
+    (8.1, 1.7, "Moyenne\nspatiale\n(gradient nul)"),
+]
+for x, y, lbl in hyp_labels:
+    ax.text(x, y, lbl, ha="center", fontsize=7.5, color=C_ACCENT,
+            bbox=dict(boxstyle="round,pad=0.2", fc="#fff5f5", ec=C_ACCENT, alpha=0.85))
+
+# Flèche montante gauche
+ax.annotate("", xy=(0.3, 5.5), xytext=(0.3, 1.2),
+            arrowprops=dict(arrowstyle="->", color=C_PIEZO, lw=2.0))
+ax.text(0.05, 3.4, "Richesse\nphysique ↑", ha="center", fontsize=8,
+        color=C_PIEZO, rotation=90)
+
+# Flèche descendante droite
+ax.annotate("", xy=(11.7, 1.2), xytext=(11.7, 5.5),
+            arrowprops=dict(arrowstyle="->", color=C_CHARGE, lw=2.0))
+ax.text(11.95, 3.4, "Calculabilité ↑\nCoût ↓", ha="center", fontsize=8,
+        color=C_CHARGE, rotation=270)
+
+ax.set_title("Cascade dimensionnelle — De Navier-Stokes aux modèles opérationnels",
+             fontsize=10.5, y=0.98)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-note}
+## Ce que la CFD apporte malgré tout
+
+La CFD reste indispensable pour les ouvrages ponctuels complexes (déversoirs d'orage, jonctions, vannes), où les effets 3D dominent et où les modèles 1D perdent leur validité. Elle est utilisée en **complément** du modèle réseau, pas à la place. Renvoi note **3.2** (*Quand le 1D ne suffit plus*).
+:::
+
+---
+
+## Deux choix structurants avant toute modélisation
+
+Avant même de choisir entre hydraulique en charge et hydraulique à surface libre, l'ingénieur doit trancher deux questions qui conditionnent la nature même des équations à résoudre.
+
+### Premier choix : quelle dimension spatiale ?
+
+La @tbl-cascade le résume : 1D, 2D ou 3D. Pour les réseaux d'infrastructure (AEP, assainissement, irrigation en réseau), la **réponse est presque toujours 1D**. Ce n'est pas une simplification paresseuse — c'est le constat que la géométrie d'une conduite ou d'un canal se décrit très bien par un axe longitudinal, et que les variations transversales sont négligeables ou captées par des coefficients empiriques (rugosité, coefficient de forme).
+
+Quand la réponse n'est pas 1D — lit majeur d'une rivière, zone inondable, ouvrage de dissipation, estuaire — renvoi note **3.2** pour la modélisation 2D/3D.
+
+### Second choix : régime permanent ou transitoire ?
+
+C'est le choix le plus structurant, et celui qui est le plus souvent mal posé. Il détermine si le terme $\partial/\partial t$ (dérivée temporelle) reste dans les équations ou disparaît.
+
+| Régime | Définition | Termes temporels | Usage dominant |
+|---|---|---|---|
+| **Permanent** | L'écoulement ne varie pas dans le temps | $\partial/\partial t = 0$ : équations algébriques | Dimensionnement, diagnostic nominal |
+| **Quasi-permanent** | Succession d'états permanents (variation lente) | $\partial/\partial t \approx 0$ : enchaînement de pas statiques | Gestion journalière AEP, variation de consommation |
+| **Transitoire** | L'écoulement varie rapidement dans le temps | $\partial/\partial t \neq 0$ : EDP à résoudre dans le temps | Coups de bélier, crues, remplissage de réseau |
+
+: Les trois régimes temporels en modélisation hydraulique {#tbl-regimes}
+
+Le critère physique qui justifie l'approximation quasi-permanente est la **séparation des échelles de temps** :
+
+$$\frac{T_{\text{onde}}}{T_{\text{sollicitation}}} \ll 1 \;\Rightarrow\; \text{quasi-permanent admissible}$$
+
+**Exemple chiffré :** sur un réseau AEP de 10 km, une onde de pression se propage à $c \approx 1\,000$ m/s → temps de transit $\approx 10$ s. Une variation de consommation a lieu sur des heures. Le rapport est $\sim 10^{-4}$ → quasi-permanent parfaitement justifié. En revanche, un arrêt de pompe se produit en $\sim 1$ s, du même ordre que le temps de transit → **transitoire obligatoire**, renvoi note **2.A2**.
+
+```{python}
+#| label: fig-frise-temps
+#| fig-cap: "Frise temporelle logarithmique des phénomènes hydrauliques et des régimes de modélisation associés. Les phénomènes à gauche (coup de bélier, fermeture de vanne) exigent un modèle transitoire complet. Les phénomènes à droite (gestion AEP, hydrologie saisonnière) sont bien représentés en régime permanent ou quasi-permanent. La zone grise centrale est la zone d'ambiguïté : remplissage de collecteur, hydrogramme de crue à montée rapide — c'est là que le choix du régime doit être le plus soigneusement justifié."
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+fig, ax = plt.subplots(figsize=(10, 3.8))
+
+# Bandes de régime
+ax.axvspan(np.log10(0.01), np.log10(60),    alpha=0.15, color=C_ACCENT,  label="Transitoire obligatoire")
+ax.axvspan(np.log10(60),   np.log10(1800),  alpha=0.15, color="#888",    label="Zone d'ambiguïté")
+ax.axvspan(np.log10(1800), np.log10(864000),alpha=0.15, color=C_PIEZO,   label="Quasi-permanent / permanent")
+
+# Événements
+events = [
+    (0.1,    "Coup de\nbélier",      C_ACCENT),
+    (1.0,    "Fermeture\nvanne",     C_ACCENT),
+    (10,     "Arrêt\npompe",        C_ACCENT),
+    (120,    "Remplissage\ncollecteur", "#888"),
+    (900,    "Hydrogramme\ncrue rapide","#555"),
+    (3600,   "Crue\nurbaine",        C_PIEZO),
+    (21600,  "Gestion\nAEP journée", C_PIEZO),
+    (86400,  "Variation\nconsommation",C_PIEZO),
+    (604800, "Hydrologie\nsaisonnière",C_PIEZO),
+]
+
+for t, lbl, col in events:
+    ax.axvline(np.log10(t), color=col, lw=1.8, ls="--", alpha=0.7)
+    ax.text(np.log10(t), 0.85, lbl, ha="center", va="top", fontsize=7.5,
+            color=col, rotation=35, transform=ax.get_xaxis_transform())
+
+ax.set_xlabel("Durée caractéristique (s, échelle log)", fontsize=9)
+ax.set_xlim(np.log10(0.05), np.log10(1e6))
+ax.set_xticks([np.log10(v) for v in [0.1, 1, 10, 60, 600, 3600, 86400, 604800]])
+ax.set_xticklabels(["0,1 s","1 s","10 s","1 min","10 min","1 h","1 j","1 sem"],
+                   fontsize=8.5)
+ax.set_yticks([]); ax.set_ylim(0, 1)
+ax.legend(fontsize=8.5, loc="lower right")
+ax.set_title("Frise temporelle — Phénomènes hydrauliques et régimes de modélisation", fontsize=10)
+ax.grid(axis="x", alpha=0.15)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-important}
+## Un modèle permanent ne "voit" pas les transitoires
+
+Un modèle AEP en régime permanent peut donner des pressions nominales tout à fait correctes, et être incapable de prédire la surpression de 20 bars qui détruira une conduite lors d'un arrêt d'urgence de pompe. Les deux modèles répondent à des questions différentes. Confondre leur domaine de validité est une source fréquente d'erreurs de conception.
+:::
+
+Les sections suivantes présentent les équations propres à chaque régime d'écoulement (charge et surface libre) **principalement sous l'angle du régime permanent**, qui est le cadre de référence de la modélisation de réseau. Les spécificités du transitoire sont signalées explicitement à chaque fois qu'elles divergent.
+
+---
+
+## L'hydraulique en charge
+
+### Physique et hypothèses
+
+Un écoulement est dit **en charge** lorsque la conduite est intégralement remplie de liquide sous pression. La section mouillée est fixe et imposée par la géométrie de la canalisation — c'est cette hypothèse clé qui simplifie radicalement les équations.
+
+Conformément à la cascade de la @tbl-cascade, la modélisation en réseau est quasi exclusivement **1D** : on intègre Navier-Stokes sur la section droite de la conduite en supposant que le profil de vitesse est représentable par une vitesse débitante moyenne $V = Q/A$.
+
+En régime permanent, Navier-Stokes 1D se réduit à la conservation de l'énergie entre deux sections. La **charge hydraulique** $H$ en un point :
+
+$$H = z + \frac{P}{\rho g} + \frac{V^2}{2g}$$
+
+où $z$ est la cote altimétrique, $P/(\rho g)$ la hauteur de pression, et $V^2/(2g)$ la charge cinétique. Entre deux points d'un même tronçon, le **théorème de Bernoulli généralisé** :
+
+$$H_1 = H_2 + \Delta H_{1 \to 2}$$
+
+La décomposition de $H$ et la nature physique de $\Delta H$ (dégradation irréversible d'énergie mécanique en chaleur) sont approfondies dans la note **0.2** — point de référence énergétique de la série.
+
+```{python}
+#| label: fig-ligne-charge-piezo
+#| fig-cap: "Ligne de charge (bleu) et ligne piézométrique (vert) le long d'un tronçon en charge avec changement de diamètre. La ligne de charge décroît continûment (pertes de charge régulières $\\Delta H$) avec une chute supplémentaire à la singularité (rétrécissement). La ligne piézométrique s'écarte de la ligne de charge de $V^2/(2g)$ : là où la vitesse augmente (section réduite), la pression diminue et la ligne piézométrique s'abaisse par rapport à la ligne de charge. Ces deux lignes sont les outils visuels de base de tout diagnostic de réseau en charge — renvoi note 0.2 pour leur exploitation détaillée."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+fig, ax = plt.subplots(figsize=(9, 4.2))
+
+x = np.array([0, 2, 2, 5, 5, 9])
+D1, D2 = 0.2, 0.12
+Q = 0.04  # m3/s
+
+V1 = Q / (np.pi*D1**2/4)
+V2 = Q / (np.pi*D2**2/4)
+cv1, cv2 = V1**2/(2*9.81), V2**2/(2*9.81)
+
+# Perte de charge : régulière + singulière simplifiée
+J1 = 0.008  # m/m section 1
+J2 = 0.030  # m/m section 2
+dh_sing = 0.5*(V2-V1)**2/(2*9.81) * 3   # singularité
+
+H0 = 15.0
+H = np.array([H0,
+              H0 - J1*2,
+              H0 - J1*2 - dh_sing,
+              H0 - J1*2 - dh_sing - J2*3,
+              H0 - J1*2 - dh_sing - J2*3,
+              H0 - J1*2 - dh_sing - J2*3 - J1*4])
+
+# Charge cinétique par segment
+cv_arr = np.array([cv1, cv1, cv2, cv2, cv1, cv1])
+Hp = H - cv_arr
+
+z_pipe = np.array([5, 5, 5, 4, 4, 3.5])  # cote radier schématique
+
+ax.plot(x, H,  color=C_CHARGE, lw=2.5, label="Ligne de charge $H$")
+ax.plot(x, Hp, color=C_PIEZO,  lw=2.0, ls="--", label="Ligne piézométrique $H - V^2/2g$")
+ax.fill_between(x, z_pipe, z_pipe+np.array([D1,D1,D2,D2,D1,D1]),
+                alpha=0.25, color="#aaa", label="Conduite (schématique)")
+ax.plot(x, z_pipe, color="#888", lw=1.5)
+
+# Annotation ΔH régulier
+ax.annotate("", xy=(9, H[-1]), xytext=(5, H[4]),
+            arrowprops=dict(arrowstyle="<->", color=C_ACCENT, lw=1.5))
+ax.text(7.2, (H[-1]+H[4])/2+0.15, r"$\Delta H$ pertes\nrégulières",
+        fontsize=8, color=C_ACCENT, ha="center")
+
+# Annotation V²/2g
+ax.annotate("", xy=(3.2, H[3]), xytext=(3.2, Hp[3]),
+            arrowprops=dict(arrowstyle="<->", color="#8e44ad", lw=1.5))
+ax.text(3.5, (H[3]+Hp[3])/2, r"$V_2^2/2g$",
+        fontsize=8.5, color="#8e44ad", va="center")
+
+# Annotation singularité
+ax.scatter([2], [H[2]], color=C_ACCENT, s=70, zorder=6)
+ax.text(2.1, H[2]+0.15, "Singularité\n(rétrécissement)", fontsize=8, color=C_ACCENT)
+
+ax.set_xlabel("Abscisse (m)", fontsize=9)
+ax.set_ylabel("Charge / cote (m NGF)", fontsize=9)
+ax.set_title("Ligne de charge et ligne piézométrique — Tronçon en charge", fontsize=10)
+ax.legend(fontsize=8.5, loc="upper right")
+ax.grid(alpha=0.2)
+ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+### Lois de perte de charge : quatre approches
+
+Faute de pouvoir résoudre finement la turbulence aux parois, l'ingénierie s'appuie sur des lois empiriques ou semi-empiriques dont les hypothèses de validité diffèrent sensiblement.
+
+**Darcy-Weisbach + Colebrook-White** — L'approche de référence physique :
+
+$$\Delta H = f \cdot \frac{L}{D} \cdot \frac{V^2}{2g}, \quad \frac{1}{\sqrt{f}} = -2 \log\left(\frac{\varepsilon/D}{3{,}7} + \frac{2{,}51}{Re\sqrt{f}}\right)$$
+
+Le coefficient de frottement $f$ est calculé implicitement via la formule de Colebrook-White en fonction du nombre de Reynolds $Re$ et de la rugosité relative $\varepsilon/D$. C'est la formulation la plus générale : elle couvre tous les régimes turbulents, tous les fluides, et s'adapte à la température. La structure $f = \Phi(Re, \varepsilon/D)$ est exactement ce que l'analyse dimensionnelle prédit — renvoi note **0.4** qui dérive ce résultat par le théorème de Vaschy-Buckingham.
+
+*Limite principale :* la résolution implicite de $f$ impose une itération numérique (remplacée en pratique par l'approximation explicite de Swamee-Jain).
+
+**Hazen-Williams** — Le pragmatisme anglo-saxon :
+
+$$V = 0{,}8492 \cdot C_{HW} \cdot R_h^{0{,}63} \cdot S^{0{,}54}$$
+
+*Limite principale :* strictement valide pour l'eau à température ambiante en régime turbulent rugueux.
+
+**Manning-Strickler** — Le détournement utile :
+
+$$V = K_s \cdot R_h^{2/3} \cdot S^{1/2}$$
+
+*Limite principale :* physique moins bien représentée que Darcy-Weisbach, notamment pour les faibles débits.
+
+**Lechapt-Calmon** — La spécificité de l'école française :
+
+$$\Delta H = L \cdot A \cdot Q^m \cdot D^{-n}$$
+
+*Limite principale :* coefficients figés par matériau et diamètre ; non adaptable hors du domaine de calage.
+
+::: {.callout-tip}
+## Quelle loi choisir ?
+En règle générale : Darcy-Weisbach pour la rigueur et les études sensibles, Hazen-Williams pour l'interopérabilité avec les outils anglo-saxons, Lechapt-Calmon pour les études réglementaires françaises, Manning-Strickler si le logiciel ne propose pas d'autre option.
+:::
+
+```{python}
+#| label: fig-comparaison-lois
+#| fig-cap: "Perte de charge $\\Delta H$ (m) en fonction du débit $Q$ (m³/h) pour une conduite DN 200, longueur 1 000 m, rugosité $\\varepsilon = 0{,}1$ mm (fonte revêtue), calculée par les quatre lois. La dispersion inter-formules, visible pour les débits élevés, atteint 15 à 20 % — ce qui peut représenter plusieurs mètres de perte de charge sur un réseau réel. Le choix de la loi est donc une source d'incertitude non négligeable, à documenter dans les notes de calcul. Darcy-Weisbach est la référence ; les autres lois sont des approximations dont les coefficients doivent être calés sur des mesures terrain pour réduire cet écart."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+D    = 0.200  # m
+L    = 1000.0 # m
+eps  = 1e-4   # m rugosité
+nu   = 1e-6   # m²/s
+g    = 9.81
+A    = np.pi*D**2/4
+Rh   = D/4
+
+Q_mh = np.linspace(5, 150, 200)
+Q    = Q_mh / 3600  # m3/s
+V    = Q / A
+Re   = V * D / nu
+
+# Darcy-Weisbach + Colebrook (itéré)
+f = np.full_like(Re, 0.02)
+for _ in range(50):
+    f = (1.0/(-2*np.log10(eps/D/3.7 + 2.51/(Re*np.sqrt(f)))))**2
+dH_DW = f * (L/D) * V**2 / (2*g)
+
+# Hazen-Williams (C_HW=130, fonte revêtue)
+C_HW = 130
+S_HW = ((V / (0.8492 * C_HW * Rh**0.63))**(1/0.54))
+dH_HW = S_HW * L
+
+# Manning-Strickler (Ks=90)
+Ks = 90
+S_MS = (V / (Ks * Rh**(2/3)))**2
+dH_MS = S_MS * L
+
+# Lechapt-Calmon (fonte neuve DN200, coefficients indicatifs)
+A_lc, m_lc, n_lc = 2.24e-3, 1.852, 4.87
+dH_LC = L * A_lc * Q**m_lc * D**(-n_lc)
+
+fig, ax = plt.subplots(figsize=(8, 4.2))
+ax.plot(Q_mh, dH_DW, color=C_CHARGE, lw=2.5, label="Darcy-Weisbach + Colebrook (référence)")
+ax.plot(Q_mh, dH_HW, color=C_PIEZO,  lw=2.0, ls="--", label=f"Hazen-Williams ($C_{{HW}}={C_HW}$)")
+ax.plot(Q_mh, dH_MS, color="#8e44ad", lw=2.0, ls="-.", label=f"Manning-Strickler ($K_s={Ks}$)")
+ax.plot(Q_mh, dH_LC, color=C_ACCENT,  lw=2.0, ls=":",  label="Lechapt-Calmon (fonte, indicatif)")
+
+ax.set_xlabel("Débit $Q$ (m³/h)", fontsize=9)
+ax.set_ylabel("Perte de charge $\\Delta H$ (m)", fontsize=9)
+ax.set_title("Comparaison des lois de perte de charge — DN 200, 1 000 m, $\\varepsilon=0{,}1$ mm", fontsize=10)
+ax.legend(fontsize=8.5)
+ax.set_xlim(5, 150); ax.set_ylim(0, None)
+ax.grid(alpha=0.2)
+ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+### Méthodes de résolution en réseau
+
+Un réseau en charge est un graphe de nœuds et d'arcs. Deux lois de fermeture forment le système :
+
+$$\sum_{i \in \text{nœud}} Q_i = 0 \qquad \text{(continuité nodale)} \qquad ; \qquad \Delta H_{ij} = r_{ij}\,Q_{ij}\,|Q_{ij}|^{\,n-1} \qquad \text{(loi d'arc)}$$
+
+La méthode du **gradient hydraulique** (implémentée dans EPANET) résout ce système non linéaire par itérations de Newton-Raphson. Pour le régime **transitoire** (coups de bélier), les équations de la ligne élastique sont résolues par la **méthode des caractéristiques**.
+
+::: {.callout-warning}
+## Alerte modélisation — La convergence de Newton-Raphson n'est pas garantie
+
+Sur les réseaux mal conditionnés (clapets anti-retour qui claquent, débits quasi nuls dans des antennes, points de fonctionnement multiples), la méthode de Newton-Raphson peut diverger ou converger vers une solution non physique. Ces cas requièrent une initialisation soignée, une relaxation du pas de Newton, ou une formulation régularisée de la loi d'arc au voisinage de $Q = 0$. Le point de fonctionnement d'une pompe en réseau est un cas particulier de ce problème — renvoi notes **2.A1** et **2.D**.
+:::
+
+### Domaines d'application et limites
+
+- ✅ AEP, irrigation sous pression, réseaux de refoulement en assainissement
+- ⚠️ Le régime permanent suppose un état d'équilibre ; les transitoires rapides (fermeture de vanne, pompe à l'arrêt) nécessitent un modèle coups de bélier dédié
+- ❌ Inapplicable dès que la conduite se vide partiellement (passage en surface libre)
+
+---
+
+## L'hydraulique à surface libre
+
+### Physique et hypothèses
+
+Un écoulement est dit **à surface libre** dès lors qu'il existe une interface avec l'atmosphère, sur laquelle la pression est égale à la pression atmosphérique (prise comme référence, $P = 0$). La différence fondamentale avec l'hydraulique en charge est que la **hauteur d'eau $h$ devient une inconnue dynamique** — la section mouillée varie à chaque instant et en chaque point.
+
+Deux nombres adimensionnels structurent la physique de ces écoulements (renvoi note **0.4** pour leur fondement dimensionnel — c'est l'analyse dimensionnelle qui prédit leur existence et leur forme) :
+
+- Le **nombre de Froude** $Fr = V / \sqrt{g h}$ distingue le régime **fluvial** ($Fr < 1$) du régime **torrentiel** ($Fr > 1$).
+- Le **nombre de Reynolds** $Re = V R_h / \nu$ caractérise le régime turbulent (quasi-systématique en hydraulique appliquée).
+
+```{python}
+#| label: fig-diptyque-charge-sl
+#| fig-cap: "Diptyque comparatif : section en charge (gauche) et section à surface libre (droite). En charge, la section mouillée est fixe, la pression est inconnue dynamique, la charge $H$ est l'inconnue de résolution. À surface libre, la hauteur $h$ est inconnue dynamique, la pression est imposée (atmosphérique), la section mouillée varie. Ce contraste structurel explique pourquoi les deux régimes requièrent des approches numériques différentes, malgré un même ancêtre — Navier-Stokes."
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(9.5, 4.2))
+
+# --- Section en charge ---
+theta = np.linspace(0, 2*np.pi, 200)
+r = 1.0
+ax1.plot(np.cos(theta), np.sin(theta), color=C_CHARGE, lw=2.5)
+ax1.fill(np.cos(theta), np.sin(theta), alpha=0.12, color=C_CHARGE)
+ax1.annotate("", xy=(0, 1.5), xytext=(0, -1.5),
+             arrowprops=dict(arrowstyle="<->", color=C_CHARGE, lw=1.5))
+ax1.text(0.15, 0, "$D$ (fixe)", fontsize=9, color=C_CHARGE, va="center")
+# Profil de pression (cercle extérieur)
+theta_p = np.linspace(np.pi/2, -np.pi/2, 50)
+r_p = 1.0 + 0.4*np.cos(theta_p - np.pi/2)**2
+ax1.plot(r_p*np.cos(theta_p), r_p*np.sin(theta_p),
+         color="#e67e22", lw=1.5, ls="--", label="Pression (inconnue)")
+ax1.text(1.55, 0, "P\n(inconnue)", fontsize=8, color="#e67e22", va="center")
+ax1.set_xlim(-2.2, 2.2); ax1.set_ylim(-2.0, 2.0); ax1.set_aspect("equal")
+ax1.set_title("En charge\nSection fixe, pression inconnue", fontsize=9.5, color=C_CHARGE)
+ax1.axis("off")
+ax1.text(0, -1.85, "Section mouillée $A$ = constante", ha="center", fontsize=8.5, color=C_CHARGE)
+
+# --- Section à surface libre ---
+x_sl = np.linspace(-2, 2, 200)
+z_fond = -1.0 + 0.3*np.sin(np.pi*x_sl/2)
+h_val = 1.0
+z_surf = z_fond + h_val * np.ones_like(x_sl)
+
+ax2.fill_between(x_sl, z_fond, z_surf, alpha=0.15, color=C_PIEZO)
+ax2.plot(x_sl, z_fond, color=C_PIEZO, lw=2.0)
+ax2.plot(x_sl, z_surf, color=C_CHARGE, lw=2.5, label="Surface libre ($P=P_{atm}$)")
+ax2.annotate("", xy=(0, z_surf[100]), xytext=(0, z_fond[100]),
+             arrowprops=dict(arrowstyle="<->", color=C_PIEZO, lw=1.5))
+ax2.text(0.15, (z_surf[100]+z_fond[100])/2, "$h$ (inconnue)",
+         fontsize=9, color=C_PIEZO, va="center")
+# Profil de pression hydrostatique (triangulaire)
+z_p = np.linspace(z_fond[80], z_surf[80], 20)
+p_p = (z_surf[80] - z_p) * 0.5
+ax2.fill_betweenx(z_p, -2.0, -2.0 + p_p, alpha=0.30, color="#e67e22")
+ax2.plot(-2.0 + p_p, z_p, color="#e67e22", lw=1.5, ls="--")
+ax2.text(-1.5, z_fond[80]-0.35, "Pression\nhydrostatique\n$P=\\rho g(h-z)$",
+         fontsize=8, color="#e67e22", ha="center")
+ax2.set_xlim(-2.2, 2.2); ax2.set_ylim(-1.6, 1.6); ax2.set_aspect("equal")
+ax2.set_title("À surface libre\n$h$ inconnue dynamique, $P=P_{atm}$", fontsize=9.5, color=C_PIEZO)
+ax2.axis("off")
+ax2.text(0, -1.5, "Section mouillée $A(h)$ = variable", ha="center", fontsize=8.5, color=C_PIEZO)
+
+fig.suptitle("Diptyque — Hydraulique en charge vs à surface libre", fontsize=10.5)
+fig.tight_layout()
+plt.show()
+```
+
+### Les équations de Saint-Venant
+
+En moyennant les équations de Navier-Stokes sur la section verticale, sous l'hypothèse de pression **hydrostatique**, on obtient les équations de **Saint-Venant 1D**.
+
+::: {.callout-note}
+## Le coin du puriste — Saint-Venant est Navier-Stokes moyenné sous hypothèse hydrostatique
+
+L'hypothèse hydrostatique ($\partial p/\partial z = -\rho g$, écoulements peu courbés à faible pente) donne :
+
+$$\frac{\partial p}{\partial z} = -\rho g \;\Rightarrow\; p = \rho g (h - z)$$
+
+En substituant dans Navier-Stokes et en intégrant sur la verticale (avec $\beta \approx 1$), on obtient directement la forme conservative de Saint-Venant. La boucle est bouclée : Saint-Venant est une branche exactement identifiée de la cascade, pas une loi indépendante.
+:::
+
+**Continuité :**
+
+$$\frac{\partial A}{\partial t} + \frac{\partial Q}{\partial x} = q_l$$
+
+**Dynamique :**
+
+$$\frac{\partial Q}{\partial t} + \frac{\partial}{\partial x}\!\left(\frac{Q^2}{A}\right) + gA\frac{\partial h}{\partial x} = gA(S_0 - S_f) + q_l V_l$$
+
+En **régime permanent** ($\partial/\partial t = 0$, $q_l = 0$), la continuité donne $Q = \text{cste}$ et l'équation dynamique se ramène au calcul des **courbes de remous**.
+
+::: {.callout-warning}
+## Alerte modélisation — L'hypothèse hydrostatique tombe près des ouvrages
+
+La pression n'est plus hydrostatique dès que la courbure des lignes de courant est significative : seuils, vannes, déversoirs, ressauts hydrauliques. Dans ces zones, les modèles Saint-Venant 1D perdent leur validité et des coefficients de décharge empiriques doivent être introduits pour les conditions aux limites (renvoi note **0.3**). La CFD 3D est requise pour les ouvrages complexes (renvoi note **3.2**).
+:::
+
+### Les approximations de Saint-Venant
+
+Selon les hypothèses physiques retenues, on coupe certains termes de l'équation dynamique :
+
+$$\underbrace{\frac{\partial Q}{\partial t} + \frac{\partial}{\partial x}\!\Big(\frac{Q^2}{A}\Big)}_{\text{inertie — coupée en diffusive}} + \underbrace{gA\frac{\partial h}{\partial x}}_{\text{pression — coupée en cinématique}} = gA(S_0 - S_f)$$
+
+| Modèle | Termes conservés | Usage typique |
+|---|---|---|
+| Onde dynamique complète | Inertie + pression + gravité | Rupture de barrage, influence de marée, réseau d'assainissement complexe |
+| Onde diffusive | Pression + gravité (inertie négligée) | Plaines d'inondation, collecteurs à faible vitesse |
+| Onde cinématique | Gravité seule ($S_f = S_0$) | Ruissellement de surface, bassins versants |
+
+: Approximations des équations de Saint-Venant {#tbl-saint-venant}
+
+```{python}
+#| label: fig-ondes-sv
+#| fig-cap: "Propagation d'un même hydrogramme de crue (entrée en pointillé noir) par les trois approximations de Saint-Venant. L'onde cinématique (rouge) ne peut pas s'atténuer — elle translate le signal sans déformation ni amortissement. L'onde diffusive (vert) atténue et étale l'hydrogramme mais sans le déphaser correctement en présence d'effets aval. L'onde dynamique complète (bleu) capture à la fois l'atténuation, l'étalement et le déphasage réels. Le choix de l'approximation conditionne directement la qualité de la prévision de crue — renvoi notes 2.B2 (hydrologie urbaine) et 2.C3 (transitoires en canaux)."
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.ndimage import gaussian_filter1d
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+t = np.linspace(0, 10, 500)
+# Hydrogramme d'entrée : créneau lissé
+Q_in = np.where((t >= 1) & (t <= 4), 1.0, 0.1)
+Q_in = gaussian_filter1d(Q_in, sigma=15)
+
+# Onde cinématique : translation pure (pas d'atténuation)
+dt_cin = 2.0
+Q_cin = np.interp(t - dt_cin, t, Q_in, left=Q_in[0], right=Q_in[-1])
+
+# Onde diffusive : translation + atténuation
+dt_dif = 2.5
+Q_dif = gaussian_filter1d(np.interp(t - dt_dif, t, Q_in,
+                           left=Q_in[0], right=Q_in[-1]), sigma=25) * 0.82
+
+# Onde dynamique : translation + atténuation + déphasage plus réaliste
+dt_dyn = 2.8
+Q_dyn = gaussian_filter1d(np.interp(t - dt_dyn, t, Q_in,
+                           left=Q_in[0], right=Q_in[-1]), sigma=35) * 0.70
+
+fig, ax = plt.subplots(figsize=(8, 4.0))
+ax.plot(t, Q_in,  color="k",       lw=2.0, ls=":", label="Hydrogramme d'entrée")
+ax.plot(t, Q_cin, color=C_ACCENT,  lw=2.0, ls="-.", label="Onde cinématique (translation pure)")
+ax.plot(t, Q_dif, color=C_PIEZO,   lw=2.0, ls="--", label="Onde diffusive (atténuée)")
+ax.plot(t, Q_dyn, color=C_CHARGE,  lw=2.5,           label="Onde dynamique (complète)")
+
+ax.set_xlabel("Temps (h, normalisé)", fontsize=9)
+ax.set_ylabel("Débit (normalisé)", fontsize=9)
+ax.set_title("Approximations de Saint-Venant — Propagation d'un hydrogramme", fontsize=10)
+ax.legend(fontsize=8.5, loc="upper right")
+ax.set_xlim(0, 10); ax.set_ylim(0, 1.15)
+ax.grid(alpha=0.2)
+ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+### Méthodes de résolution
+
+Les équations de Saint-Venant sont résolues numériquement dans le temps par :
+
+- **Différences finies** (schéma de Preissmann implicite) : le plus répandu dans les logiciels d'assainissement (SWMM, Infoworks ICM).
+- **Volumes finis** : préféré pour les modèles 2D de plaines d'inondation (Telemac-2D, HEC-RAS 2D).
+
+Renvoi note **3.5** pour le détail des schémas et leurs propriétés de stabilité/diffusion.
+
+### Domaines d'application et limites
+
+- ✅ Assainissement gravitaire, canaux d'irrigation, rivières, zones inondables
+- ⚠️ L'hypothèse hydrostatique est invalide près des ouvrages (seuils, vannes)
+- ❌ Les modèles 1D ne gèrent pas les expansions latérales réelles sans couplage 2D
+
+---
+
+## Le point de jonction : la transition de régime
+
+### Un défi numérique majeur
+
+Le plus grand défi survient lors du **changement de régime**, par exemple lorsqu'un collecteur pluvial s'engorge progressivement. L'écoulement passe d'un régime à surface libre à un régime en charge : la section mouillée se fige contre la paroi, et la pression monte. Ce changement provoque une **singularité mathématique** difficile à traiter.
+
+### La fente de Preissmann
+
+La solution la plus répandue dans les logiciels (SWMM, Infoworks) est la **fente de Preissmann** : on suppose l'existence d'une fente virtuelle, infiniment étroite, au sommet de la conduite, permettant à une « fausse » surface libre de monter au-dessus du sommet réel et de simuler la montée en pression.
+
+$$P = \rho g (h - D) \quad \text{pour } h > D$$
+
+```{python}
+#| label: fig-fente-preissmann
+#| fig-cap: "Schéma de la fente de Preissmann : conduite circulaire de diamètre $D$ avec une fente virtuelle de largeur $T_s$ au sommet. Quand le niveau fictif $h > D$, la pression en tout point de la section est $P = \\rho g(h - D)$ — simulant la mise en charge sans changer les équations résolues. La largeur de fente $T_s$ est un paramètre numérique critique : trop large, elle fausse la célérité d'onde (qui vaut $c = \\sqrt{gA/T_s}$) ; trop étroite, elle crée des instabilités numériques. Sa valeur typique est $T_s \\approx 10^{-3} D$ à $10^{-2} D$, à ajuster selon la période de coupure souhaitée — renvoi note 2.B3 (surcharges et engorgements)."
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+fig, ax = plt.subplots(figsize=(6, 5.5))
+ax.set_xlim(-2.5, 3.5); ax.set_ylim(-2.0, 4.5); ax.set_aspect("equal"); ax.axis("off")
+
+# Conduite circulaire
+theta = np.linspace(0, 2*np.pi, 300)
+ax.plot(np.cos(theta), np.sin(theta), color=C_CHARGE, lw=2.5)
+ax.fill(np.cos(theta), np.sin(theta), alpha=0.08, color=C_CHARGE)
+
+# Fente virtuelle
+T_s = 0.06
+ax.fill_between([-T_s/2, T_s/2], [1.0, 1.0], [3.8, 3.8],
+                color=C_PIEZO, alpha=0.4)
+ax.plot([-T_s/2, -T_s/2, T_s/2, T_s/2], [1.0, 3.8, 3.8, 1.0],
+        color=C_PIEZO, lw=1.8)
+ax.text(0.25, 2.4, "Fente virtuelle\n$T_s$ (étroite)", fontsize=8.5,
+        color=C_PIEZO, va="center")
+
+# Niveau fictif h > D
+h_fictif = 3.2
+ax.axhline(h_fictif, color=C_ACCENT, lw=2.0, ls="--", xmin=0.25, xmax=0.75)
+ax.text(1.2, h_fictif+0.1, f"Niveau fictif $h > D$",
+        fontsize=8.5, color=C_ACCENT)
+
+# Pression correspondante
+ax.annotate("", xy=(1.8, 1.0), xytext=(1.8, h_fictif),
+            arrowprops=dict(arrowstyle="<->", color=C_ACCENT, lw=1.5))
+ax.text(2.1, (1.0+h_fictif)/2, "$h - D$\n$\\to P=\\rho g(h-D)$",
+        fontsize=8, color=C_ACCENT, va="center")
+
+# Diamètre D
+ax.annotate("", xy=(-1.0, -1.0), xytext=(-1.0, 1.0),
+            arrowprops=dict(arrowstyle="<->", color=C_CHARGE, lw=1.5))
+ax.text(-1.4, 0, "$D$", fontsize=10, color=C_CHARGE, va="center")
+
+# Eau fictive dans fente
+ax.fill_between([-T_s/2, T_s/2], [1.0, 1.0], [h_fictif, h_fictif],
+                color=C_CHARGE, alpha=0.25)
+
+ax.set_title("Fente de Preissmann — Artifice de transition\ncharge / surface libre",
+             fontsize=10)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-important}
+## Piège numérique — La largeur de fente $T_s$ est un paramètre critique
+
+La célérité de l'onde en régime chargé via la fente est $c = \sqrt{g A / T_s}$. Une fente trop large ($T_s$ grand) sous-estime $c$ et fausse la dynamique des transitoires. Une fente trop étroite ($T_s$ petit) produit une célérité très élevée et impose un pas de temps infinitésimal pour la stabilité. La valeur typique est $T_s \approx 10^{-3} D$ à $10^{-2} D$. Ce paramètre est souvent caché dans les logiciels — vérifier sa valeur avant toute étude de surcharge. Renvoi note **2.B3**.
+:::
+
+---
+
+## Choisir son approche de modélisation
+
+### Un tableau de synthèse
+
+| Critère | En charge | À surface libre |
+|---|---|---|
+| Section mouillée | Fixe | Variable |
+| Inconnues principales | $Q$, $H$ (charge) | $Q$, $h$ (hauteur) |
+| Dimension spatiale courante | 1D (réseau), rarement 2D/3D | 1D (canal/collecteur), 2D (inondation) |
+| Régime temporel dominant | **Permanent / quasi-permanent** | Permanent (profils) ou **transitoire** (crues, pluies) |
+| Équations de base | Bernoulli + perte de charge | Saint-Venant (transitoire) ou courbes de remous (permanent) |
+| Outils courants | EPANET, WaterGEMS, Porteau | SWMM, HEC-RAS, Telemac, Infoworks |
+| Applications | AEP, irrigation sous pression | Assainissement gravitaire, rivières, canaux |
+
+: Comparaison synthétique des deux régimes {#tbl-comparaison}
+
+### Critères de choix concrets
+
+**Modèle en charge si :**
+
+- L'objectif est la vérification des pressions aux nœuds ou le dimensionnement d'une station de pompage
+- Le réseau est intégralement en pression
+- On dispose des diamètres, matériaux, et relevés de pression
+
+**Modèle à surface libre si :**
+
+- L'objectif est la capacité hydraulique d'un collecteur ou la propagation d'une crue
+- Les cotes de radier et la topographie sont disponibles
+- On cherche à modéliser un événement pluvieux ou un étiage
+
+**Modèle mixte (couplé) si :**
+
+- Le réseau contient des tronçons en charge et des tronçons gravitaires
+- On simule le remplissage progressif d'un réseau lors d'un événement extrême
+
+### Le calage : condition non négociable
+
+Aucun modèle ne devrait être exploité sans une phase de **calage puis de validation**. En confrontant les sorties du modèle aux mesures de terrain (capteurs de pression, débitmètres, limnigrammes), l'ingénieur ajuste les paramètres empiriques — typiquement la rugosité ($\varepsilon$ ou $K_s$) — jusqu'à ce que l'outil reproduise les observations avec une précision acceptable. La validation consiste ensuite à vérifier que le modèle calé se comporte correctement sur un événement qu'il n'a pas servi à caler.
+
+Un indicateur générique de qualité de calage (annonce note **3.1**) :
+
+$$NSE = 1 - \frac{\sum (y_{obs}-y_{sim})^2}{\sum (y_{obs}-\bar{y}_{obs})^2}$$
+
+Un $NSE$ proche de 1 indique un bon calage ; en dessous de 0,5, le modèle est généralement considéré comme insuffisant pour des applications opérationnelles. Renvoi notes **3.1** (calage et validation — méthodologie complète) et **3.6** (limites et responsabilité du modélisateur).
+
+::: {.callout-warning}
+## Garbage in, garbage out
+
+La qualité d'un modèle est plafonnée par la qualité des données d'entrée. Un modèle AEP alimenté par des lois de consommation incertaines ne peut pas être plus précis que ces hypothèses. Un modèle pluvial dépend de la spatialisation souvent très approximative des pluies radar. La propagation des incertitudes d'entrée vers les sorties est une question à se poser systématiquement avant d'interpréter les résultats.
+:::
+
+---
+
+## Ce qu'un modèle ne peut pas faire
+
+Au-delà des limites propres à chaque régime, certains phénomènes sortent du cadre 1D et constituent des **signaux indiquant que l'outil adapté est différent** :
+
+**Les écoulements polyphasiques :** les poches d'air piégées lors d'un remplissage rapide peuvent provoquer des coups de bélier d'amplitude supérieure à ce que prédit un modèle monophasique. → Renvoi note **2.A2** (coups de bélier et transitoires AEP).
+
+**Le transport solide :** l'envasement non linéaire des conduites ou le charriage en canal nécessitent des modèles morphodynamiques couplés (fond mobile rétroagissant sur l'hydraulique). → Renvoi note **3.4** (transport solide et morphodynamique — note jumelle de 3.3).
+
+**La turbulence 3D dans les ouvrages de régulation :** un déversoir d'orage ou une chambre de dissipation se dimensionne par CFD ou par essais sur modèle physique réduit. → Renvoi notes **3.2** (modélisation 2D/3D) et **0.3** (ouvrages et conditions aux limites).
+
+**La qualité de l'eau et la thermique couplées :** dès que la concentration ou la température modifient la densité du fluide (biseau salin, stratification thermique), le couplage avec l'hydraulique est fort et le modèle réseau seul est invalide. → Renvoi note **3.3** (qualité de l'eau et thermique).
+
+Ces limites ne sont pas des défauts du modèle — ce sont des **signaux indiquant que l'outil adapté est différent**.
+
+---
+
+## Conclusion
+
+La modélisation hydraulique, qu'elle soit en charge ou à surface libre, est une chaîne de choix raisonnés : choix du régime physique, choix du niveau d'approximation, choix des paramètres empiriques, et choix de l'objectif métier. Ce qui unit ces deux grandes familles de modèles — Navier-Stokes comme ancêtre commun, les équations de conservation comme invariant — est aussi précieux à comprendre que ce qui les distingue.
+
+La compétence de l'ingénieur ne réside pas dans la maîtrise d'un logiciel particulier, mais dans la capacité à **choisir le bon modèle pour le bon problème**, à en connaître les limites, et à ne jamais confondre la sortie d'un code avec la réalité du terrain.
+
+---
+
+## Pour aller plus loin dans cette série
+
+Cette note est la porte d'entrée de toute la série. Chaque branche ci-dessous prolonge l'un de ses fils.
+
+**Niveau 0 — Fondements transversaux**
+
+- **Note 0.2** — *Énergie, charge et dégradation* : approfondit la décomposition de $H$, la nature physique de $\Delta H$ et le bilan énergétique — prolongement direct de la section « hydraulique en charge »
+- **Note 0.3** — *Ouvrages et conditions aux limites* : seuils, vannes, pompages, réservoirs — prolongement de la section « transition de régime » et du callout sur l'hypothèse hydrostatique
+- **Note 0.4** — *Analyse dimensionnelle et similitude* : fonde Reynolds, Froude, le diagramme de Moody et les lois d'échelle invoqués dans cette note — à lire pour comprendre d'où viennent ces nombres
+
+**Niveau 1 — Entrées métier**
+
+- **Note 1.A** — *Enjeux AEP* : décline le @tbl-domaines côté eau potable
+- **Note 1.B** — *Enjeux assainissement* : décline le @tbl-domaines côté collecte et épuration
+- **Note 1.C** — *Enjeux irrigation* : décline le @tbl-domaines côté agriculture
+
+**Niveau 2 — Applications**
+
+- **Note 2.A1** — *Dimensionnement AEP* : réseau en charge, point de fonctionnement pompe/réseau
+- **Note 2.A2** — *Coups de bélier* : transitoire en charge, méthode des caractéristiques — le cas où l'incompressibilité tombe
+- **Note 2.B1/2.B2/2.B3** — *Surface libre pluviale* : Saint-Venant appliqué, onde cinématique/diffusive, surcharges et engorgements (fente de Preissmann)
+- **Note 2.C1/2.C2/2.C3** — *Irrigation* : canaux gravitaires, irrigation sous pression, transitoires
+- **Note 2.D** — *Pompes et turbines* : machines hydrauliques comme conditions aux limites actives du réseau
+
+**Niveau 3 — Transversales**
+
+- **Note 3.1** — *Calage et validation* : méthodologie complète du NSE au bilan de masse — prolonge directement la section « calage »
+- **Note 3.2** — *Quand le 1D ne suffit plus* : CFD, modélisation 2D/3D des ouvrages et plaines inondables
+- **Note 3.3** — *Qualité de l'eau et thermique* : transport d'un scalaire porté par l'hydraulique — le couplage faible et ses limites
+- **Note 3.4** — *Transport solide et morphodynamique* : quand le fond rétroagit sur l'écoulement — le couplage fort
+- **Note 3.5** — *Méthodes numériques* : schémas, stabilité, DNS/LES/RANS — le détail de la résolution invoqué ici
+- **Note 3.6** — *Limites et responsabilité du modélisateur* : documenter les hypothèses, tracer les incertitudes, responsabilité professionnelle

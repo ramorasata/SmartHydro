@@ -1,0 +1,975 @@
+---
+title: "Qualité de l'eau et thermique : le transport couplé à l'hydraulique"
+subtitle: "Advection, dispersion, réaction : transporter un scalaire dans un réseau hydraulique"
+date: "2026-05-17"
+author: ""
+categories: [Hydraulique, Qualité de l'eau, Thermique, Modélisation, Ingénierie]
+page-layout: article
+toc: true
+toc-title: "Sommaire"
+toc-depth: 3
+number-sections: true
+lang: fr
+format:
+  html:
+    embed-resources: true
+    html-math-method: katex
+    theme: cosmo
+execute:
+  echo: false
+  warning: false
+  fig-format: svg
+  fig-responsive: true
+  fig-width: 8
+  fig-height: 4.5
+jupyter: python3
+---
+
+::: {.callout-note}
+## Note transversale de la série — La qualité hérite de l'hydraulique
+
+Cette note occupe une position charnière dans la série. Elle s'appuie sur les bilans de conservation de la **note 0.2**, les conditions aux limites des réservoirs de la **note 0.3**, et l'analyse dimensionnelle de la **note 0.4** (le nombre de Péclet introduit ici est le cousin direct de Reynolds et Froude). Elle alimente les notes d'application métier **1.A/1.B** (qualité comme enjeu AEP / assainissement) et **2.B2/2.B3** (charge polluante pluviale, surverses).
+
+**Ce que cette note traite** : le transport d'un scalaire (concentration, température) porté par un écoulement déjà calculé, l'équation ADR, les cinétiques usuelles, le bilan thermique de surface, la modélisation en réseau (mélange aux nœuds, âge de l'eau).
+
+**Ce que cette note ne traite pas** : la chimie/biologie fine multi-espèces, le transport solide (→ note 3.4), les méthodes numériques en profondeur (→ note 3.5), la CFD 3D du mélange (→ note 3.2).
+
+---
+
+**Équation pivot de toute la note — l'ADR unificatrice :**
+
+$$\frac{\partial C}{\partial t} + \underbrace{u\frac{\partial C}{\partial x}}_{\text{advection}} = \underbrace{D\frac{\partial^{2} C}{\partial x^{2}}}_{\text{dispersion}} + \underbrace{S(C,x,t)}_{\text{réaction / source}}$$
+
+Cette équation décrit indifféremment un polluant, le chlore résiduel, l'oxygène dissous ou la température — seul le terme source $S$ change de forme. La qualité de l'eau hérite de **toutes les erreurs de l'hydraulique** : un champ de vitesse faux produit un transport faux, quel que soit le soin apporté à la cinétique. Un modèle qualité ne peut jamais être meilleur que le modèle hydraulique qui le porte.
+:::
+
+**Fil rouge de la note.** Pour ancrer les concepts, une antenne AEP de 2 km (DN 150, acier revêtu) alimente 120 abonnés depuis un réservoir de tête. On suivra successivement la décroissance du chlore, l'âge de l'eau et l'évolution thermique estivale le long de cette antenne.
+
+---
+
+## Du transport d'eau au transport d'un scalaire
+
+### Le scalaire transporté : concentration et température
+
+L'hydraulique calcule comment l'eau se déplace. La qualité/thermique calcule **ce que l'eau transporte**. Ces deux problèmes sont distincts mais hiérarchisés : le premier conditionne entièrement le second.
+
+Un **scalaire** est une quantité transportée par le fluide. Il est dit **passif** s'il ne modifie pas les propriétés de l'écoulement (masse volumique, viscosité) — c'est l'hypothèse de travail pour la quasi-totalité des modèles de réseau. Il est dit **actif** s'il rétroagit sur l'écoulement (sel dans un estuaire, chaleur dans un lac stratifié) — cas traité au §7.
+
+Les flux transportés par un écoulement de débit $Q$ sont :
+
+$$\dot{m} = Q\,C \qquad \text{(flux massique de soluté, [kg/s])}$$
+
+$$\dot{q} = \rho\,c_p\,Q\,T \qquad \text{(flux convectif de chaleur, [W])}$$
+
+Le formalisme est identique : dans les deux cas, le flux est le produit du débit par l'intensité du scalaire transporté.
+
+```{python}
+#| label: fig-volume-controle
+#| fig-cap: "Volume de contrôle élémentaire sur un tronçon de conduite de longueur $\\Delta x$ et de section $A$. Les flux de soluté (bleu) et de chaleur (vert) entrent par la face gauche et sortent par la face droite, modifiés par les réactions internes $S$ (terme source/puits, flèche rouge). Le bilan sur ce volume donne directement l'équation ADR par passage à la limite $\\Delta x \\to 0$."
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+from matplotlib.patches import FancyArrowPatch
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+fig, ax = plt.subplots(figsize=(8, 3.5))
+ax.set_xlim(0, 10); ax.set_ylim(0, 4); ax.axis("off")
+
+# Tronçon
+rect = mpatches.FancyBboxPatch((2.5, 1.2), 5.0, 1.6,
+    boxstyle="round,pad=0.05", fc="#eaf2fb", ec=C_CHARGE, lw=2)
+ax.add_patch(rect)
+ax.text(5.0, 2.0, r"$\Delta x$", ha="center", va="center", fontsize=13, color=C_CHARGE)
+
+# Flux entrant
+ax.annotate("", xy=(2.5, 2.0), xytext=(0.8, 2.0),
+            arrowprops=dict(arrowstyle="->", color=C_CHARGE, lw=2.2))
+ax.text(0.2, 2.35, r"$Q\,C$", color=C_CHARGE, fontsize=10, ha="left")
+ax.text(0.2, 1.65, r"$\rho c_p Q T$", color=C_PIEZO, fontsize=10, ha="left")
+
+# Flux sortant
+ax.annotate("", xy=(9.2, 2.0), xytext=(7.5, 2.0),
+            arrowprops=dict(arrowstyle="->", color=C_CHARGE, lw=2.2))
+ax.text(9.25, 2.35, r"$Q\,C + \frac{\partial(QC)}{\partial x}\Delta x$",
+        color=C_CHARGE, fontsize=9.5, ha="left")
+ax.text(9.25, 1.65, r"$+ \frac{\partial(\rho c_p Q T)}{\partial x}\Delta x$",
+        color=C_PIEZO, fontsize=9.5, ha="left")
+
+# Terme source (vers le bas)
+ax.annotate("", xy=(5.0, 1.2), xytext=(5.0, 0.5),
+            arrowprops=dict(arrowstyle="<-", color=C_ACCENT, lw=2.0))
+ax.text(5.0, 0.25, r"$S \cdot A\,\Delta x$  (réaction / source)",
+        color=C_ACCENT, fontsize=9.5, ha="center")
+
+# Accumulation
+ax.text(5.0, 3.2, r"$\frac{\partial(AC)}{\partial t}\Delta x$  (accumulation)",
+        color="#555", fontsize=9.5, ha="center")
+ax.annotate("", xy=(5.0, 2.8), xytext=(5.0, 3.0),
+            arrowprops=dict(arrowstyle="->", color="#555", lw=1.5))
+
+ax.set_title("Volume de contrôle élémentaire — Bilan de masse de soluté", fontsize=10)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-warning}
+## Alerte modélisation — Scalaire passif vs actif : choisir le bon régime
+
+Traiter la température comme un scalaire passif est valable en réseau d'eau potable (écarts de densité < 0,5 %) et en rivière bien mélangée. Cela devient **faux** dans un lac ou une retenue en période de stratification estivale (l'eau chaude de surface ne se mélange plus avec l'eau froide du fond) et en présence d'un biseau salin en estuaire. Dans ces cas, le scalaire modifie l'écoulement — couplage fort traité au §7.
+:::
+
+### Les trois mécanismes : advection, diffusion, réaction
+
+Trois mécanismes distincts contribuent au transport d'un scalaire :
+
+**Advection** — transport par le mouvement moyen du fluide. Le scalaire se déplace à la vitesse $u$ sans se disperser ni se transformer. C'est le mécanisme dominant dans les réseaux AEP à fort débit.
+
+**Diffusion / Dispersion** — étalement par agitation. La loi de Fick relie le flux diffusif au gradient de concentration :
+
+$$\vec{J}_{adv} = \vec{u}\,C \qquad \vec{J}_{diff} = -D_m\,\nabla C \qquad \text{(loi de Fick)}$$
+
+**Réaction** — transformation sur place, modélisée par un terme source/puits volumique $S(C, x, t)$.
+
+Le bilan de masse sur le volume de contrôle de la figure précédente donne, après passage à la limite :
+
+$$\frac{\partial C}{\partial t} = -\nabla\!\cdot(\vec{u}\,C) + \nabla\!\cdot(D_m\,\nabla C) + S$$
+
+```{python}
+#| label: fig-trois-mecanismes
+#| fig-cap: "Évolution d'un pic de concentration (injection instantanée) sous trois régimes : (a) advection pure — le pic se translate sans se déformer à la vitesse $u$ ; (b) diffusion pure — le pic s'étale symétriquement sans se déplacer ; (c) advection + dispersion + décroissance premier ordre — translation, étalement et atténuation simultanés. Ce troisième cas est celui de l'équation ADR complète qui structure toute la note."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+x = np.linspace(0, 10, 500)
+t_vals = [0, 1, 2, 3]
+u = 1.5
+D = 0.3
+k = 0.15
+colors_t = ["#aaa", "#6baed6", C_CHARGE, "#08306b"]
+
+fig, axes = plt.subplots(1, 3, figsize=(11, 3.8))
+
+for ax, title, mode in zip(axes,
+    ["(a) Advection pure", "(b) Diffusion pure", "(c) ADR complète"],
+    ["adv", "diff", "adr"]):
+
+    for t, col in zip(t_vals, colors_t):
+        if t == 0:
+            # Gaussian initial
+            C = np.exp(-((x - 2.0)**2) / (2 * 0.15**2))
+        else:
+            if mode == "adv":
+                C = np.exp(-((x - 2.0 - u*t)**2) / (2 * 0.15**2))
+            elif mode == "diff":
+                sig2 = 0.15**2 + 2*D*t
+                C = (0.15 / np.sqrt(sig2)) * np.exp(-((x - 2.0)**2) / (2*sig2))
+            else:  # adr
+                sig2 = 0.15**2 + 2*D*t
+                C = (0.15 / np.sqrt(sig2)) * np.exp(-((x - 2.0 - u*t)**2) / (2*sig2)) * np.exp(-k*t)
+
+        ax.plot(x, C, color=col, lw=2.0, label=f"$t={t}$ s" if t > 0 else "$t=0$")
+
+    ax.set_xlabel("Position $x$ (m)", fontsize=8.5)
+    ax.set_ylabel("Concentration $C$ (normalisée)", fontsize=8.5)
+    ax.set_title(title, fontsize=9.5)
+    ax.set_ylim(-0.05, 1.15)
+    ax.legend(fontsize=8, loc="upper right")
+    ax.grid(alpha=0.2)
+    ax.tick_params(labelsize=8)
+
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-important}
+## Piège — Diffusion moléculaire vs dispersion : six ordres de grandeur d'écart
+
+La diffusion moléculaire $D_m \sim 10^{-9}$ m²/s est quasi négligeable en hydraulique. La **dispersion longitudinale effective** (Taylor-Aris en conduite, Fischer en rivière) vaut typiquement $D_L \sim 10^{-3}$ à $10^{-1}$ m²/s — soit 10⁴ à 10⁶ fois plus grande. Utiliser $D_m$ là où il faut $D_L$ revient à ignorer complètement la dispersion réelle. Cette confusion est à l'origine des sous-estimations les plus graves en études de transport.
+:::
+
+---
+
+## L'équation d'advection-dispersion-réaction (ADR)
+
+### Établissement de l'équation 1D par bilan
+
+Le bilan de masse de soluté sur un tronçon de section $A$ et de longueur $dx$, à l'image du bilan hydraulique de la note 0.2, donne la forme **conservative** de l'ADR :
+
+$$\frac{\partial (A C)}{\partial t} + \frac{\partial (Q C)}{\partial x} = \frac{\partial}{\partial x}\!\left(A\,D\,\frac{\partial C}{\partial x}\right) + A\,S$$
+
+Pour une conduite à section constante et débit permanent ($Q = cste$, $u = Q/A = cste$) :
+
+$$\frac{\partial C}{\partial t} + u\frac{\partial C}{\partial x} = D\frac{\partial^{2}C}{\partial x^{2}} + S$$
+
+::: {.callout-note}
+## Le coin du puriste — Forme conservative vs forme advective
+
+La forme conservative $\partial(QC)/\partial x$ et la forme advective $u\,\partial C/\partial x$ sont liées par :
+
+$$\frac{\partial(QC)}{\partial x} = Q\frac{\partial C}{\partial x} + C\frac{\partial Q}{\partial x}$$
+
+Elles sont équivalentes **si et seulement si** la continuité hydraulique est vérifiée, c'est-à-dire $\partial A/\partial t + \partial Q/\partial x = 0$. Sur un champ de vitesse non conservatif (modèle hydraulique mal bouclé, géométrie variable mal traitée), les deux formes divergent et créent une fausse production ou destruction de masse de soluté — sans aucun signal d'erreur apparent dans le résidu hydraulique. La forme conservative est toujours préférable numériquement car elle garantit la conservation de masse de soluté dès que le champ hydraulique est lui-même conservatif.
+:::
+
+### La dispersion : Taylor-Aris et le prix de la moyenne 1D
+
+Lorsqu'on réduit un écoulement 3D à une description 1D (section moyennée), on **perd l'information sur le profil de vitesse**. Ce profil est non uniforme (Poiseuille en laminaire, logarithmique en turbulent) : les particules proches de l'axe avancent plus vite que celles près de la paroi. Après un temps suffisant, la diffusion transverse mélange les positions radiales, et le résultat macroscopique est un **étalement longitudinal apparent** beaucoup plus grand que la diffusion moléculaire seule. C'est la **dispersion de Taylor-Aris** : le prix payé pour avoir moyenné.
+
+$$D_{Taylor} = \frac{a^{2}\,\bar{u}^{2}}{48\,D_m} \qquad \text{(conduite circulaire, régime laminaire)}$$
+
+En rivière, la formule empirique de Fischer donne un ordre de grandeur :
+
+$$D_L \approx 0{,}011\,\frac{\bar{u}^{2}\,W^{2}}{h\,u_{*}} \qquad \text{(rivière — ordre de grandeur)}$$
+
+où $W$ est la largeur, $h$ la profondeur, $u_*$ la vitesse de frottement.
+
+```{python}
+#| label: fig-taylor
+#| fig-cap: 'Mécanisme de dispersion de Taylor-Aris. À gauche : profil de vitesse parabolique (Poiseuille) sur la section — les particules centrales avancent deux fois plus vite que la moyenne. À droite : évolution d''un front de traceur initialement plan (t=0, trait noir) qui se déforme progressivement en un profil étalé sous l''effet combiné du cisaillement et de la diffusion transverse. Après un temps d''établissement suffisant ($t \gg a^2/D_m$), le profil longitudinal moyen est gaussien avec un coefficient de dispersion effectif $D_{Taylor}$ bien supérieur à $D_m$.'
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(9.5, 3.8))
+
+# Profil de vitesse Poiseuille
+r = np.linspace(-1, 1, 200)
+u_prof = 2.0 * (1 - r**2)  # normalisé, u_max = 2*u_mean
+ax1.plot(u_prof, r, color=C_CHARGE, lw=2.5)
+ax1.axvline(1.0, color="#aaa", lw=1.2, ls="--", label=r"Vitesse moyenne $\bar u$")
+ax1.fill_betweenx(r, 0, u_prof, alpha=0.15, color=C_CHARGE)
+ax1.set_xlabel("Vitesse $u/u_{moy}$", fontsize=9)
+ax1.set_ylabel("Position radiale $r/a$", fontsize=9)
+ax1.set_title("Profil de Poiseuille — cisaillement générateur\nde dispersion longitudinale", fontsize=9)
+ax1.legend(fontsize=8.5)
+ax1.grid(alpha=0.2)
+ax1.tick_params(labelsize=8.5)
+ax1.set_xlim(-0.1, 2.3)
+
+# Évolution du front de traceur
+x = np.linspace(-3, 6, 400)
+colors_ev = ["#111", "#2980b9", C_CHARGE, "#08306b"]
+labels_ev = ["$t=0$ (front plan)", "$t_1$ (début cisaillement)", "$t_2$", "$t_3$ (régime Taylor)"]
+sigmas = [0.08, 0.35, 0.65, 1.05]
+means  = [0.0,  0.7,  1.5,  2.4]
+
+for sig, mu, col, lbl in zip(sigmas, means, colors_ev, labels_ev):
+    C_prof = np.exp(-((x - mu)**2) / (2*sig**2)) / (sig * np.sqrt(2*np.pi))
+    C_prof /= C_prof.max()
+    ax2.plot(x, C_prof, color=col, lw=2.0, label=lbl)
+
+ax2.set_xlabel("Position longitudinale $x$", fontsize=9)
+ax2.set_ylabel("Concentration moyennée sur section", fontsize=9)
+ax2.set_title("Déformation d'un front de traceur\n— mécanisme de Taylor-Aris", fontsize=9)
+ax2.legend(fontsize=8.5, loc="upper right")
+ax2.grid(alpha=0.2)
+ax2.tick_params(labelsize=8.5)
+
+fig.tight_layout()
+plt.show()
+```
+
+### Le nombre de Péclet : advection contre dispersion {#sec-peclet}
+
+Exactement comme le nombre de Reynolds classe les régimes hydrauliques (laminaire vs turbulent) et le nombre de Froude classe les régimes de surface libre (fluvial vs torrentiel), le **nombre de Péclet** classe les régimes de transport (advectif vs dispersif) :
+
+$$Pe = \frac{u\,L}{D}$$
+
+- $Pe \gg 1$ : l'advection domine, le scalaire se transporte en « piston » avec peu d'étalement. Régime typique des réseaux AEP.
+- $Pe \ll 1$ : la dispersion domine, le scalaire s'étale rapidement dans toutes les directions. Régime des milieux poreux, des lacs peu agités.
+- $Pe \sim 1$ : les deux mécanismes jouent à part égale, la forme de la réponse dépend des détails.
+
+```{python}
+#| label: fig-peclet-regimes
+#| fig-cap: "Réponse d'un tronçon à un créneau d'injection (concentration normalisée en entrée de 0 à $t_1$) pour trois valeurs du nombre de Péclet. $Pe=200$ : transport quasi-piston, le créneau est bien conservé (régime typique réseau AEP). $Pe=10$ : étalement modéré, front progressif. $Pe=1$ : le créneau est presque entièrement étalé, le signal de sortie ressemble à une cloche. La structure est analogue aux régimes fluvial/torrentiel de Froude (note 0.4) : un seul nombre sans dimension classe le comportement dominant."
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.special import erfc
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+def adr_créneau(x, t, u, D, t1=2.0):
+    """Solution analytique ADR, créneau [0, t1] en x=0, sans réaction."""
+    eps = 1e-12
+    def C_step(x_, t_):
+        if t_ <= 0:
+            return np.zeros_like(x_)
+        arg1 = (x_ - u*t_) / (2*np.sqrt(D*t_) + eps)
+        arg2 = (x_ + u*t_) / (2*np.sqrt(D*t_) + eps)
+        return 0.5 * (erfc(arg1) + np.exp(u*x_/D + eps) * erfc(arg2))
+    return C_step(x, t) - C_step(x, t - t1) * (t > t1)
+
+L = 10.0
+x_out = L
+t_arr = np.linspace(0, 20, 500)
+u = 1.0
+
+fig, ax = plt.subplots(figsize=(7.5, 4.0))
+
+configs = [(200, C_CHARGE, "-"), (10, C_PIEZO, "--"), (1, C_ACCENT, "-.")]
+for Pe, col, ls in configs:
+    D = u * L / Pe
+    C_out = np.array([adr_créneau(np.array([x_out]), ti, u, D)[0] for ti in t_arr])
+    ax.plot(t_arr, C_out, color=col, lw=2.2, ls=ls, label=f"$Pe = {Pe}$")
+
+# Créneau d'entrée (en grisé)
+t_in = np.linspace(0, 20, 500)
+C_in = np.where((t_in >= 0) & (t_in <= 2.0), 1.0, 0.0)
+ax.fill_between(t_in, 0, C_in * 0.15, alpha=0.18, color="#888", label="Signal d'entrée (normalisé × 0,15)")
+
+ax.set_xlabel("Temps (s)", fontsize=9)
+ax.set_ylabel("Concentration en sortie (normalisée)", fontsize=9)
+ax.set_title("Régimes de transport selon le nombre de Péclet", fontsize=10)
+ax.legend(fontsize=8.5, loc="upper right")
+ax.set_xlim(0, 20); ax.set_ylim(-0.02, 1.05)
+ax.grid(alpha=0.2)
+ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-warning}
+## Alerte modélisation — En réseau AEP, Pe est très élevé : la diffusion numérique guette
+
+Dans un réseau AEP typique ($u \sim 0{,}5$ m/s, $L \sim 100$ m, $D_L \sim 0{,}01$ m²/s), $Pe \sim 5\,000$. Le transport est quasi-piston : le chlore injecté en tête de réseau arrive en bout de conduite presque sans étalement. Un schéma numérique diffusif (upwind) introduit une dispersion numérique $D_{num} = u\,\Delta x / 2$ qui peut éclipser totalement la dispersion physique et produire des profils de chlore faussement lisses. Le §3 traite ce piège en détail.
+:::
+
+---
+
+## Résolution numérique et diffusion numérique
+
+Le terme d'advection $u\,\partial C/\partial x$ est de nature **hyperbolique** (information se propageant dans une direction) : il est numériquement piégeux. La diffusion $D\,\partial^2 C/\partial x^2$ est **parabolique** (régularisante) : elle se traite sans difficulté. La difficulté des schémas de transport vient toujours de l'advection.
+
+Deux pathologies opposées apparaissent selon le schéma choisi :
+
+- **Schéma amont (upwind)** : stable, mais introduit une **diffusion numérique** $D_{num} = u\,\Delta x\,(1 - Cr)/2$ qui écrase la dispersion physique si $\Delta x$ est grand.
+- **Schéma centré** : précis au second ordre, mais **oscille** (concentrations négatives) si le nombre de Péclet de maille $Pe_{\Delta x} = u\,\Delta x / D > 2$.
+
+Les conditions de stabilité et de contrôle de la diffusion numérique sont :
+
+$$Cr = \frac{u\,\Delta t}{\Delta x} \le 1 \qquad Pe_{\Delta x} = \frac{u\,\Delta x}{D} \qquad D_{num} = \frac{u\,\Delta x}{2}\,(1 - Cr)$$
+
+```{python}
+#| label: fig-diffusion-numerique
+#| fig-cap: "Transport d'un créneau de concentration : solution exacte (noir), schéma upwind (bleu, $\\Delta x = 0{,}5$ m) et schéma centré (rouge, même $\\Delta x$). Le schéma upwind lisse excessivement le front (diffusion numérique $D_{num} \\gg D_{physique}$). Le schéma centré produit des oscillations en amont et aval du front (concentrations négatives non physiques). Le bon compromis passe par des schémas d'ordre élevé avec limiteurs de pente (TVD) — traités en note 3.5."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+# Paramètres
+L = 10.0; nx_fine = 1000; u = 1.0; D_phys = 0.005; dt = 0.4; n_steps = 10
+dx_coarse = 0.5; nx_c = int(L / dx_coarse) + 1
+
+# Solution exacte (gaussienne étalée)
+x_fine = np.linspace(0, L, nx_fine)
+t_tot  = n_steps * dt
+from scipy.special import erfc as sc_erfc
+def exact_step(x, t, u, D):
+    eps = 1e-12
+    a1 = (x - u*t)/(2*np.sqrt(D*t+eps))
+    a2 = (x + u*t)/(2*np.sqrt(D*t+eps))
+    return 0.5*(sc_erfc(a1) + np.exp(u*x/D+eps)*sc_erfc(a2))
+C_exact = exact_step(x_fine, t_tot, u, D_phys) - exact_step(x_fine, t_tot - 2.0, u, D_phys) * (t_tot > 2.0)
+C_exact = np.clip(C_exact, 0, 1)
+
+# Schéma upwind
+x_c = np.linspace(0, L, nx_c)
+C_up = np.where(x_c <= 2.0, 1.0, 0.0).astype(float)
+Cr = u * dt / dx_coarse
+r_diff = D_phys * dt / dx_coarse**2
+for _ in range(n_steps):
+    C_new = C_up.copy()
+    for i in range(1, nx_c - 1):
+        adv  = -u * (C_up[i] - C_up[i-1]) / dx_coarse
+        diff =  D_phys * (C_up[i+1] - 2*C_up[i] + C_up[i-1]) / dx_coarse**2
+        C_new[i] = C_up[i] + dt * (adv + diff)
+    C_new[0] = 0.0; C_new[-1] = C_new[-2]
+    C_up = C_new
+
+# Schéma centré
+C_cen = np.where(x_c <= 2.0, 1.0, 0.0).astype(float)
+for _ in range(n_steps):
+    C_new = C_cen.copy()
+    for i in range(1, nx_c - 1):
+        adv  = -u * (C_cen[i+1] - C_cen[i-1]) / (2*dx_coarse)
+        diff =  D_phys * (C_cen[i+1] - 2*C_cen[i] + C_cen[i-1]) / dx_coarse**2
+        C_new[i] = C_cen[i] + dt * (adv + diff)
+    C_new[0] = 0.0; C_new[-1] = C_new[-2]
+    C_cen = C_new
+
+fig, ax = plt.subplots(figsize=(7.5, 4.0))
+ax.plot(x_fine, C_exact, color="k",       lw=2.5, label="Solution exacte")
+ax.plot(x_c,   C_up,    color=C_CHARGE,   lw=2.0, ls="--", label=f"Upwind ($\\Delta x={dx_coarse}$ m) — diffusion numérique")
+ax.plot(x_c,   C_cen,   color=C_ACCENT,   lw=2.0, ls="-.", label="Centré — oscillations")
+ax.axhline(0, color="#999", lw=0.8, ls=":")
+ax.set_xlabel("Position $x$ (m)", fontsize=9)
+ax.set_ylabel("Concentration (normalisée)", fontsize=9)
+ax.set_title("Diffusion numérique (upwind) vs oscillations (centré) — transport d'un créneau", fontsize=10)
+ax.legend(fontsize=8.5)
+ax.grid(alpha=0.2)
+ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+**Le transport en réseau : la méthode lagrangienne.** Pour contourner ces difficultés numériques, les modèles de réseau AEP (EPANET, WNTR) utilisent une approche **lagrangienne** : au lieu de discrétiser l'espace, on suit des **paquets d'eau** (segments) de concentration uniforme qui se déplacent à la vitesse de l'écoulement. L'advection est ainsi exacte par construction — aucune diffusion numérique. Le temps de transit d'un segment dans un tronçon est :
+
+$$t_{transit} = \frac{L}{u} = \frac{A\,L}{Q}$$
+
+Le pas de temps qualité doit satisfaire $\Delta t_{qualité} \ll \Delta t_{hydraulique}$ pour que les segments soient bien résolus. La cinétique de réaction est appliquée sur chaque segment pendant la durée du pas. Le mélange entre segments de concentrations différentes s'effectue aux nœuds (règle du §5.1). Renvoi pour l'implémentation : moteur qualité d'EPANET / WNTR (mode *water quality*), note 3.5.
+
+::: {.callout-warning}
+## Alerte modélisation — La méthode lagrangienne n'est pas universelle
+
+À très faible débit (nuit, antenne peu sollicitée), le temps de transit peut atteindre plusieurs jours et le pas de temps qualité doit être réduit en conséquence — au risque d'un coût de calcul prohibitif. Un débit nul crée des zones « gelées » (segments immobiles) que certains moteurs gèrent mal. En rivière ou en milieu à forte dispersion, la méthode lagrangienne pure n'est pas adaptée : un schéma eulérien d'ordre élevé avec limiteur (TVD) lui est préféré — détail en note 3.5.
+:::
+
+---
+
+## Les cinétiques de réaction
+
+### Décroissance du désinfectant (chlore) en AEP — Fil rouge §1
+
+**Cas fil rouge.** L'antenne AEP de 2 km (DN 150, acier revêtu, $u = 0{,}4$ m/s) est alimentée avec une concentration en chlore libre $C_0 = 0{,}4$ mg/L en entrée de réseau. On calcule le résiduel en bout d'antenne.
+
+La décroissance du chlore résiduel suit une cinétique de **premier ordre** combinant réaction dans la masse d'eau (paroi du biofilm comprise) et réaction à la paroi :
+
+$$\frac{dC}{dt} = -k\,C \qquad \Rightarrow \qquad C(t) = C_0\,e^{-kt}$$
+
+La constante globale $k$ intègre la réaction de masse $k_b$ et la réaction de paroi $k_w$ (limitée par le transfert de masse $k_f$ vers la paroi) :
+
+$$k = k_b + \frac{k_w\,k_f}{r_h\,(k_w + k_f)}$$
+
+où $r_h = D_{int}/4$ est le rayon hydraulique de la conduite circulaire. La dépendance thermique suit une loi d'Arrhenius simplifiée :
+
+$$k(T) = k_{20}\,\theta^{\,T-20} \qquad (\theta \approx 1{,}08 \text{ pour le chlore})$$
+
+Le seuil réglementaire minimal est fixé à $C_{min} = 0{,}1$ mg/L en France (arrêté du 11 janvier 2007).
+
+```{python}
+#| label: fig-chlore-antenne
+#| fig-cap: "Décroissance du chlore résiduel le long de l'antenne AEP fil rouge (2 km, DN 150) pour trois valeurs de la constante globale $k$ (conduites neuves $k=0{,}3$ j$^{-1}$, conduites vieillies $k=0{,}8$ j$^{-1}$, conduites très dégradées $k=1{,}5$ j$^{-1}$) et deux débits (vitesse 0,4 m/s et 0,15 m/s — temps de séjour différents). Le seuil réglementaire de 0,1 mg/L est indiqué en rouge. À faible débit, le temps de séjour augmente et le résiduel s'effondre beaucoup plus rapidement en distance."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+L = 2000.0  # m
+x = np.linspace(0, L, 300)
+C0 = 0.4    # mg/L
+C_min = 0.1
+
+fig, axes = plt.subplots(1, 2, figsize=(10, 4.0))
+titles = ["Vitesse $u = 0{,}4$ m/s (débit nominal)", "Vitesse $u = 0{,}15$ m/s (débit de nuit)"]
+u_vals = [0.4, 0.15]
+
+for ax, u_v, title in zip(axes, u_vals, titles):
+    for k_j, lbl, col, ls in [
+        (0.3,  "Conduite neuve ($k=0{,}3$ j$^{-1}$)",      C_CHARGE, "-"),
+        (0.8,  "Conduite vieillie ($k=0{,}8$ j$^{-1}$)",    C_PIEZO,  "--"),
+        (1.5,  "Conduite dégradée ($k=1{,}5$ j$^{-1}$)",    "#8e44ad", "-.")]:
+        k_s  = k_j / 86400  # /s
+        t_x  = x / u_v      # temps de séjour [s]
+        C_x  = C0 * np.exp(-k_s * t_x)
+        ax.plot(x/1000, C_x, color=col, lw=2.0, ls=ls, label=lbl)
+
+    ax.axhline(C_min, color=C_ACCENT, lw=1.8, ls=":", label=f"Seuil réglementaire {C_min} mg/L")
+    ax.set_xlabel("Distance depuis le réservoir (km)", fontsize=9)
+    ax.set_ylabel("Chlore résiduel (mg/L)", fontsize=9)
+    ax.set_title(title, fontsize=9.5)
+    ax.legend(fontsize=7.8, loc="upper right")
+    ax.set_xlim(0, 2); ax.set_ylim(0, 0.45)
+    ax.grid(alpha=0.2)
+    ax.tick_params(labelsize=8.5)
+
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-warning}
+## Alerte modélisation — $k_w$ est le paramètre de calage le plus incertain
+
+La constante de paroi $k_w$ dépend du matériau, de l'état de surface, du biofilm et de la tuberculisation — elle peut varier d'un facteur 10 entre deux conduites du même réseau. Un résiduel calculé sans calage de $k_w$ sur mesures terrain n'a **aucune valeur réglementaire**. La procédure correcte : tracer d'abord un traceur conservatif (fluorure, sel) pour valider l'hydraulique, puis caler $k_b$ et $k_w$ séparément (renvoi note 3.1).
+:::
+
+### Couplage DBO–oxygène dissous : le modèle de Streeter-Phelps
+
+Lors d'un rejet organique dans un cours d'eau, la dégradation de la **matière organique** (DBO, demande biochimique en oxygène) consomme l'oxygène dissous tandis que la **réaération atmosphérique** le reconstitue. Le couplage de ces deux processus produit la courbe en « sag » caractéristique :
+
+$$\frac{dL}{dt} = -k_d\,L \qquad ; \qquad \frac{dD}{dt} = k_d\,L - k_a\,D$$
+
+où $L$ est la DBO résiduelle, $D = O_{s} - O$ le déficit en oxygène par rapport à la saturation $O_s$, $k_d$ la constante de dénitrification/dégradation et $k_a$ la constante de réaération. La solution analytique est :
+
+$$D(t) = \frac{k_d\,L_0}{k_a - k_d}\left(e^{-k_d t} - e^{-k_a t}\right) + D_0\,e^{-k_a t}$$
+
+Le déficit maximal (point critique) est atteint à l'instant :
+
+$$t_c = \frac{1}{k_a - k_d}\ln\!\left[\frac{k_a}{k_d}\!\left(1 - \frac{D_0(k_a - k_d)}{k_d\,L_0}\right)\right]$$
+
+```{python}
+#| label: fig-streeter-phelps
+#| fig-cap: "Courbe en « sag » de Streeter-Phelps : DBO résiduelle $L(x)$ (bleu, axe gauche) et déficit en oxygène $D(x)$ (vert, axe gauche) le long d'un cours d'eau à $u = 0{,}2$ m/s, après un rejet organique en $x=0$. Le minimum d'oxygène dissous (point critique) est atteint en $x_c$ et délimite la zone de risque pour la vie aquatique. Le seuil de 3 mg/L (survie des espèces les plus sensibles) est marqué en rouge. Les hypothèses du modèle (rivière uniforme, permanent, sans photosynthèse ni sédiments) rappellent ses limites : Streeter-Phelps est un outil d'ordre de grandeur, pas de prédiction fine."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+kd  = 0.30  # /j
+ka  = 0.50  # /j
+L0  = 15.0  # mg/L DBO initiale
+D0  = 1.0   # mg/L déficit initial
+Os  = 9.0   # saturation O2 (15°C)
+u   = 0.20  # m/s
+
+t = np.linspace(0, 10, 500)  # jours
+x = u * t * 86400 / 1000     # km
+
+L = L0 * np.exp(-kd * t)
+D = (kd*L0/(ka-kd)) * (np.exp(-kd*t) - np.exp(-ka*t)) + D0*np.exp(-ka*t)
+O = Os - D
+
+tc = (1/(ka-kd)) * np.log((ka/kd) * (1 - D0*(ka-kd)/(kd*L0)))
+xc = u * tc * 86400 / 1000
+Dc = (kd*L0/(ka-kd)) * (np.exp(-kd*tc) - np.exp(-ka*tc)) + D0*np.exp(-ka*tc)
+Oc = Os - Dc
+
+fig, ax1 = plt.subplots(figsize=(8, 4.2))
+
+ax1.plot(x, L, color=C_CHARGE, lw=2.2, label="DBO résiduelle $L$ (mg/L)")
+ax1.plot(x, O, color=C_PIEZO,  lw=2.2, ls="--", label="O$_2$ dissous (mg/L)")
+ax1.axhline(3.0, color=C_ACCENT, lw=1.8, ls=":", label="Seuil O$_2$ vital (3 mg/L)")
+ax1.axvline(xc, color=C_ACCENT, lw=1.2, ls="-.")
+ax1.scatter([xc], [Oc], color=C_ACCENT, s=80, zorder=6,
+            label=f"Point critique ($x_c = {xc:.1f}$ km, O$_2 = {Oc:.1f}$ mg/L)")
+
+ax1.set_xlabel("Distance depuis le rejet (km)", fontsize=9)
+ax1.set_ylabel("Concentration (mg/L)", fontsize=9)
+ax1.set_title("Modèle de Streeter-Phelps — Courbe en « sag » d'oxygène dissous", fontsize=10)
+ax1.set_xlim(0, x[-1]); ax1.set_ylim(0, 18)
+ax1.legend(fontsize=8.5, loc="upper right")
+ax1.grid(alpha=0.2)
+ax1.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-warning}
+## Alerte modélisation — Streeter-Phelps : un outil d'ordre de grandeur, pas de conformité
+
+Le modèle suppose un cours d'eau uniforme, un régime permanent, et néglige la photosynthèse (source d'O₂ le jour), la respiration benthique (puits d'O₂ permanent) et les sédiments (réservoir de DBO). Il donne un résultat **conservateur** (déficit surestimé) en l'absence de photosynthèse. Ne pas l'utiliser pour un milieu eutrophe, un plan d'eau, ou une rivière à forte activité benthique — renvoi note 3.4 pour les modèles couplés sédiment/eau.
+:::
+
+### Typologie des cinétiques et terme source générique
+
+Pour tout scalaire réactif, le terme source $S$ prend l'une des formes suivantes selon l'ordre de réaction :
+
+$$S = -k\,C^{n} \quad \text{(ordre } n\text{)} \qquad ; \qquad S = -\frac{V_{max}\,C}{K_m + C} \quad \text{(saturation Michaelis-Menten)} \qquad ; \qquad S = 0 \quad \text{(traceur conservatif)}$$
+
+```{python}
+#| label: fig-cinetiques
+#| fig-cap: "Comparaison de l'allure de $C(t)$ pour quatre types de cinétiques (mêmes conditions initiales $C_0 = 1$, même constante de vitesse de référence). Ordre 0 : décroissance linéaire jusqu'à zéro (s'annule en temps fini). Ordre 1 : décroissance exponentielle (jamais nul, asymptote). Ordre 2 : décroissance plus rapide que l'ordre 1 aux fortes concentrations, plus lente aux faibles. Saturation (Michaelis-Menten) : ordre 1 apparent aux faibles concentrations, ordre 0 apparent aux fortes. Le choix d'ordre incorrect produit une constante « apparente » non transposable hors de la plage de calage."
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.integrate import odeint
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+t = np.linspace(0, 5, 300)
+C0 = 1.0
+k  = 0.6
+Vmax = 0.6; Km = 0.3
+
+C0_arr = np.array([C0])
+
+C_ord0 = np.maximum(C0 - k * t, 0)
+C_ord1 = C0 * np.exp(-k * t)
+C_ord2 = C0 / (1 + k * C0 * t)
+
+def dc_mm(C, t_):
+    return [-Vmax * C[0] / (Km + C[0])]
+C_mm = np.array(odeint(dc_mm, C0_arr, t)).flatten()
+
+fig, ax = plt.subplots(figsize=(7.5, 4.0))
+ax.plot(t, C_ord0, color="#e67e22", lw=2.2, ls="--",  label="Ordre 0 : $S = -k$")
+ax.plot(t, C_ord1, color=C_CHARGE,  lw=2.2,            label="Ordre 1 : $S = -k C$")
+ax.plot(t, C_ord2, color=C_PIEZO,   lw=2.2, ls="-.",   label="Ordre 2 : $S = -k C^2$")
+ax.plot(t, C_mm,   color=C_ACCENT,  lw=2.2, ls=":",    label="Saturation (Michaelis-Menten)")
+ax.set_xlabel("Temps (unités normalisées)", fontsize=9)
+ax.set_ylabel("Concentration $C/C_0$", fontsize=9)
+ax.set_title("Cinétiques de dégradation — comparaison des ordres de réaction", fontsize=10)
+ax.legend(fontsize=8.5)
+ax.grid(alpha=0.2)
+ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-tip}
+## Bon sens de l'ingénieur — Commencer par un traceur conservatif
+
+Avant tout calage d'une cinétique réactive, tracer d'abord le transport d'un **scalaire conservatif** ($S = 0$) — un sel (NaCl), un fluorure ou la conductivité de l'eau. Cela valide l'hydraulique (débit, géométrie) et la dispersion (coefficient $D_L$) indépendamment de la chimie. Si le traceur conservatif n'est pas bien reproduit, la cinétique réactive ne le sera jamais — quel que soit le soin mis à la caler.
+:::
+
+---
+
+## Le transport en réseau : mélange aux nœuds et âge de l'eau
+
+### La règle de mélange aux nœuds — Fil rouge §2
+
+**Cas fil rouge.** L'antenne AEP est alimentée par deux conduites de débit différents qui se rejoignent en un nœud intermédiaire : la conduite principale ($Q_1 = 20$ m³/h, $C_1 = 0{,}35$ mg/L de chlore) et un branchement de secours ($Q_2 = 5$ m³/h, $C_2 = 0{,}15$ mg/L). La concentration sortante au nœud est calculée par conservation de la masse de soluté.
+
+À un nœud de jonction, l'hypothèse de mélange instantané et parfait donne :
+
+$$C_{noeud} = \frac{\displaystyle\sum_{i \in entrants} Q_i\,C_i}{\displaystyle\sum_{i \in entrants} Q_i}$$
+
+**Application numérique :**
+
+$$C_{noeud} = \frac{20 \times 0{,}35 + 5 \times 0{,}15}{20 + 5} = \frac{7{,}0 + 0{,}75}{25} = 0{,}31\ \text{mg/L}$$
+
+::: {.callout-warning}
+## Alerte modélisation — Le mélange parfait au nœud est une hypothèse, pas une loi
+
+L'hypothèse de mélange instantané et parfait est fausse aux jonctions en té à fort contraste de débit : le fluide majoritaire « traverse » le nœud sans se mélanger au fluide minoritaire (*bulk advective mixing*). Des études expérimentales montrent que jusqu'à 80 % du débit dominant peut passer « en ligne droite » dans le tronçon aval coaxial, sans incorporer le fluide latéral. En pratique, cette approximation est acceptable pour les modèles de réseau à l'échelle du système, mais elle peut conduire à sous-estimer localement la propagation d'un polluant introduit par un branchement latéral. Pour les études de risque détaillées, renvoi note 3.2 (modèles de mélange imparfait en 3D).
+:::
+
+### L'âge de l'eau et le temps de séjour — Fil rouge §3
+
+**Cas fil rouge.** Sur l'antenne de 2 km (section $A = \pi \times 0{,}075^2 = 0{,}01767$ m², $u = 0{,}4$ m/s), l'âge de l'eau en bout d'antenne est :
+
+$$\tau = \frac{L}{u} = \frac{2000}{0{,}4} = 5000\ \text{s} \approx 1{,}39\ \text{h}$$
+
+L'âge de l'eau se formule comme un **scalaire à terme source unitaire** $S = 1$ (le temps s'accumule à mesure que l'eau progresse dans le réseau) :
+
+$$\frac{\partial \tau}{\partial t} + u\frac{\partial \tau}{\partial x} = 1$$
+
+À un nœud de jonction, l'âge moyen pondéré est :
+
+$$\tau_{noeud} = \frac{\sum_i Q_i\,(\tau_i + t_i^{transit})}{\sum_i Q_i}$$
+
+Pour un **réservoir de stockage** modélisé comme une cuve parfaitement mélangée :
+
+$$V\frac{dC}{dt} = Q_{in}\,C_{in} - Q_{out}\,C \qquad \Rightarrow \qquad \tau_{moy} = \frac{V}{Q}$$
+
+::: {.callout-warning}
+## Alerte modélisation — Le réservoir n'est jamais parfaitement mélangé ni parfaitement piston
+
+Un réservoir réel présente simultanément des zones mortes (coins, recoins où l'eau stagne) et des court-circuits (le flux entrant rejoint directement la sortie sans se mélanger). Le modèle « cuve agitée » ($\tau_{moy} = V/Q$) **masque** ces hétérogénéités qui sont précisément les points de dégradation de qualité (âge réel >> âge moyen dans les zones mortes). Le choix du modèle de réservoir (cuve agitée, piston, mixte) doit s'appuyer sur la géométrie réelle et si possible sur un essai au traceur (renvoi note 0.3, conditions aux limites).
+:::
+
+---
+
+## Le transport thermique
+
+### L'équation de la chaleur advectée — Fil rouge §4
+
+**Cas fil rouge.** En juillet, l'eau entre dans l'antenne à $T_0 = 18$ °C. La conduite est posée à faible profondeur (0,8 m) dans un sol réchauffé à $T_{sol} = 22$ °C. On estime le réchauffement de l'eau sur les 2 km.
+
+La température obéit à la même équation ADR que la concentration, avec un terme source thermique :
+
+$$\frac{\partial T}{\partial t} + u\frac{\partial T}{\partial x} = D_T\frac{\partial^{2} T}{\partial x^{2}} + \frac{\phi_{net}}{\rho\,c_p\,h}$$
+
+où $\phi_{net}$ est le flux net de chaleur échangé avec le milieu extérieur (W/m²) et $h$ la profondeur (ou le diamètre pour une conduite). Pour une conduite enterrée, l'échange avec le sol se linéarise autour de la température d'équilibre $T_{eq}$ (température du sol environnant) :
+
+$$\phi_{net} \approx -K_{cond}\,(T - T_{eq}) \qquad \text{(échange conductif conduite–sol)}$$
+
+ce qui conduit à une décroissance exponentielle de l'écart thermique le long de la conduite, analogue à la décroissance du chlore.
+
+```{python}
+#| label: fig-bilan-thermique
+#| fig-cap: "Bilan thermique de surface d'une tranche d'eau libre (rivière, plan d'eau) sur un cycle journalier estival. Le rayonnement solaire (positif, jaune) et le rayonnement atmosphérique infrarouge (positif, orange) apportent de la chaleur. Le rayonnement propre de l'eau, la chaleur latente d'évaporation (dominant en été, vert) et la convection turbulente (bleu) la restituent. Le flux net résultant (trait noir épais) est positif le jour (réchauffement) et négatif la nuit (refroidissement). La température d'équilibre $T_{eq}$ est la température à laquelle $\\phi_{net} = 0$."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+t_h = np.linspace(0, 24, 300)  # heures
+
+# Flux solaire (pic à 13h)
+phi_sol = np.maximum(650 * np.sin(np.pi * (t_h - 6) / 12), 0) * (t_h >= 6) * (t_h <= 18)
+
+# Flux atmosphérique IR (quasi constant + légère variation nocturne)
+phi_atm = 350 + 20 * np.sin(2 * np.pi * t_h / 24)
+
+# Flux propre de l'eau (T_eau ≈ 22°C, Stefan-Boltzmann linéarisé)
+phi_eau = np.full_like(t_h, 420.0)
+
+# Évaporation (proportionnel à l'humidité déficit, plus fort l'après-midi)
+phi_evap = 100 + 120 * np.maximum(np.sin(np.pi * (t_h - 6) / 12), 0)
+
+# Convection
+phi_conv = 20 + 40 * np.maximum(np.sin(np.pi * (t_h - 8) / 12), 0)
+
+phi_net = phi_sol + phi_atm - phi_eau - phi_evap - phi_conv
+
+fig, ax = plt.subplots(figsize=(8.5, 4.2))
+
+ax.fill_between(t_h, 0, phi_sol,  alpha=0.55, color="#f39c12", label="Rayonnement solaire $\\phi_{sol}$")
+ax.fill_between(t_h, 0, phi_atm,  alpha=0.25, color="#e67e22", label="IR atmosphérique $\\phi_{atm}$")
+ax.fill_between(t_h, 0, -phi_evap, alpha=0.40, color=C_PIEZO,  label="Évaporation $-\\phi_{évap}$")
+ax.fill_between(t_h, 0, -phi_conv, alpha=0.30, color=C_CHARGE, label="Convection $-\\phi_{conv}$")
+ax.fill_between(t_h, 0, -phi_eau,  alpha=0.20, color="#8e44ad", label="IR eau $-\\phi_{eau}$")
+ax.plot(t_h, phi_net, color="k", lw=2.5, label="Flux net $\\phi_{net}$")
+ax.axhline(0, color="#555", lw=0.8, ls=":")
+
+ax.set_xlabel("Heure de la journée", fontsize=9)
+ax.set_ylabel("Flux thermique (W/m²)", fontsize=9)
+ax.set_title("Bilan thermique de surface — Cycle journalier estival", fontsize=10)
+ax.legend(fontsize=8.0, loc="upper left", ncol=2)
+ax.set_xlim(0, 24); ax.set_ylim(-600, 750)
+ax.grid(alpha=0.2)
+ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+### Le bilan d'échange air/eau
+
+Le flux net de chaleur en surface libre se décompose en cinq contributions :
+
+$$\phi_{net} = \phi_{solaire} + \phi_{atm} - \phi_{eau} - \phi_{évap} - \phi_{conv}$$
+
+Autour d'une température de référence, ce bilan se **linéarise** en :
+
+$$\phi_{net} \approx -K\,(T - T_{eq})$$
+
+où $T_{eq}$ est la **température d'équilibre** (valeur de $T$ qui annule le flux net) et $K$ le **coefficient d'échange global** (W/m²/°C, typiquement 15–30 W/m²/°C en conditions estivales). Cette linéarisation transforme l'équation thermique en une ADR avec terme source de premier ordre — analogue formelle parfaite avec la décroissance du chlore.
+
+::: {.callout-warning}
+## Alerte modélisation — $T_{eq}$ et $K$ ne sont pas des constantes
+
+Le flux évaporatif (chaleur latente) est souvent dominant et dépend fortement du **vent** et du **déficit hygrométrique** — deux grandeurs très variables. Prendre $K$ et $T_{eq}$ constants sur une simulation de plusieurs semaines introduit des biais importants sur la dynamique estivale. En pratique, $T_{eq}$ et $K$ doivent être calculés pas de temps par pas de temps à partir des données météorologiques. De plus, la température est un **scalaire actif** dès que la stratification thermique s'installe (lac, retenue, estuaire) : le modèle 1D bien mélangé tombe et un modèle 2D ou 3D est requis (renvoi note 3.2).
+:::
+
+### Le panache thermique d'un rejet
+
+Lorsqu'un effluent chaud (eau de refroidissement d'une centrale, rejet industriel) est déversé dans un milieu récepteur, le mélange se déroule en deux zones bien distinctes :
+
+**Champ proche** — quelques longueurs caractéristiques depuis l'exutoire, dominé par la quantité de mouvement du jet et la flottabilité thermique. Le **nombre de Froude densimétrique** classe le comportement :
+
+$$Fr_d = \frac{u}{\sqrt{\dfrac{\Delta\rho}{\rho}\,g\,\ell}}$$
+
+**Champ lointain** — après mélange complet sur la section transversale, le panache est advecté et dispersé par le cours d'eau récepteur. L'ADR 1D s'applique :
+
+$$\Delta T(x) = \frac{\Delta T_0}{\text{Dilution}(x)}$$
+
+```{python}
+#| label: fig-panache-thermique
+#| fig-cap: "Vue en plan schématique d'un panache thermique (rejet chaud dans une rivière). La zone de champ proche (à gauche, isothermes resserrées en rouge) est dominée par la flottabilité et la quantité de mouvement du jet — inaccessible à un modèle ADR 1D. La zone de champ lointain (à droite) correspond au panache advecto-dispersif bien décrit par l'ADR 1D après mélange complet sur la section. La frontière réglementaire (zone de mélange, délimitée en tirets rouges) est définie par rapport au point où le mélange sur la section est complet — elle doit être calculée en 2D/3D pour le champ proche (renvoi note 3.2)."
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+fig, ax = plt.subplots(figsize=(9, 4.5))
+
+# Grille
+x = np.linspace(0, 12, 300)
+y = np.linspace(-3, 3, 200)
+X, Y = np.meshgrid(x, y)
+
+# Température normalisée (modèle simplifié)
+# Champ proche : jet gaussien concentré
+# Champ lointain : étalement progressif
+sig_y = np.where(X < 2, 0.15 + 0.3*X, 0.75 + 0.15*(X-2)**0.6)
+DT = np.exp(-Y**2 / (2*sig_y**2)) * np.exp(-0.05*X)
+
+cmap = LinearSegmentedColormap.from_list("hot_panache",
+    ["#2166ac", "#92c5de", "#f7f7f7", "#f4a582", C_ACCENT])
+cf = ax.contourf(X, Y, DT, levels=20, cmap=cmap, alpha=0.85)
+cs = ax.contour(X, Y, DT, levels=[0.1, 0.3, 0.5, 0.7, 0.9],
+                colors=["#333"], linewidths=0.8, alpha=0.6)
+ax.clabel(cs, fmt="%.1f $\\Delta T_0$", fontsize=7.5)
+plt.colorbar(cf, ax=ax, label="$\\Delta T / \\Delta T_0$", shrink=0.85)
+
+# Flèche courant rivière
+ax.annotate("", xy=(11.5, 0), xytext=(0.3, 0),
+            arrowprops=dict(arrowstyle="->", color=C_CHARGE, lw=2.0))
+ax.text(6, -0.3, "Courant $u$", color=C_CHARGE, fontsize=9, ha="center")
+
+# Zone champ proche
+ax.axvspan(0, 2.5, alpha=0.08, color=C_ACCENT)
+ax.text(1.25, 2.6, "Champ proche\n(3D, flottabilité)", ha="center", fontsize=8.5,
+        color=C_ACCENT, style="italic")
+
+# Frontière réglementaire
+ax.plot([2.5, 2.5], [-2.8, 2.8], color=C_ACCENT, lw=2, ls="--",
+        label="Zone de mélange réglementaire")
+ax.text(2.7, 2.6, "ADR 1D valide →", fontsize=8.5, color="#333")
+
+# Exutoire
+ax.scatter([0], [0], s=120, color=C_ACCENT, zorder=6)
+ax.text(0.05, 0.3, "Exutoire\n$\\Delta T_0$", fontsize=8.5, color=C_ACCENT)
+
+ax.set_xlabel("Distance longitudinale $x$ (normalisée)", fontsize=9)
+ax.set_ylabel("Distance transversale $y$ (normalisée)", fontsize=9)
+ax.set_title("Panache thermique — Champ proche (3D) et champ lointain (ADR 1D)", fontsize=10)
+ax.legend(fontsize=8.5, loc="lower right")
+ax.set_xlim(0, 12); ax.set_ylim(-3, 3)
+ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-warning}
+## Alerte modélisation — L'ADR 1D est invalide en champ proche
+
+Appliquer l'ADR 1D dès l'exutoire revient à supposer un mélange instantané sur la section transversale du cours d'eau. En champ proche, ce mélange n'est pas encore réalisé : les isothermes sont 2D/3D, et la flottabilité peut même séparer verticalement la plume chaude de l'eau froide de fond. Un modèle 1D utilisé en champ proche produit une concentration (ou température) en sortie de zone de mélange **sous-estimée**, ce qui peut conduire à une conformité réglementaire calculée à tort. Le champ proche exige une modélisation 2D ou 3D (renvoi note 3.2).
+:::
+
+---
+
+## Le couplage hydraulique ↔ transport
+
+### Couplage faible : l'hydraulique d'abord, le transport ensuite
+
+La chaîne de modélisation standard est séquentielle : on résout d'abord l'hydraulique (champ de vitesse, débits), puis on transporte le scalaire sur ce champ figé :
+
+$$\underbrace{\{Q(x,t),\,u(x,t)\}}_{\text{résolu en 1}} \;\longrightarrow\; \underbrace{\frac{\partial C}{\partial t}+u\frac{\partial C}{\partial x}=D\frac{\partial^2C}{\partial x^2}+S}_{\text{résolu en 2, }u\text{ figé}}$$
+
+Cette approche est valide sous deux conditions : (1) le scalaire est passif (densité et viscosité inchangées) ; (2) le champ hydraulique est conservatif (continuité vérifiée). Elle est implémentée dans tous les modèles de réseau standards (EPANET, WNTR, MIKE URBAN).
+
+::: {.callout-warning}
+## Alerte modélisation — Un champ non conservatif crée de la masse fictive
+
+Sur un champ de vitesse issu d'un modèle hydraulique mal bouclé (résidu de continuité non nul), la forme advective $u\,\partial C/\partial x$ et la forme conservative $\partial(uC)/\partial x$ divergent. La différence se traduit par une création ou une destruction fictive de masse de soluté à chaque pas de temps — sans signal d'erreur visible dans le résidu hydraulique. Vérifier systématiquement le **bilan de masse de soluté** (masse totale en sortie + masse réactive = masse en entrée) avant de valider un modèle qualité.
+:::
+
+### Couplage fort : quand le scalaire modifie l'écoulement
+
+Le découplage tombe dès que le scalaire modifie la **masse volumique** ou la **viscosité** du fluide en quantité non négligeable. La rétroaction s'exprime par un terme de flottabilité dans l'équation de quantité de mouvement :
+
+$$\rho = \rho(C, T) \qquad \Rightarrow \qquad \text{terme de flottabilité} : -\frac{\Delta\rho}{\rho}\,g$$
+
+Les cas typiques de couplage fort en hydraulique :
+- **Biseau salin** en estuaire : $\Delta\rho/\rho \sim 2{,}5\,\%$ — la stratification haline bloque le mélange vertical
+- **Stratification thermique** en lac ou retenue estivale : $\Delta\rho/\rho \sim 0{,}3\,\%$ — suffisant pour une thermocline stable
+- **Courant de turbidité** : matières en suspension augmentent la densité, le courant plonge (renvoi note 3.4)
+
+::: {.callout-warning}
+## Alerte modélisation — Un modèle 1D découplé est qualitativement faux pour un biseau salin
+
+Dans un estuaire à biseau salin, le sel (plus dense) reste en fond de cours d'eau pendant que l'eau douce s'écoule en surface. Un modèle 1D découplé, qui suppose un mélange complet sur la section, « voit » une concentration moyenne en sel qui ne correspond à aucune réalité physique : il ne prédit ni la stratification, ni l'intrusion saline, ni le comportement des espèces aquatiques. La modélisation correcte exige un modèle 2D ou 3D couplé densité–hydrodynamique (renvoi note 3.2).
+:::
+
+### Règle de décision du modélisateur
+
+::: {.callout-tip}
+## Bon sens de l'ingénieur — Arbre de décision découplé / couplé
+
+**Étape 1 — Écart de densité :**
+- $\Delta\rho/\rho < 0{,}1\,\%$ (eau douce, faibles variations thermiques < 10 °C) → scalaire passif probable → continuer
+
+**Étape 2 — Froude densimétrique :**
+- $Fr_d \gg 1$ (turbulence force le mélange, flottabilité négligeable) → **découplage acceptable**
+- $Fr_d \lesssim 1$ (flottabilité gouverne) → couplage requis
+
+**Étape 3 — Stratification / géométrie :**
+- Rivière courante bien mélangée → découplage acceptable même si $Fr_d$ modéré
+- Lac, retenue, estuaire, zone calme → couplage fort, modèle 2D/3D requis
+
+**En zone de transition** : faire les deux calculs et comparer. Documenter l'hypothèse de découplage et sa justification — exigence de traçabilité (renvoi note 3.6, limites et responsabilité du modélisateur).
+:::
+
+Le seuil de décision quantitatif :
+
+$$\frac{\Delta\rho}{\rho} \ll 1 \quad \text{et} \quad Fr_d \gg 1 \quad \Rightarrow \quad \text{découplage acceptable} \qquad \text{sinon} \quad \Rightarrow \quad \text{couplage requis}$$
+
+---
+
+## Synthèse : modéliser la qualité dans une étude
+
+### Tableau de synthèse : scalaire, mécanisme, modèle, note associée
+
+Les trois relations pivots à retenir :
+
+$$\frac{\partial C}{\partial t} + u\frac{\partial C}{\partial x} = D\frac{\partial^{2}C}{\partial x^{2}} + S \qquad ; \qquad C_{noeud} = \frac{\sum Q_i\,C_i}{\sum Q_i} \qquad ; \qquad Pe = \frac{u\,L}{D}$$
+
+| Scalaire | Mécanisme dominant | Terme source $S$ typique | Hypothèse clé | Note associée |
+|---|---|---|---|---|
+| Chlore libre (AEP) | Advection piston ($Pe \gg 1$) | $-k\,C$ (ordre 1, $k = k_b + k_{paroi}$) | Scalaire passif, calage de $k_w$ | 3.1 |
+| Âge de l'eau (AEP) | Advection piston | $+1$ (s/s) | Traceur conservatif virtuel | 2.A1, 3.1 |
+| DBO / O₂ dissous | Advection + réaération | $-k_d L$ / $k_d L - k_a D$ | Rivière uniforme, permanent | 2.B2, 2.B3 |
+| Température (rivière) | Advection + échange surface | $-K(T-T_{eq})/(\rho c_p h)$ | $T_{eq}$, $K$ variables (météo) | — |
+| Panache thermique | Advection–dispersion latérale | $0$ (conservatif en champ lointain) | Mélange section complet ($x > x_{mél}$) | 3.2 |
+| Traceur conservatif | Advection ± dispersion | $0$ | Outil de validation hydraulique/dispersion | 3.1 |
+
+: Synthèse des scalaires transportés, mécanismes et modèles associés {#tbl-synthese-qualite}
+
+::: {.callout-warning}
+## Alerte modélisation — La hiérarchie des incertitudes
+
+L'incertitude d'un modèle qualité est dominée, dans l'ordre décroissant, par : (1) le champ hydraulique (débit, géométrie non calés) ; (2) les constantes cinétiques ($k_w$, $k_a$, $k_d$) — souvent non mesurées et empruntées à la littérature ; (3) la dispersion $D_L$ (rarement mesurée directement) ; (4) le schéma numérique. Investir dans le raffinement du schéma numérique avant d'avoir calé les deux premiers points est une erreur d'allocation de ressources.
+:::
+
+### Check-list du modélisateur qualité
+
+::: {.callout-tip}
+## Bon sens de l'ingénieur — Check-list avant validation d'un modèle qualité/thermique
+
+- [ ] **Champ hydraulique conservatif** — bilan de masse d'eau bouclé à chaque nœud ; résidu de continuité < 1 ‰
+- [ ] **Bilan de masse de soluté vérifié** — masse sortante + masse réactive = masse entrante sur la durée de simulation
+- [ ] **Schéma non diffusif / positif** — vérifier $Cr \le 1$ et $Pe_{\Delta x} \le 2$ si schéma eulérien ; sinon, méthode lagrangienne ou schéma TVD
+- [ ] **Traceur conservatif validé en premier** — avant tout calage réactif, reproduire un essai au sel ou fluorure
+- [ ] **Constantes cinétiques calées sur site** — ne pas transposer $k_w$ d'un autre réseau sans vérification
+- [ ] **Découplage hydraulique/qualité justifié et documenté** — préciser $\Delta\rho/\rho$ et $Fr_d$ ; vérifier scalaire passif
+- [ ] **Mélange aux nœuds réaliste** — signaler les tés à fort contraste de débit et quantifier l'incertitude associée
+- [ ] **Modèle de réservoir adapté à la géométrie** — ne pas supposer mélange parfait sans justification géométrique
+- [ ] **Champ proche traité séparément si rejet ponctuel** — valider que l'ADR 1D n'est appliquée qu'après mélange transversal complet
+:::
+
+---
+
+## Conclusion
+
+La qualité de l'eau et la thermique sont le même problème : transporter un **scalaire** (chlore, oxygène, température, âge de l'eau) porté par une hydraulique calculée en amont. Un seul formalisme — l'équation ADR — unifie tous ces cas. Seul le terme source $S$ change de forme.
+
+Trois idées-force structurent cette note :
+
+**1. Advection, dispersion, réaction — et le Péclet classe les régimes.** Comme Reynolds et Froude classent les régimes hydrauliques, Péclet classe les régimes de transport : piston ($Pe \gg 1$, réseau AEP) ou dispersif ($Pe \ll 1$, milieu poreux). Ce classement détermine le schéma numérique approprié et la sensibilité aux erreurs de dispersion.
+
+**2. La diffusion numérique est l'ennemie n°1 du transport en réseau.** Un schéma upwind stable mais diffusif peut introduire une dispersion numérique bien supérieure à la dispersion physique, produisant des profils de chlore ou de traceur faussement lisses. La méthode lagrangienne (suivi de segments) élimine ce piège par construction — c'est pourquoi les modèles de réseau AEP l'utilisent.
+
+**3. Le découplage faible est commode mais conditionnel.** Il est valable tant que le scalaire est passif ($\Delta\rho/\rho \ll 1$) et le champ hydraulique conservatif. La stratification thermique ou haline brise ce découplage : le scalaire descend ou remonte par densité, et un modèle 1D ne le voit pas.
+
+La qualité hérite des erreurs de l'hydraulique. Aucun raffinement cinétique — aucun $k_w$ calé au dixième de jour — ne compense un champ de vitesse faux.
+
+---
+
+## Pour aller plus loin dans cette série
+
+- **Note 0.2** — *Bilans et conservation* : le fondement du bilan de masse de soluté appliqué ici — même méthode, même volume de contrôle, appliqués à un scalaire plutôt qu'à l'eau elle-même
+- **Note 0.4** — *Analyse dimensionnelle et similitude* : le nombre de Péclet comme cousin de Reynolds et Froude ; le Froude densimétrique pour le couplage scalaire actif / flottabilité
+- **Note 0.3** — *Ouvrages et conditions aux limites* : les réservoirs comme conditions aux limites — le modèle de mélange (cuve agitée vs piston) détermine l'âge de l'eau en sortie
+- **Note 1.A / 1.B** — *Qualité comme enjeu métier AEP / assainissement* : la mise en œuvre réglementaire du chlore résiduel, les normes O₂ en milieu récepteur, les indicateurs opérationnels d'âge de l'eau
+- **Note 2.B2** — *Charge polluante pluviale* : conditions amont du transport en milieu récepteur — concentration et débit de pointe entrants dans l'ADR
+- **Note 2.B3** — *Surverses et rejets au milieu* : les conditions à la limite source (injection de DBO/NH₄) qui alimentent le modèle Streeter-Phelps
+- **Note 3.2** — *Quand le 1D ne suffit plus* : la modélisation 2D/3D du champ proche du panache thermique, de la stratification et des bifurcations — les cas où l'ADR 1D n'est pas valide
+- **Note 3.4** — *Transport solide et courants de turbidité* : le couplage fort entre scalaire (sédiments en suspension) et hydrodynamique — les courants de densité que le découplage faible ne peut pas capturer
+- **Note 3.5** — *Méthodes numériques* : les schémas advectifs d'ordre élevé (TVD, MUSCL, ENO), la condition CFL, et la comparaison eulérienne / lagrangienne pour le transport de scalaires
+- **Note 3.6** — *Limites et responsabilité du modélisateur* : documenter l'hypothèse de découplage, tracer l'incertitude des constantes cinétiques, et les obligations réglementaires de traçabilité en qualité de l'eau

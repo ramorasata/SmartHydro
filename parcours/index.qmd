@@ -1,0 +1,116 @@
+---
+title: ""
+page-layout: full
+toc: false
+---
+
+```{=html}
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+
+<!-- ═══ HERO COMPACT ═══════════════════════════════════════════ -->
+<section class="sh-page-hero">
+  <div class="sh-page-hero-inner">
+    <p class="sh-page-hero-eyebrow">🗺️ Parcours</p>
+    <h1 class="sh-page-hero-title">Mon parcours</h1>
+    <p class="sh-page-hero-sub">Un parcours dédié à l'hydraulique urbaine, de l'ingénierie d'études aux projets d'infrastructure, aussi bien en eau potable qu'en assainissement.</p>
+  </div>
+</section>
+
+<!-- ═══ TIMELINE ═══════════════════════════════════════════════ -->
+<section class="sh-timeline-section">
+  <div class="sh-timeline-inner">
+
+    <!-- ── EXPÉRIENCE ─────────────────────────────────────── -->
+    <h2 class="sh-timeline-section-title">💼 Expérience professionnelle</h2>
+    <div class="sh-timeline">
+
+      <div class="sh-tl-item">
+        <div class="sh-tl-dot sh-tl-dot-active"></div>
+        <div class="sh-tl-content">
+          <div class="sh-tl-period">
+            <span class="sh-tl-date">Févr. 2025 — Aujourd'hui</span>
+            <span class="sh-tl-duration">1 an 4 mois</span>
+          </div>
+          <h3 class="sh-tl-role">Ingénieur Expert en Hydraulique</h3>
+          <p class="sh-tl-company">SAUR <span class="sh-tl-type">· CDI</span></p>
+          <p class="sh-tl-location">Lyon, Auvergne-Rhône-Alpes, France · Sur site</p>
+          <p class="sh-tl-detail">Service Expertise Hydraulique</p>
+        </div>
+      </div>
+
+      <div class="sh-tl-item">
+        <div class="sh-tl-dot"></div>
+        <div class="sh-tl-content">
+          <div class="sh-tl-period">
+            <span class="sh-tl-date">Mars 2023 — Août 2023</span>
+            <span class="sh-tl-duration">6 mois</span>
+          </div>
+          <h3 class="sh-tl-role">Ingénieur de projets</h3>
+          <p class="sh-tl-company">SUEZ <span class="sh-tl-type">· Stage de césure</span></p>
+          <p class="sh-tl-location">Tours, Centre-Val de Loire, France · Sur site</p>
+          <p class="sh-tl-detail">Service : Études — Agence Centre Loire</p>
+        </div>
+      </div>
+
+      <div class="sh-tl-item">
+        <div class="sh-tl-dot"></div>
+        <div class="sh-tl-content">
+          <div class="sh-tl-period">
+            <span class="sh-tl-date">Sept. 2022 — Févr. 2023</span>
+            <span class="sh-tl-duration">6 mois</span>
+          </div>
+          <h3 class="sh-tl-role">Ingénieur hydraulicien</h3>
+          <p class="sh-tl-company">Veolia <span class="sh-tl-type">· Stage de césure</span></p>
+          <p class="sh-tl-location">Montpellier, Occitanie, France · Sur site</p>
+          <p class="sh-tl-detail">Service : Direction des Opérations — Région Sud</p>
+        </div>
+      </div>
+
+      <div class="sh-tl-item">
+        <div class="sh-tl-dot"></div>
+        <div class="sh-tl-content">
+          <div class="sh-tl-period">
+            <span class="sh-tl-date">Juil. 2021</span>
+            <span class="sh-tl-duration">1 mois</span>
+          </div>
+          <h3 class="sh-tl-role">Technicien géomètre</h3>
+          <p class="sh-tl-company">7ID Réseaux <span class="sh-tl-type">· Stage</span></p>
+          <p class="sh-tl-location">France</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── FORMATION ──────────────────────────────────────── -->
+    <h2 class="sh-timeline-section-title">🎓 Formation</h2>
+    <div class="sh-timeline">
+
+      <div class="sh-tl-item">
+        <div class="sh-tl-dot sh-tl-dot-grad"></div>
+        <div class="sh-tl-content">
+          <div class="sh-tl-period">
+            <span class="sh-tl-date">Sept. 2020 — Août 2024</span>
+            <span class="sh-tl-duration">4 ans</span>
+          </div>
+          <h3 class="sh-tl-role">Diplôme d'ingénieur en Hydraulique</h3>
+          <p class="sh-tl-company">ENGEES — École nationale du génie de l'eau et de l'environnement de Strasbourg</p>
+          <p class="sh-tl-detail">Spécialisation : Hydraulique urbaine</p>
+        </div>
+      </div>
+
+      <div class="sh-tl-item">
+        <div class="sh-tl-dot sh-tl-dot-grad"></div>
+        <div class="sh-tl-content">
+          <div class="sh-tl-period">
+            <span class="sh-tl-date">Sept. 2017 — Sept. 2020</span>
+            <span class="sh-tl-duration">3 ans</span>
+          </div>
+          <h3 class="sh-tl-role">Classe Préparatoire aux Grandes Écoles</h3>
+          <p class="sh-tl-company">Lycée Lakanal</p>
+          <p class="sh-tl-detail">Spécialisation : MPSI - MP</p>
+        </div>
+      </div>
+    </div>
+
+</section>
+```

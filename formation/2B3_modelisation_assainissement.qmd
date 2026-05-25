@@ -1,0 +1,1003 @@
+---
+title: "Surcharges et engorgements : modéliser les événements extrêmes en assainissement"
+subtitle: "Saint-Venant transitoire, fente de Preissmann et dual-drainage"
+date: "2026-05-17"
+author: ""
+categories: [Hydraulique, Assainissement, Modélisation, Transitoire, Ingénierie]
+page-layout: article
+toc: true
+toc-title: "Sommaire"
+toc-depth: 3
+number-sections: true
+lang: fr
+format:
+  html:
+    embed-resources: true
+    html-math-method: katex
+    theme: cosmo
+execute:
+  echo: false
+  warning: false
+  fig-format: svg
+  fig-responsive: true
+  fig-width: 8
+  fig-height: 4.5
+jupyter: python3
+---
+
+::: {.callout-note}
+## Note de la série
+Cette note fait partie d'une série sur la modélisation des réseaux hydrauliques. Elle suppose la lecture des notes **0.1** (*Généralités sur la modélisation*), **1.B** (*Modéliser un réseau d'assainissement*), **2.B1** (*Dimensionnement d'un réseau gravitaire*) et **2.B2** (*Modélisation pluviale*). On aborde ici le régime de fonctionnement le plus complexe : l'événement extrême qui sature le réseau, provoque des débordements, et met en jeu des couplages réseau/surface que les modèles 1D standard ne peuvent pas capturer seuls.
+:::
+
+::: {.callout-note}
+## Note de cadrage — La place de 2.B3 dans le triptyque assainissement
+
+**2.B1** dimensionne le réseau en régime permanent uniforme.
+**2.B2** fournit la pluie de projet et produit les hydrogrammes d'entrée.
+**2.B3** simule l'événement extrême qui dépasse les capacités de conception — et pose les bases de la philosophie résilience qui sera développée en note **3.6**.
+
+Cette note est la charnière entre le niveau 2 (application) et le niveau 3 (transversal) : elle mobilise des outils avancés (Saint-Venant transitoire, fente de Preissmann, dual-drainage) tout en inscrivant la modélisation dans une posture de responsabilité et de communication de l'incertitude.
+:::
+
+---
+
+## Qu'est-ce qu'un événement extrême pour un réseau d'assainissement ?
+
+### La gradation des dysfonctionnements
+
+Un réseau d'assainissement ne passe pas instantanément du fonctionnement normal à l'inondation catastrophique. La dégradation suit une **gradation progressive** de dysfonctionnements, chacun avec ses conséquences et ses outils de modélisation associés.
+
+```{python}
+#| label: fig-gradation-4-niveaux
+#| fig-cap: "Gradation des dysfonctionnements d'un réseau d'assainissement en 4 niveaux pour le même collecteur DN 500. **Niveau 1** (surface libre nominale) : ligne d'eau bien en dessous du sommet, écoulement gravitaire normal. **Niveau 2** (mise en charge sans débordement) : ligne piézométrique remonte au-dessus du sommet — réseau sous pression. **Niveau 3** (débordement au regard) : ligne piézométrique dépasse la cote du tampon — eau sortant en surface (C_ACCENT). **Niveau 4** (inondation de surface et réinjection) : cycle réseau→surface→réseau, zones inondées hachurées. Cette figure est la figure canonique de l'événement extrême en assainissement."
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+from matplotlib.patches import FancyBboxPatch
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+fig, axes = plt.subplots(1, 4, figsize=(12, 4.8))
+titles = ["Niveau 1\nNominal", "Niveau 2\nMise en charge",
+          "Niveau 3\nDébordement", "Niveau 4\nInondation surface"]
+
+D = 1.0   # diamètre normalisé
+z_fond = 0.0
+z_som  = z_fond + D
+z_TN   = z_som + 1.5
+z_tamp = z_TN - 0.1
+
+hauteurs_eau = [0.55*D, 1.35*D, z_tamp + 0.3, z_tamp + 0.6]
+
+for ax, titre, h_eau in zip(axes, titles, hauteurs_eau):
+    ax.set_xlim(-1.5, 1.5); ax.set_ylim(-0.5, 4.0); ax.axis("off")
+
+    # Terrain naturel
+    ax.fill_between([-1.5, 1.5], [z_TN]*2, [4.0]*2, color="#c8a96e", alpha=0.3)
+    ax.axhline(z_TN, color="#c8a96e", lw=1.5)
+
+    # Conduite (section circulaire schématique)
+    theta = np.linspace(0, 2*np.pi, 100)
+    xc = 0.5*np.cos(theta); yc = z_fond + D/2 + 0.5*np.sin(theta)
+    ax.fill(xc, yc, color="#dde", alpha=0.6)
+    ax.plot(xc, yc, color="#888", lw=2.0)
+
+    # Eau dans la conduite / fente
+    h_eff = min(h_eau, D)
+    theta_w = np.linspace(np.pi, 0, 100)
+    r = D/2
+    cx = r*np.cos(theta_w)
+    cy_raw = z_fond + r*(1 - np.sin(theta_w))
+    cy_clip = np.minimum(cy_raw, z_fond + h_eff)
+    ax.fill_between(cx, z_fond, cy_clip,
+                    color=C_PIEZO if h_eau <= D else C_CHARGE, alpha=0.55)
+
+    # Ligne piézométrique
+    if h_eau > D:
+        ax.axhline(z_fond + h_eau, color=C_CHARGE, lw=2.5, ls="--",
+                   xmin=0.1, xmax=0.9)
+
+    # Regard
+    ax.fill_between([-0.08, 0.08], [z_som, z_som], [z_TN, z_TN],
+                    color="#aaa", alpha=0.5)
+    ax.add_patch(plt.Rectangle((-0.15, z_tamp-0.02), 0.30, 0.04,
+                                fc="#555", ec="#333", lw=1))  # tampon
+
+    # Débordement / inondation
+    if h_eau > z_tamp:
+        h_surf = h_eau - z_tamp
+        ax.fill_between([-1.2, 1.2], [z_tamp]*2, [z_tamp + h_surf*0.6]*2,
+                        color=C_ACCENT, alpha=0.35)
+        ax.annotate("", xy=(0.5, z_tamp + h_surf*0.3),
+                    xytext=(0.0, z_tamp - 0.05),
+                    arrowprops=dict(arrowstyle="->", color=C_ACCENT, lw=2.0))
+
+    if titre.startswith("Niveau 4"):
+        # Hachures inondation
+        for xi in np.arange(-1.2, 1.2, 0.25):
+            ax.plot([xi, xi+0.15], [z_tamp+0.05, z_tamp+0.30], color=C_ACCENT, lw=1, alpha=0.5)
+        # Flèche réinjection
+        ax.annotate("", xy=(0.0, z_som + 0.15),
+                    xytext=(0.0, z_tamp + 0.45),
+                    arrowprops=dict(arrowstyle="->", color=C_PIEZO, lw=2.0))
+
+    ax.set_title(titre, fontsize=9, color=C_ACCENT if "Niveau 3" in titre or "Niveau 4" in titre
+                 else C_CHARGE if "Niveau 2" in titre else C_PIEZO, fontweight="bold")
+
+fig.suptitle("Gradation des dysfonctionnements — Figure canonique de l'événement extrême",
+             fontsize=10.5)
+fig.tight_layout()
+plt.show()
+```
+
+**Niveau 1 — Mise en charge :** le collecteur est plein, la pression monte au-dessus du sommet. L'eau ne déborde pas encore — elle est sous pression dans le réseau. La fente de Preissmann permet de le simuler en 1D.
+
+**Niveau 2 — Débordement au regard :** la pression dépasse la cote du tampon. L'eau sort par les bouches d'égout — le modèle 1D peut calculer le volume débordé mais pas ce qu'il devient en surface.
+
+**Niveau 3 — Inondation de surface :** l'eau débordée s'écoule en surface, emprunte les rues comme des canaux, et peut réentrer dans le réseau par d'autres regards. Ce **cycle réseau→surface→réseau** est le phénomène de dual-drainage — il échappe entièrement au modèle 1D seul.
+
+**Niveau 4 — Saturation généralisée :** plusieurs tronçons simultanément en charge, déversoirs à pleine capacité, stations de pompage à pleine puissance.
+
+### Les mécanismes déclencheurs
+
+Un événement extrême résulte presque toujours d'une **combinaison de mécanismes** — le bousculement aval a été introduit en note **2.B1** (callout « cause fréquente d'inondation sous-estimée ») ; la non-stationnarité du coefficient $C$ selon l'état hydrique est fondée en note **2.B2** (callout « difficultés spécifiques au calage pluvial »).
+
+```{python}
+#| label: fig-conjonction-mecanismes
+#| fig-cap: "Diagramme conceptuel de l'événement extrême comme conjonction de mécanismes. Chaque cercle représente un facteur déclencheur partiel : pluie intense et localisée, crue de la rivière réceptrice (bousculement aval), sol saturé et ECP élevées, défaillance d'un ouvrage. La zone d'intersection centrale (rouge foncé) représente le scénario du pire — la conjonction simultanée de plusieurs facteurs, statistiquement rare mais ayant des conséquences catastrophiques. Dimensionner pour la pluie seule ignore les trois autres cercles."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+fig, ax = plt.subplots(figsize=(7.5, 5.5))
+ax.set_xlim(-3.5, 3.5); ax.set_ylim(-3.2, 3.5); ax.axis("off")
+
+from matplotlib.patches import Circle
+
+centres = [(0.0, 1.2), (-1.2, -0.8), (1.2, -0.8), (0.0, -2.2)]
+labels  = ["Pluie intense\nlocalisée\n(orage convectif)",
+           "Bousculement aval\n(rivière en crue\nsimultanée)",
+           "Sol saturé +\nECP élevées\n(antécédent pluvieux)",
+           "Défaillance ouvrage\n(pompe, clapet,\nvanne bloquée)"]
+r = 1.8
+for (cx, cy), lbl in zip(centres, labels):
+    c = Circle((cx, cy), r, fc=C_CHARGE+"15", ec=C_CHARGE, lw=2.0)
+    ax.add_patch(c)
+    dx = cx*0.8; dy = cy*0.8
+    ax.text(cx + dx, cy + dy, lbl, ha="center", va="center",
+            fontsize=8, color=C_CHARGE)
+
+# Zone centrale
+c_centre = Circle((0, 0), 0.65, fc=C_ACCENT+"cc", ec=C_ACCENT, lw=2.5, zorder=5)
+ax.add_patch(c_centre)
+ax.text(0, 0, "Scénario\ndu pire", ha="center", va="center",
+        fontsize=8.5, color="white", fontweight="bold", zorder=6)
+
+ax.set_title("Événement extrême = conjonction de mécanismes", fontsize=10.5)
+fig.tight_layout()
+plt.show()
+```
+
+### Capacité de transit vs capacité de stockage
+
+La **capacité de transit** est le débit maximal que le réseau peut évacuer — c'est la grandeur que dimensionne l'approche permanente de la note **2.B1**. La **capacité de stockage** est le volume temporairement retenu dans les collecteurs lors d'une pointe — ignorée en permanent, très significative pour les événements extrêmes.
+
+```{python}
+#| label: fig-transit-stockage
+#| fig-cap: "Comparaison du comportement de deux collecteurs face au même hydrogramme amont ($Q_{max}=150$ L/s, $t_c=30$ min). Collecteur A (grand diamètre / faible pente, trait plein) : forte capacité de stockage — le pic est fortement écrêté ($Q_{aval,max} \\approx 95$ L/s) et décalé dans le temps. Collecteur B (petit diamètre / forte pente, tirets) : faible capacité de stockage — le pic est quasi-intégralement transmis ($Q_{aval,max} \\approx 140$ L/s). Ce comportement différentiel n'est capturablé qu'avec un modèle transitoire ; le modèle permanent ne 'voit' pas cette distinction."
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.ndimage import gaussian_filter1d
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+t = np.linspace(0, 120, 400)
+# Hydrogramme amont
+Q_in = np.where(t < 5, 10,
+       np.where(t < 35, 10 + 140*(t-5)/30 * np.exp(-((t-5)/12)**1.5),
+       10 * np.exp(-(t-35)/30)))
+Q_in = gaussian_filter1d(Q_in, sigma=5)
+
+# Grand diamètre / faible pente → fort stockage → fort écrêtement + décalage
+Q_A = gaussian_filter1d(np.interp(t - 12, t, Q_in, left=Q_in[0]) * 0.65, sigma=18)
+Q_A = np.maximum(Q_A, 5)
+
+# Petit diamètre / forte pente → faible stockage → peu d'écrêtement
+Q_B = gaussian_filter1d(Q_in * 0.93, sigma=4)
+Q_B = np.maximum(Q_B, 5)
+
+fig, ax = plt.subplots(figsize=(8.5, 4.2))
+ax.plot(t, Q_in, color="#aaa",   lw=2.0, ls=":",  label="Hydrogramme amont (entrée)")
+ax.plot(t, Q_A,  color=C_CHARGE, lw=2.8,           label="Collecteur A — grand Ø, faible pente (fort stockage)")
+ax.plot(t, Q_B,  color=C_PIEZO,  lw=2.2, ls="--",  label="Collecteur B — petit Ø, forte pente (faible stockage)")
+
+ax.annotate(f"$Q_{{A,max}} \\approx {Q_A.max():.0f}$ L/s",
+            xy=(t[np.argmax(Q_A)], Q_A.max()),
+            xytext=(t[np.argmax(Q_A)]+5, Q_A.max()+8),
+            arrowprops=dict(arrowstyle="->", color=C_CHARGE), fontsize=8.5, color=C_CHARGE)
+ax.annotate(f"$Q_{{B,max}} \\approx {Q_B.max():.0f}$ L/s",
+            xy=(t[np.argmax(Q_B)], Q_B.max()),
+            xytext=(t[np.argmax(Q_B)]+5, Q_B.max()-15),
+            arrowprops=dict(arrowstyle="->", color=C_PIEZO), fontsize=8.5, color=C_PIEZO)
+
+ax.set_xlabel("Temps (min)", fontsize=9)
+ax.set_ylabel("Débit (L/s)", fontsize=9)
+ax.set_title("Transit vs stockage — Deux comportements limites en événement extrême", fontsize=10)
+ax.legend(fontsize=8.5)
+ax.set_xlim(0, 120); ax.set_ylim(0)
+ax.grid(alpha=0.2); ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+---
+
+## Saint-Venant transitoire : le modèle complet
+
+### Ce que le transitoire capture que le permanent manque
+
+Les équations de Saint-Venant transitoires contiennent les termes $\partial/\partial t$ qui décrivent l'évolution temporelle (renvoi note **0.1**, cascade dimensionnelle). Pour les événements extrêmes, cette dynamique est précisément ce qui importe : propagation de la mise en charge, effet de stockage, dynamique amont/aval bidirectionnelle.
+
+::: {.callout-warning}
+## Alerte modélisation — En transitoire, Manning-Strickler n'est plus une loi débit-hauteur
+
+C'est l'erreur conceptuelle la plus fréquente au passage du dimensionnement à la surcharge. En régime permanent uniforme (note **2.B1**), on écrit $Q = K_s A R_h^{2/3} S_0^{1/2}$ parce que l'hypothèse uniforme impose $S_f = S_0$. Dès qu'il y a surcharge, remous ou front de mise en charge, **cette égalité tombe** : $S_f \neq S_0$, et les termes $\partial Q/\partial t$, $\partial(Q^2/A)/\partial x$ et $gA\,\partial h/\partial x$ ne sont plus négligeables. Manning-Strickler ne disparaît pas pour autant — mais il **change de statut** : il n'est plus la relation débit-hauteur globale du tronçon, il redevient ce qu'il est fondamentalement (renvoi note **0.1**, « Qui conserve quoi ? Qui ferme quoi ? »), c'est-à-dire la **fermeture locale du seul terme $S_f$** dans l'équation de quantité de mouvement de Saint-Venant :
+
+$$\frac{\partial Q}{\partial t} + \frac{\partial}{\partial x}\!\left(\frac{Q^2}{A}\right) + gA\frac{\partial h}{\partial x} = gA\!\left(S_0 - \underbrace{S_f}_{\text{fermé par Manning}}\right), \quad S_f = \frac{Q^2}{K_s^2 A^2 R_h^{4/3}}$$
+
+Conséquence pratique : appliquer $Q = K_s A R_h^{2/3} S_0^{1/2}$ pour estimer un débit en tronçon surchargé est un usage hors domaine — exactement le piège que la fente de Preissmann permet d'éviter.
+:::
+
+::: {.callout-note}
+## Le coin du puriste — La fente de Preissmann : Saint-Venant n'est pas réservé à la surface libre
+
+La fente de Preissmann est l'illustration opérationnelle d'un point établi en note **0.1** (« La frontière charge/surface libre est culturelle, pas physique ») : les équations de Saint-Venant ne sont **pas intrinsèquement limitées à la surface libre**. L'artifice consiste précisément à transformer l'écoulement en charge en une pseudo-surface libre quasi-incompressible, ce qui permet de résoudre *la même* conservation de quantité de mouvement (fermée par le même Manning) de part et d'autre de la mise en charge, sans changer de jeu d'équations. C'est la contrepartie exacte, côté assainissement, du fait que Bernoulli s'applique pleinement à la surface libre via la charge spécifique : la ligne de partage est la projection choisie (énergie vs quantité de mouvement), pas le domaine d'application.
+:::
+
+### Le schéma de Preissmann implicite
+
+Le **schéma de Preissmann** (1961) est le schéma de discrétisation standard pour Saint-Venant en réseau d'assainissement (SWMM, CANOE, Infoworks ICM). C'est un schéma implicite à 4 points évaluant les termes à un instant intermédiaire $t + \theta\Delta t$ (renvoi note **0.1** pour la distinction explicite/implicite et la condition CFL) :
+
+$$f \approx \frac{\theta \bigl(f_{i+1}^{n+1} + f_i^{n+1}\bigr) + (1-\theta)\bigl(f_{i+1}^n + f_i^n\bigr)}{2}$$
+
+$\theta \in [0{,}5 ; 1]$ est le coefficient de pondération temporelle :
+- $\theta = 0{,}5$ (Crank-Nicolson) : précision d'ordre 2, mais peut présenter des oscillations numériques
+- $\theta = 1$ : totalement implicite, précision d'ordre 1, très stable mais légèrement dissipatif
+- En pratique : $\theta = 0{,}6$ à $0{,}7$ est souvent le meilleur compromis
+
+```{python}
+#| label: fig-grille-preissmann
+#| fig-cap: "Schéma à 4 points de Preissmann dans le plan $(x, t)$. Les 4 nœuds de la maille élémentaire sont $(i, n)$, $(i+1, n)$, $(i, n+1)$, $(i+1, n+1)$. L'équation est évaluée au point $P = (x_{i+1/2}, t_n + \\theta\\Delta t)$ : $\\theta=0$ donne un schéma explicite centré (instable) ; $\\theta=1$ donne un schéma totalement implicite (stable, légèrement dissipatif) ; $\\theta=0{,}6$ est le compromis pratique standard. La propriété fondamentale : le schéma est inconditionnellement stable pour $\\theta \\geq 0{,}5$ — on peut choisir $\\Delta t$ sans contrainte CFL sur les ondes. En revanche, la précision se dégrade si $\\Delta t$ est trop grand par rapport au temps de montée de l'hydrogramme."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+fig, ax = plt.subplots(figsize=(7.5, 5.0))
+ax.set_xlim(-0.5, 3.5); ax.set_ylim(-0.5, 3.5); ax.axis("off")
+
+# Grille
+for xi in [0, 1, 2, 3]:
+    ax.axvline(xi, color="#ddd", lw=1)
+for ti in [0, 1, 2, 3]:
+    ax.axhline(ti, color="#ddd", lw=1)
+
+# Nœuds de la maille élémentaire
+nœuds = [(1, 1), (2, 1), (1, 2), (2, 2)]
+labels_n = ["$(i,n)$", "$(i+1,n)$", "$(i,n+1)$", "$(i+1,n+1)$"]
+for (xi, ti), lbl in zip(nœuds, labels_n):
+    ax.scatter([xi], [ti], color=C_CHARGE, s=120, zorder=6)
+    dx = -0.35 if xi == 1 else +0.10
+    dy = -0.20 if ti == 1 else +0.10
+    ax.text(xi+dx, ti+dy, lbl, fontsize=9, color=C_CHARGE)
+
+# Point P (évaluation)
+theta = 0.6
+xP = 1.5; tP = 1 + theta
+ax.scatter([xP], [tP], color=C_ACCENT, s=200, zorder=7, marker="*")
+ax.text(xP+0.12, tP+0.10,
+        f"$P = (x_{{i+1/2}},\\ t_n + \\theta\\Delta t)$\n$\\theta={theta}$",
+        fontsize=9.5, color=C_ACCENT)
+
+# Flèches de pondération
+for (xi, ti) in nœuds:
+    ax.annotate("", xy=(xP, tP), xytext=(xi, ti),
+                arrowprops=dict(arrowstyle="->", color="#bbb", lw=1.2))
+
+# Axes labels
+ax.text(1.5, -0.35, "$x_{i+1/2}$", ha="center", fontsize=9, color="#555")
+ax.text(-0.35, 1.6, "$t_n + \\theta\\Delta t$", ha="center",
+        fontsize=9, color="#555", rotation=90)
+ax.text(1, -0.35, "$x_i$", ha="center", fontsize=9, color=C_CHARGE)
+ax.text(2, -0.35, "$x_{i+1}$", ha="center", fontsize=9, color=C_CHARGE)
+ax.text(-0.3, 1, "$t_n$", ha="center", fontsize=9, color=C_CHARGE)
+ax.text(-0.3, 2, "$t_{n+1}$", ha="center", fontsize=9, color=C_CHARGE)
+
+ax.set_title("Schéma à 4 points de Preissmann — Pondération spatiale et temporelle", fontsize=10.5)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-warning}
+## Alerte modélisation — Stabilité inconditionnelle ≠ précision inconditionnelle
+
+Un schéma implicite ne diverge pas pour un grand pas de temps — mais ses résultats peuvent être imprécis. Si $\Delta t$ est trop grand, les variations rapides de l'hydrogramme (front de montée, pointe) sont lissées. En pratique : 1 à 5 min pour les événements pluvieux urbains ; 10 à 30 s pour les transitoires très rapides (remplissage d'un collecteur vide).
+:::
+
+### Le pas de temps adaptatif
+
+Les logiciels modernes utilisent un **pas de temps adaptatif** : réduit automatiquement lors des gradients forts (front de mise en charge, transition surface libre/charge), augmenté lors des phases tranquilles. Cette adaptation maintient la précision aux moments critiques sans pénaliser le temps de calcul.
+
+---
+
+## La fente de Preissmann : fonctionnement détaillé
+
+### Rappel du principe
+
+La **fente de Preissmann** (Preissmann & Cunge, 1961) est l'artifice numérique permettant de simuler la transition surface libre/charge sans changer les équations résolues (annoncée en note **0.1**). On suppose une fente virtuelle de largeur $T_s$ au sommet de la conduite.
+
+Lorsque $h \leq D$ : section réelle, équations Saint-Venant normales.
+
+Lorsque $h > D$ : hauteur fictive dans la fente. Pression au sommet de la conduite :
+
+$$P = \rho g (h - D)$$
+
+```{python}
+#| label: fig-fente-preissmann
+#| fig-cap: "Coupe en travers d'un collecteur circulaire DN 500 illustrant la fente de Preissmann. **Gauche** (surface libre, $h < D$) : section mouillée réelle (bleu), ligne d'eau à la hauteur $h$. **Droite** (mise en charge, $h > D$) : la conduite est pleine ; la hauteur fictive $h > D$ monte dans la fente virtuelle de largeur $T_s$ au sommet. La pression au sommet est $P = \\rho g (h-D)$ ; le débit dans la fente est négligeable ($T_s \\ll D$). La célérité artificielle $c_s = \\sqrt{gA/T_s}$ est réglée par le choix de $T_s$ — compromis entre stabilité (fente large) et précision (fente étroite)."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(9, 5.0))
+
+D = 1.0
+for ax, titre, h_eau, en_charge in [(ax1, "Surface libre ($h < D$)", 0.60, False),
+                                     (ax2, "Mise en charge ($h > D$)", 1.55, True)]:
+    ax.set_xlim(-1.0, 1.0); ax.set_ylim(-0.2, 2.2); ax.axis("off")
+
+    # Paroi conduite
+    theta_p = np.linspace(0, 2*np.pi, 200)
+    xp = 0.5*np.cos(theta_p); yp = D/2 + 0.5*np.sin(theta_p)
+    ax.fill(xp, yp, color="#e8e8e8", zorder=2)
+    ax.plot(xp, yp, color="#777", lw=2.5, zorder=3)
+
+    # Eau
+    h_eff = min(h_eau, D)
+    theta_w = np.linspace(-np.pi, 0, 200)
+    xw = 0.5*np.cos(theta_w)
+    yw = D/2 + 0.5*np.sin(theta_w)
+    yw_clip = np.minimum(yw, h_eff)
+    ax.fill_between(xw, 0, yw_clip, color=C_PIEZO, alpha=0.55, zorder=4)
+
+    # Fente virtuelle (en charge)
+    if en_charge:
+        Ts = 0.08
+        ax.fill_between([-Ts/2, Ts/2], [D, D], [h_eau, h_eau],
+                        color=C_CHARGE, alpha=0.6, zorder=5)
+        ax.plot([-Ts/2, -Ts/2, Ts/2, Ts/2],
+                [D, h_eau, h_eau, D], color=C_CHARGE, lw=2, zorder=6)
+        ax.annotate("", xy=(0.25, h_eau), xytext=(0.25, D),
+                    arrowprops=dict(arrowstyle="<->", color=C_CHARGE, lw=1.8))
+        ax.text(0.35, (D+h_eau)/2, "$h-D$\n$P=\\rho g(h-D)$",
+                fontsize=8, color=C_CHARGE, va="center")
+        ax.text(0, h_eau+0.08, f"$h = {h_eau}$ m (fictif)",
+                ha="center", fontsize=8.5, color=C_CHARGE)
+        ax.annotate("", xy=(-Ts/2-0.05, D+0.05), xytext=(Ts/2+0.05, D+0.05),
+                    arrowprops=dict(arrowstyle="<->", color=C_ACCENT, lw=1.5))
+        ax.text(0, D+0.18, f"$T_s$ (fente)", ha="center", fontsize=8.5, color=C_ACCENT)
+    else:
+        ax.axhline(h_eff, color=C_PIEZO, lw=2.0, ls="--", xmin=0.1, xmax=0.9)
+        ax.text(0.55, h_eff+0.05, f"$h = {h_eau}$ m", fontsize=8.5, color=C_PIEZO)
+
+    ax.annotate("", xy=(-0.55, h_eff), xytext=(-0.55, 0),
+                arrowprops=dict(arrowstyle="<->", color="#888", lw=1.5))
+    ax.text(-0.75, h_eff/2, "$h$", ha="center", fontsize=9, color="#555")
+    ax.annotate("", xy=(-0.55, D), xytext=(-0.55, 0),
+                arrowprops=dict(arrowstyle="<->", color="#bbb", lw=1.0))
+    ax.text(-0.82, D/2, "$D$", ha="center", fontsize=9, color="#888")
+    ax.set_title(titre, fontsize=9.5,
+                 color=C_CHARGE if en_charge else C_PIEZO, fontweight="bold")
+
+fig.suptitle("Fente de Preissmann — Section circulaire : surface libre vs mise en charge", fontsize=10.5)
+fig.tight_layout()
+plt.show()
+```
+
+### La largeur de fente et la célérité artificielle
+
+La largeur $T_s$ définit la **célérité artificielle des ondes de pression** en régime de charge simulé :
+
+$$c_s = \sqrt{\frac{gA}{T_s}}$$
+
+La célérité réelle des ondes en conduite sous pression est 800 à 1 200 m/s (formule de Korteweg, développée en note **2.A2** — renvoi fort : c'est précisément pourquoi la fente ne modélise pas les coups de bélier). Les logiciels maintiennent $c_s \in [50 ; 300]$ m/s par choix de $T_s$.
+
+```{python}
+#| label: fig-celerite-artificielle
+#| fig-cap: "Célérité artificielle $c_s = \\sqrt{gA/T_s}$ en fonction de la largeur de fente $T_s$ (échelle log) pour une conduite DN 500 ($A = 0{,}196$ m²). La bande verte indique la plage typique des logiciels (50–300 m/s) correspondant à des fentes de $0{,}2$–$7$ cm. La bande rouge indique la célérité réelle des ondes de Korteweg (800–1200 m/s, note 2.A2) — atteinte pour une fente de $0{,}15$–$0{,}5$ mm, trop étroite pour la stabilité numérique. Le compromis : $T_s$ assez large pour la stabilité (50–300 m/s), assez étroit pour limiter l'erreur de bilan de masse."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+D = 0.50; A_ps = np.pi*D**2/4; g = 9.81
+Ts_arr = np.logspace(-4, -1, 300)  # m
+cs_arr = np.sqrt(g * A_ps / Ts_arr)
+
+fig, ax = plt.subplots(figsize=(8, 4.0))
+ax.loglog(Ts_arr*100, cs_arr, color=C_CHARGE, lw=2.5, label="$c_s = \\sqrt{gA/T_s}$")
+
+ax.axhspan(50, 300,   alpha=0.15, color=C_PIEZO,  label="Plage logiciels (50–300 m/s)")
+ax.axhspan(800, 1200, alpha=0.15, color=C_ACCENT,  label="Célérité Korteweg réelle (note 2.A2)")
+
+ax.set_xlabel("Largeur de fente $T_s$ (cm)", fontsize=9)
+ax.set_ylabel("Célérité artificielle $c_s$ (m/s)", fontsize=9)
+ax.set_title(f"Célérité artificielle vs largeur de fente — DN {int(D*1000)}", fontsize=10)
+ax.legend(fontsize=8.5)
+ax.grid(alpha=0.2, which="both"); ax.tick_params(labelsize=8.5)
+ax.set_xlim(Ts_arr.min()*100, Ts_arr.max()*100)
+fig.tight_layout()
+plt.show()
+```
+
+### Le compromis précision/stabilité
+
+**Fente trop étroite** ($T_s \to 0$) : célérité artificielle très élevée → oscillations numériques au passage de la transition.
+
+**Fente trop large** ($T_s$ grand) : stockage fictif d'eau dans la fente → erreur de bilan de masse et sous-estimation de la pression.
+
+En pratique, $T_s = 10^{-3}$ à $10^{-2}$ fois la largeur au sommet de la conduite est le réglage standard des logiciels.
+
+::: {.callout-warning}
+## Alerte modélisation — La fente de Preissmann et les pressions maximales
+
+La fente modélise correctement la mise en charge jusqu'à quelques bars. Pour des pressions très élevées (conduites à forte pression statique, stations de refoulement), l'erreur introduite par la fente peut devenir significative. Dans ces cas, un couplage explicite entre modèle Saint-Venant (surface libre) et modèle réseau sous pression (type EPANET) est préférable — c'est l'approche d'Infoworks ICM, Mike Urban+. Pour les coups de bélier au sens strict, la méthode des caractéristiques de la note **2.A2** reste indispensable.
+:::
+
+---
+
+## Le dual-drainage : couplage réseau et surface
+
+### Le principe : deux réseaux superposés
+
+```{python}
+#| label: fig-dual-drainage-schema
+#| fig-cap: "Schéma conceptuel du dual-drainage : coupe transversale d'une rue urbaine montrant le réseau souterrain (collecteur en bleu foncé) et le réseau de surface (rue en vert). Les échanges sont bidirectionnels aux regards/bouches d'égout : débordement du réseau vers la surface (flèche rouge, quand $H_{réseau} > z_{tampon}$) et réinjection de la surface vers le réseau (flèche bleue, quand $h_{surface} > 0$). La capacité d'absorption d'un avaloir standard (10–30 L/s) est souvent très inférieure au débit de débordement lors d'un événement extrême — l'eau s'accumule donc en surface malgré les bouches d'égout ouvertes."
+import matplotlib.pyplot as plt
+from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
+import numpy as np
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+fig, ax = plt.subplots(figsize=(9.5, 4.8))
+ax.set_xlim(0, 12); ax.set_ylim(0, 5.5); ax.axis("off")
+
+# Sol / rue
+ax.fill_between([0, 12], [2.5, 2.5], [3.2, 3.2], color="#c8a96e", alpha=0.5)
+ax.fill_between([0, 12], [3.2, 3.2], [3.6, 3.6], color="#888888", alpha=0.5)  # bitume
+ax.text(6, 3.38, "Rue (surface de ruissellement — réseau de surface)", ha="center",
+        fontsize=8.5, color="white", fontweight="bold")
+
+# Bâtiments
+for xb in [0.5, 9.5]:
+    b = FancyBboxPatch((xb, 3.6), 1.8, 1.6,
+        boxstyle="square,pad=0", fc="#dde", ec="#999", lw=1.5)
+    ax.add_patch(b)
+
+# Collecteur
+theta = np.linspace(0, 2*np.pi, 100)
+xc = 6 + 0.6*np.cos(theta); yc = 1.5 + 0.6*np.sin(theta)
+ax.fill(xc, yc, color=C_CHARGE+"55")
+ax.plot(xc, yc, color=C_CHARGE, lw=2.5)
+ax.text(6, 1.5, "Collecteur\n(réseau souterrain)", ha="center", va="center",
+        fontsize=7.5, color=C_CHARGE, fontweight="bold")
+
+# Regard
+ax.fill_between([5.8, 6.2], [2.1, 2.1], [3.2, 3.2], color="#aaa", alpha=0.6)
+ax.add_patch(plt.Rectangle((5.65, 3.18), 0.7, 0.06, fc="#555", ec="#333"))
+
+# Eau surface (inondation)
+ax.fill_between([2, 10], [3.6, 3.6], [4.1, 4.1], color=C_ACCENT, alpha=0.30)
+ax.text(6, 3.82, "Eau en surface ($h_{surface} > 0$)", ha="center", fontsize=8, color=C_ACCENT)
+
+# Échanges
+ax.annotate("", xy=(5.9, 3.2), xytext=(5.9, 2.15),
+            arrowprops=dict(arrowstyle="->", color=C_ACCENT, lw=3.0))
+ax.text(5.0, 2.65, "Débordement\n$Q = C_d A\\sqrt{2g\\Delta H}$",
+        ha="right", fontsize=7.5, color=C_ACCENT)
+ax.annotate("", xy=(6.1, 2.15), xytext=(6.1, 3.2),
+            arrowprops=dict(arrowstyle="->", color=C_PIEZO, lw=2.0))
+ax.text(7.0, 2.65, "Réinjection\n$Q = C_d A_{avaloir}\\sqrt{2g h_s}$",
+        ha="left", fontsize=7.5, color=C_PIEZO)
+
+ax.set_title("Dual-drainage — Deux réseaux superposés, échanges bidirectionnels aux regards", fontsize=10.5)
+fig.tight_layout()
+plt.show()
+```
+
+Le dual-drainage reconnaît que l'eau en ville circule simultanément dans deux réseaux superposés : le **réseau souterrain** (dimensionné pour les événements fréquents) et le **réseau de surface** (le « réseau d'urgence » pour les événements rares).
+
+### Les échanges réseau/surface : modélisation des regards
+
+L'échange réseau↔surface est modélisé par une loi d'orifice (renvoi note **0.3** pour la formalisation des conditions aux limites internes) :
+
+**Débordement (réseau → surface) :**
+$$Q_{débordement} = C_d \cdot A_{ouverture} \cdot \sqrt{2g\,(H_{réseau} - z_{tampon})}$$
+
+**Réinjection (surface → réseau) :**
+$$Q_{réinjection} = C_d \cdot A_{avaloir} \cdot \sqrt{2g\,h_{surface}}$$
+
+La capacité d'absorption d'un avaloir standard est limitée à 10–30 L/s.
+
+::: {.callout-note}
+## Le coin du puriste — Couplage réseau/surface : régularisation numérique
+
+Structure Python pédagogique (esquisse non livrée) :
+
+```python
+def flux_orifice(H_reseau, z_tampon, h_surface, A_ouverture, C_d=0.6, g=9.81,
+                 epsilon=0.01):
+    """
+    Flux d'échange réseau ↔ surface à un regard (signé).
+    Positif = débordement (réseau → surface)
+    Négatif = réinjection (surface → réseau)
+    epsilon : régularisation au voisinage du seuil (évite oscillations numériques)
+    """
+    dH_debord = H_reseau - z_tampon          # > 0 si réseau en charge
+    dH_reinjection = h_surface               # hauteur d'eau en surface
+
+    if dH_debord > epsilon:                  # débordement franche
+        Q = C_d * A_ouverture * (2*g*dH_debord)**0.5
+    elif dH_debord < -epsilon:               # réinjection si eau en surface
+        Q = -C_d * A_ouverture * (2*g*max(dH_reinjection, 0))**0.5
+    else:                                    # transition lissée
+        alpha = (dH_debord + epsilon) / (2*epsilon)
+        Q_deb = C_d * A_ouverture * (2*g*epsilon)**0.5
+        Q_rei = -C_d * A_ouverture * (2*g*max(dH_reinjection, 0))**0.5
+        Q = alpha * Q_deb + (1-alpha) * Q_rei
+    return Q
+```
+
+La régularisation autour du seuil ($\epsilon$) est essentielle pour la stabilité numérique — sans elle, le modèle peut osciller entre débordement et réinjection à chaque pas de temps. Renvoi SWMM (module SURFACE) / Infoworks ICM 2D pour l'implémentation industrielle.
+:::
+
+### Modélisation 1D/1D : deux réseaux couplés
+
+L'approche 1D/1D modélise le réseau de surface comme un second réseau de collecteurs à ciel ouvert (rues et caniveaux). Les deux réseaux sont couplés aux nœuds d'échange par les lois d'orifice. Simple à mettre en œuvre dans les logiciels existants ; géométrie des rues schématisée.
+
+### Modélisation 1D/2D : réseau couplé à un modèle de surface 2D
+
+L'approche 1D/2D couple le réseau 1D avec un modèle Saint-Venant 2D calculant l'écoulement sur toute la surface urbaine — rues, trottoirs, places, espaces verts. Indispensable pour les études d'aléa réglementaires ; nécessite un MNT < 1 m de résolution. Le Saint-Venant 2D, le maillage et les méthodes volumes finis sont développés en note **3.2** (renvoi fort).
+
+```{python}
+#| label: fig-comparaison-1D-1D2D
+#| fig-cap: "Comparaison schématique des trois approches de modélisation du dual-drainage sur un même quartier urbain fictif (vue en plan). **Gauche** — Modèle 1D seul : seul le réseau souterrain est représenté (en bleu), la surface reste en gris uniforme. **Centre** — Modèle 1D/1D : les rues sont ajoutées comme canaux à ciel ouvert (en vert clair), échanges aux regards. **Droite** — Modèle 1D/2D : la carte des hauteurs d'eau en surface est calculée (gradient de couleur, du vert clair au rouge), révélant les zones d'accumulation que le 1D/1D ne peut pas localiser."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+fig, axes = plt.subplots(1, 3, figsize=(12, 4.5))
+titles = ["1D seul\n(réseau souterrain)", "1D / 1D\n(réseau + rues)", "1D / 2D\n(réseau + surface 2D)"]
+
+for ax, titre in zip(axes, titles):
+    ax.set_xlim(0, 10); ax.set_ylim(0, 10); ax.axis("off")
+
+    # Îlots bâtis
+    for (xb, yb) in [(1,1),(6,1),(1,6),(6,6),(3.5,3.5)]:
+        ax.add_patch(plt.Rectangle((xb, yb), 2.5, 2.5, fc="#dde", ec="#aaa", lw=1))
+
+    # Réseau souterrain (toujours présent)
+    for (x0,y0,x1,y1) in [(5,0,5,10),(0,5,10,5),(2,0,2,5),(2,5,5,5),(8,5,8,10)]:
+        ax.plot([x0,x1],[y0,y1], color=C_CHARGE, lw=3, zorder=4)
+    # Nœuds réseau
+    for (xi, yi) in [(5,5),(5,0),(5,10),(0,5),(10,5),(2,5)]:
+        ax.scatter([xi],[yi], color=C_CHARGE, s=60, zorder=5)
+
+    # Rues (1D/1D et 1D/2D)
+    if titre.startswith("1D / 1"):
+        for (x0,y0,x1,y1) in [(0,3.5,10,3.5),(0,6.5,10,6.5),(3.5,0,3.5,10),(6.5,0,6.5,10)]:
+            ax.plot([x0,x1],[y0,y1], color=C_PIEZO, lw=4, alpha=0.5, zorder=2)
+
+    # Carte hauteurs 2D
+    if "2D" in titre:
+        np.random.seed(42)
+        h_map = np.zeros((50, 50))
+        # Accumuler eau dans les creux topographiques
+        h_map[20:30, 20:30] += 0.6
+        h_map[35:45, 5:20]  += 0.4
+        h_map[5:15, 35:45]  += 0.3
+        from scipy.ndimage import gaussian_filter
+        h_map = gaussian_filter(h_map + np.random.rand(50,50)*0.05, sigma=5)
+        im = ax.imshow(h_map, cmap="RdYlGn_r", vmin=0, vmax=0.8,
+                       extent=[0,10,0,10], alpha=0.55, zorder=1)
+        # Réseau par-dessus
+        for (x0,y0,x1,y1) in [(5,0,5,10),(0,5,10,5),(2,0,2,5),(2,5,5,5),(8,5,8,10)]:
+            ax.plot([x0,x1],[y0,y1], color=C_CHARGE, lw=3, zorder=4)
+
+    ax.set_title(titre, fontsize=9.5, fontweight="bold", color=C_CHARGE)
+
+# Légende
+from matplotlib.lines import Line2D
+leg = [Line2D([0],[0], color=C_CHARGE, lw=3, label="Réseau souterrain"),
+       Line2D([0],[0], color=C_PIEZO,  lw=4, alpha=0.6, label="Rues (canaux 1D)")]
+axes[2].legend(handles=leg, fontsize=8, loc="lower right")
+
+fig.suptitle("Comparaison des approches — 1D / 1D-1D / 1D-2D", fontsize=10.5)
+fig.tight_layout()
+plt.show()
+```
+
+### Tableau comparatif
+
+| Critère | Modèle 1D seul | Modèle 1D/1D | Modèle 1D/2D |
+|---|---|---|---|
+| Calcul des débits en réseau | ✅ | ✅ | ✅ |
+| Volume débordé par regard | ✅ (bilan) | ✅ | ✅ |
+| Écoulement en surface | ❌ | ✅ (rues) | ✅ (complet) |
+| Cartographie des zones inondées | ❌ | Partielle | ✅ |
+| Hauteurs d'eau en surface | ❌ | Le long des rues | ✅ |
+| Temps de calcul | Faible | Moyen | Élevé |
+| Données nécessaires | SIG réseau | SIG réseau + rues | SIG réseau + MNT HR |
+
+: Comparaison des approches de modélisation du dual-drainage {#tbl-dual}
+
+---
+
+## Les ouvrages de régulation en événement extrême
+
+### Les déversoirs d'orage en surcharge
+
+En surcharge, deux situations : collecteur amont saturé (remous vers l'amont) et milieu récepteur en crue (déversoir noyé). La modélisation correcte nécessite une **condition aux limites aval dynamique** couplée avec un modèle hydraulique de la rivière réceptrice (renvoi note **0.3** pour les conditions aux limites internes ; note **3.3** pour le flux polluant déversé lors des événements extrêmes).
+
+### Les bassins de rétention : dimensionnement pour les événements rares
+
+L'efficacité d'un bassin dépend de son **état initial** en début d'événement. La simulation continue longue durée (note **2.B2**) est l'outil pour évaluer la probabilité que le bassin soit plein avant un événement extrême.
+
+```{python}
+#| label: fig-bassin-retention-antecedent
+#| fig-cap: "Hydrogramme entrant et sortant d'un bassin de rétention (volume utile 500 m³) pour deux scénarios d'antécédents. **Scénario A** (trait plein) : bassin vide en début d'événement — écrêtement quasi-total, débit sortant plafonné à 20 L/s. **Scénario B** (tirets) : bassin non vidangé à 70 % suite à un événement précédent — écrêtement très partiel, débit de pointe sortant proche de l'entrant. La courbe de remplissage (axe droit) montre le bassin B atteignant sa capacité maximale rapidement, déclenchant le déversoir de crue. Ce scénario, ignoré par les études événementielles, est évalué par simulation continue (note 2.B2)."
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.ndimage import gaussian_filter1d
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+t = np.linspace(0, 120, 500)
+Q_in_arr = np.where(t < 8, 20,
+           np.where(t < 45, 20 + 130*(t-8)/37*np.exp(-((t-8)/18)**2),
+           20*np.exp(-(t-45)/35)))
+Q_in_arr = gaussian_filter1d(Q_in_arr, sigma=6)
+
+V_utile = 500  # m³
+Q_sortie = 20  # L/s seuil débit sortant
+dt = t[1] - t[0]
+
+def simuler_bassin(Q_in, V_init):
+    V = np.zeros_like(Q_in); V[0] = V_init
+    Q_out = np.zeros_like(Q_in)
+    for i in range(1, len(Q_in)):
+        V_entrant = (Q_in[i-1] - Q_sortie) * dt * 60  # m³/min → m³
+        V[i] = np.clip(V[i-1] + V_entrant/1000, 0, V_utile)
+        Q_out[i] = Q_sortie if V[i] < V_utile else Q_in[i]
+    return V, Q_out
+
+V_A, Qout_A = simuler_bassin(Q_in_arr, 0)          # bassin vide
+V_B, Qout_B = simuler_bassin(Q_in_arr, 0.70*V_utile) # bassin à 70 %
+
+fig, ax1 = plt.subplots(figsize=(9, 4.2))
+ax1.plot(t, Q_in_arr, color="#aaa",   lw=2.0, ls=":",  label="Débit entrant")
+ax1.plot(t, Qout_A,   color=C_PIEZO,  lw=2.5,           label="Sortant — Scénario A (bassin vide)")
+ax1.plot(t, Qout_B,   color=C_ACCENT, lw=2.2, ls="--",  label="Sortant — Scénario B (bassin 70 % plein)")
+ax1.set_xlabel("Temps (min)", fontsize=9)
+ax1.set_ylabel("Débit (L/s)", fontsize=9)
+ax1.tick_params(axis="y", labelsize=8.5)
+
+ax2 = ax1.twinx()
+ax2.fill_between(t, 0, V_A, alpha=0.08, color=C_PIEZO)
+ax2.fill_between(t, 0, V_B, alpha=0.10, color=C_ACCENT)
+ax2.plot(t, V_A, color=C_PIEZO,  lw=1.5, ls="-.", alpha=0.7)
+ax2.plot(t, V_B, color=C_ACCENT, lw=1.5, ls="-.", alpha=0.7)
+ax2.axhline(V_utile, color="#888", lw=1, ls=":")
+ax2.text(2, V_utile+10, "Capacité utile max", fontsize=8, color="#888")
+ax2.set_ylabel("Volume stocké (m³)", fontsize=9)
+ax2.tick_params(axis="y", labelsize=8.5); ax2.set_ylim(0, V_utile*1.4)
+
+lines1, labs1 = ax1.get_legend_handles_labels()
+ax1.legend(lines1, labs1, fontsize=8.5, loc="upper right")
+ax1.set_title("Bassin de rétention — Effet de l'antécédent hydrologique", fontsize=10)
+ax1.grid(alpha=0.2); ax1.set_xlim(0, 120)
+fig.tight_layout()
+plt.show()
+```
+
+### Les clapets anti-retour : protection et risque
+
+Les clapets anti-retour protègent les zones basses mais peuvent piéger un sous-bassin actif. La fermeture brusque d'un clapet sur un collecteur en charge peut générer une surpression significative — renvoi note **2.A2** (« les clapets anti-retour sont des déclencheurs fréquents et sous-estimés ») pour la quantification.
+
+---
+
+## La modélisation des événements extrêmes : données et limites
+
+### Le problème de la validation sans données
+
+Par définition, on ne dispose pas de données de calage pour les événements rares. L'absence de validation directe oblige à s'appuyer sur des **proxys** : laisses de crue, témoignages et rapports d'événements, données CAT-NAT (dommages assurés), retours d'expérience post-événement (REX — la donnée de validation la plus précieuse, mais nécessitant une organisation spécifique de collecte).
+
+### L'analyse de sensibilité comme substitut à la validation
+
+L'analyse de sensibilité formelle (Sobol, Morris, développée en note **3.1**) permet de hiérarchiser les paramètres dominants.
+
+```{python}
+#| label: fig-tornado-sensibilite
+#| fig-cap: "Diagramme tornado de sensibilité pour un modèle d'événement extrême : impact relatif de la variation de chaque paramètre d'entrée (±20 % pour la pluie, ±30 % pour $C_{saturé}$, ±0,5 m pour la cote aval) sur deux sorties d'intérêt — volume total débordé (barres bleues) et nombre de regards dépassant leur cote tampon (barres vertes). L'intensité de la pluie domine les deux sorties : une incertitude de ±20 % sur la pluie induit ±40–50 % sur le volume débordé. C'est la hiérarchisation des incertitudes qui guide les efforts de collecte de données : mesurer mieux la pluie prime sur affiner $K_s$."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+params = ["Intensité pluie\n(±20 %)", "Coeff. ruissellement\n$C$ saturé (±30 %)",
+          "Cote rivière aval\n(±0,5 m)", "Rugosité $K_s$\n(±20 %)",
+          "Taille fente\n$T_s$ (±50 %)"]
+
+# Impact normalisé (valeurs indicatives)
+impact_vol_pos = [+45, +28, +18, +8, +3]
+impact_vol_neg = [-42, -25, -15, -7, -3]
+impact_nœuds_pos = [+38, +22, +20, +10, +2]
+impact_nœuds_neg = [-35, -20, -18, -9, -2]
+
+y = np.arange(len(params))
+fig, ax = plt.subplots(figsize=(8.5, 4.5))
+w = 0.35
+ax.barh(y + w/2, impact_vol_pos,  w, color=C_CHARGE+"bb", label="Volume débordé (+)")
+ax.barh(y + w/2, impact_vol_neg,  w, color=C_CHARGE+"44", label="Volume débordé (−)")
+ax.barh(y - w/2, impact_nœuds_pos, w, color=C_PIEZO+"bb",  label="Nb regards débordants (+)")
+ax.barh(y - w/2, impact_nœuds_neg, w, color=C_PIEZO+"44",  label="Nb regards débordants (−)")
+
+ax.axvline(0, color="k", lw=1)
+ax.set_yticks(y); ax.set_yticklabels(params, fontsize=9)
+ax.set_xlabel("Impact relatif sur la sortie (%)", fontsize=9)
+ax.set_title("Tornado — Hiérarchie des incertitudes du modèle d'événement extrême", fontsize=10)
+ax.legend(fontsize=8.5, loc="lower right", ncol=2)
+ax.grid(axis="x", alpha=0.2); ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-important}
+## Communiquer l'incertitude des événements extrêmes
+
+Les résultats d'un modèle d'événement extrême ne sont pas des prédictions précises — ce sont des **estimations entachées d'une incertitude significative**. Un résultat présenté sans fourchette (« le modèle prédit 450 maisons inondées ») induit une fausse précision. La bonne pratique : présenter une plage (« entre 300 et 600 maisons selon les hypothèses ») et expliquer d'où vient l'incertitude dominante. Renvoi note **3.6** (limites et responsabilité du modélisateur) pour la formalisation de cette posture.
+:::
+
+---
+
+## Du modèle à la décision : carte d'aléa et gestion des risques
+
+### Cartographie des zones inondables par débordement de réseau
+
+```{python}
+#| label: fig-carte-alea
+#| fig-cap: "Carte d'aléa schématique pour un quartier urbain fictif lors d'une pluie décennale. Les hauteurs d'eau maximales en surface sont représentées selon les 4 classes du @tbl-alea : vert clair ($h < 0{,}20$ m, aléa faible), jaune (0,20–0,50 m, moyen), orange (0,50–1,00 m, fort), rouge ($h \\geq 1{,}00$ m, très fort). Le réseau souterrain (en bleu foncé) est en surimpression ; les regards débordants sont marqués par un point rouge. Les zones en rouge correspondent aux creux topographiques où l'eau s'accumule — typiquement les carrefours en contre-bas et les accès souterrains. Ce livrable est central pour les études d'aléa réglementaires (PPRi, directive inondation)."
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.ndimage import gaussian_filter
+import matplotlib.patches as mpatches
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+np.random.seed(99)
+nx, ny = 80, 80
+h = np.zeros((ny, nx))
+
+# Creux topographiques → accumulation
+for (cx, cy, r, val) in [(20,20,10,1.2),(60,55,8,0.9),(40,40,6,0.6),
+                          (15,60,7,0.5),(65,20,9,0.7)]:
+    for xi in range(nx):
+        for yi in range(ny):
+            d = np.sqrt((xi-cx)**2+(yi-cy)**2)
+            if d < r:
+                h[yi,xi] += val*(1-d/r)
+
+h = gaussian_filter(h, sigma=3) + np.random.rand(ny,nx)*0.03
+h = np.clip(h, 0, 1.4)
+
+# Classes d'aléa
+from matplotlib.colors import ListedColormap, BoundaryNorm
+bounds = [0, 0.02, 0.20, 0.50, 1.00, 1.5]
+colors_alea = ["#f9f9f9", "#90EE90", "#FFD700", "#FF8C00", "#CC0000"]
+cmap_alea = ListedColormap(colors_alea)
+norm_alea = BoundaryNorm(bounds, len(colors_alea))
+
+fig, ax = plt.subplots(figsize=(7, 6.5))
+im = ax.imshow(h, cmap=cmap_alea, norm=norm_alea, extent=[0,10,0,10], origin="lower")
+
+# Réseau souterrain
+for (x0,y0,x1,y1) in [(5,0,5,10),(0,5,10,5),(2,0,2,5),(7,5,7,10),(3,7,5,7)]:
+    ax.plot([x0,x1],[y0,y1], color=C_CHARGE, lw=3, zorder=5)
+
+# Regards débordants
+debordes = [(2,5),(5,5),(3,7),(2.5,2.5),(6.5,5.5)]
+for (xr,yr) in debordes:
+    ax.scatter([xr],[yr], color=C_ACCENT, s=80, zorder=7, marker="o")
+
+# Légende
+patches = [mpatches.Patch(fc=c, ec="#aaa", label=l) for c, l in zip(colors_alea[1:],
+    ["Faible ($h<0{,}20$ m)", "Moyen (0,20–0,50 m)", "Fort (0,50–1,00 m)", "Très fort ($h\\geq 1{,}00$ m)"])]
+patches += [mpatches.Patch(fc=C_CHARGE, label="Réseau souterrain"),
+            plt.scatter([],[],color=C_ACCENT,s=60,marker="o",label="Regard débordant")]
+ax.legend(handles=patches, fontsize=8, loc="lower right",
+          title="Aléa inondation", title_fontsize=8)
+ax.set_xlabel("x (hm)", fontsize=9); ax.set_ylabel("y (hm)", fontsize=9)
+ax.set_title("Carte d'aléa — Pluie décennale (livrable de référence métier)", fontsize=10)
+ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+| Hauteur d'eau en surface | Niveau d'aléa | Conséquences typiques |
+|---|---|---|
+| $h < 0{,}20$ m | Faible | Mouillage des pieds, accès difficile |
+| $0{,}20 \leq h < 0{,}50$ m | Moyen | Inondation des caves, difficultés de circulation |
+| $0{,}50 \leq h < 1{,}00$ m | Fort | Inondation des rez-de-chaussée, risque pour les personnes |
+| $h \geq 1{,}00$ m | Très fort | Danger pour les personnes, dommages structurels |
+
+: Classes d'aléa inondation par hauteur d'eau {#tbl-alea}
+
+### Fréquence de débordement par nœud : de la simulation à la carte de risque
+
+La simulation longue durée (note **2.B2**) permet de calculer, pour chaque nœud, la **fréquence annuelle de débordement**. Elle permet de distinguer les points noirs chroniques (débordement plusieurs fois par an) des dysfonctionnements rares.
+
+::: {.callout-note}
+## Le coin du puriste — Calcul de la fréquence de débordement
+
+Structure Python pédagogique (esquisse non livrée) :
+
+```python
+def frequence_debordement(serie_charge_simulee, cote_tampon, pas_temps_h,
+                          n_annees, seuil_duree_min=5):
+    """
+    Calcule la fréquence annuelle de débordement à un nœud.
+    serie_charge_simulee : vecteur de charge hydraulique (m NGF)
+    cote_tampon          : cote du tampon de regard (m NGF)
+    pas_temps_h          : pas de temps en heures
+    n_annees             : durée de la simulation (ans)
+    seuil_duree_min      : durée minimale de dépassement pour compter un événement (min)
+    Retourne : fréquence annuelle (nombre d'événements/an)
+    """
+    depassement = serie_charge_simulee > cote_tampon
+    n_min_pas   = max(1, int(seuil_duree_min / (pas_temps_h * 60)))
+    # Identifier les événements (début + fin de dépassement)
+    transitions = np.diff(depassement.astype(int))
+    debuts      = np.where(transitions == 1)[0]
+    fins        = np.where(transitions == -1)[0]
+    # Filtrer les événements trop courts
+    n_evenements = sum(
+        (f - d) >= n_min_pas
+        for d, f in zip(debuts, fins[:len(debuts)])
+    )
+    return n_evenements / n_annees
+```
+
+Relie directement la simulation continue de la note **2.B2** à la carte de risque ici produite.
+:::
+
+```{python}
+#| label: fig-carte-frequence
+#| fig-cap: "Carte de la fréquence annuelle de débordement par nœud du réseau, calculée par simulation continue sur 20 ans (même réseau que la carte d'aléa). Couleur : vert ($<1$ événement/an), orange (1–3/an), rouge ($>3$/an, point noir chronique). Trois nœuds (rouge) constituent des points noirs chroniques à traiter en priorité. Les nœuds orange nécessitent une surveillance renforcée. La hiérarchisation des investissements découle directement de cette carte."
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+# Réseau fictif : nœuds et fréquences
+nœuds_pos = [(5,5),(5,0),(5,10),(0,5),(10,5),(2,5),(7,7),(3,7),(7,3),(2,2)]
+frequences = [3.8, 0.5, 0.8, 1.2, 0.3, 4.2, 1.8, 0.6, 3.1, 0.4]
+edges = [(0,1),(0,2),(0,3),(0,4),(0,5),(0,6),(0,7),(0,8),(5,9)]
+
+def freq_color(f):
+    if f > 3: return C_ACCENT
+    if f > 1: return "#e67e22"
+    return C_PIEZO
+
+fig, ax = plt.subplots(figsize=(7, 6.5))
+ax.set_xlim(-0.5, 10.5); ax.set_ylim(-0.5, 10.5)
+
+for (i, j) in edges:
+    x0,y0 = nœuds_pos[i]; x1,y1 = nœuds_pos[j]
+    ax.plot([x0,x1],[y0,y1], color=C_CHARGE, lw=2.5, zorder=3)
+
+for (xi, yi), freq in zip(nœuds_pos, frequences):
+    col = freq_color(freq)
+    ax.scatter([xi],[yi], s=250, color=col, zorder=5, edgecolors="white", lw=1.5)
+    ax.text(xi+0.18, yi+0.18, f"{freq:.1f}/an", fontsize=8, color=col)
+
+patches = [
+    mpatches.Patch(fc=C_PIEZO,   label="$< 1$/an (dysfonct. rare)"),
+    mpatches.Patch(fc="#e67e22", label="1–3/an (surveillance)"),
+    mpatches.Patch(fc=C_ACCENT,  label="$> 3$/an (point noir chronique)"),
+]
+ax.legend(handles=patches, fontsize=8.5, loc="upper right", title="Fréquence débordement")
+ax.set_xlabel("x (hm)", fontsize=9); ax.set_ylabel("y (hm)", fontsize=9)
+ax.set_title("Fréquence annuelle de débordement par nœud — 20 ans simulés", fontsize=10)
+ax.grid(alpha=0.15); ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+### Mesures de réduction du risque
+
+**Mesures structurelles sur le réseau :** renforcement des collecteurs sous-capacitaires, bassins de rétention, séparation des réseaux unitaires, amélioration des déversoirs.
+
+**Mesures de gestion à la source :** désimperméabilisation, noues et tranchées drainantes, toitures stockantes.
+
+**Mesures de résilience urbaine :** adaptation de l'urbanisme, systèmes d'alerte, sur-inondation contrôlée (*sponge cities*).
+
+### La résilience urbaine : concevoir pour l'extrême, pas seulement contre lui
+
+La philosophie qui émerge dans les approches les plus avancées est celle de la **résilience** plutôt que de la **résistance**. Résister signifie dimensionner pour contenir tout événement jusqu'à une certaine période de retour — coûteux et jamais totalement efficace. Être résilient signifie accepter que certains événements dépasseront les capacités et concevoir la ville pour que les dommages soient minimaux et la remise en état rapide.
+
+Cette philosophie se traduit par les **voies d'eau d'urgence** (*emergency spillways*) et les **espaces de sur-inondation consentie**. Le modèle hydraulique devient un outil de **conception de la résilience** autant qu'un outil de vérification de performance. Renvoi note **3.6** (limites et responsabilité du modélisateur) pour la formalisation transversale de cette posture.
+
+---
+
+## Conclusion
+
+La modélisation des événements extrêmes en assainissement est la discipline où les modèles sont les plus sophistiqués, les données les plus rares, et les enjeux les plus importants.
+
+**Premièrement**, un modèle non calé sur des événements observés est un outil d'exploration de scénarios, pas de prédiction — et il faut le présenter comme tel. **Deuxièmement**, la cartographie des incertitudes est aussi importante que la cartographie des résultats — un décideur qui ignore l'incertitude d'un modèle prend des décisions sur des bases fragiles. **Troisièmement**, la résilience urbaine est une approche complémentaire, pas alternative, à la modélisation hydraulique — concevoir la ville pour bien se comporter lors des événements extrêmes est un objectif que le modèle peut aider à atteindre, mais pas définir seul.
+
+---
+
+## Pour aller plus loin dans cette série
+
+**Fondements**
+
+- **Note 0.1** — *Généralités sur la modélisation* : statut de Manning comme fermeture de Saint-Venant, frontière culturelle charge/surface libre, distinction explicite/implicite et condition CFL
+- **Note 0.2** — *Énergie, charge et dégradation* : bilan d'énergie sous-jacent aux équations de Saint-Venant
+- **Note 0.3** — *Ouvrages et conditions aux limites* : déversoirs d'orage et clapets comme conditions aux limites internes ; loi d'orifice
+- **Note 0.4** — *Analyse dimensionnelle* : Froude, Strickler — fondent les termes de Saint-Venant
+
+**Entrée métier**
+
+- **Note 1.B** — *Modéliser un réseau d'assainissement* : statut de $K_s$ comme fermeture, dualité surface libre/charge annoncée
+- **Note 2.B1** — *Dimensionnement gravitaire* : régime permanent uniforme dont 2.B3 montre les limites en surcharge ; bousculement aval
+- **Note 2.B2** — *Modélisation pluviale* : hydrogrammes entrants + simulation longue durée pour la fréquence de débordement
+
+**Applications**
+
+- **Note 2.A2** — *Coups de bélier AEP* : célérité réelle des ondes (Korteweg) vs célérité artificielle de la fente ; fermeture de clapet anti-retour
+
+**Transversales**
+
+- **Note 3.1** — *Calage et validation* : analyse de sensibilité formelle (Sobol, Morris), gestion de l'équifinalité pour les modèles d'événements extrêmes
+- **Note 3.2** — *Quand le 1D ne suffit plus* : modélisation 2D de la surface, maillage, couplage 1D/2D
+- **Note 3.3** — *Qualité de l'eau et thermique* : flux polluants déversés au milieu naturel lors des événements extrêmes
+- **Note 3.6** — *Limites et responsabilité du modélisateur* : formalisation transversale de la philosophie résilience et de la communication de l'incertitude préfigurée ici

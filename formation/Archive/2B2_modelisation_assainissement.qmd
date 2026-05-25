@@ -1,0 +1,347 @@
+---
+title: "Modélisation pluviale : de la pluie au débit"
+subtitle: "Calage et validation d'un modèle d'assainissement pluvial"
+date: "2026-05-16"
+author: ""
+categories: [Hydraulique, Assainissement, Hydrologie, Modélisation, Ingénierie]
+page-layout: article
+toc: true
+toc-title: "Sommaire"
+toc-depth: 3
+number-sections: true
+lang: fr
+---
+
+::: {.callout-note}
+## Note de la série
+Cette note fait partie d'une série sur la modélisation des réseaux hydrauliques. Elle suppose la lecture des notes *Généralités sur la modélisation des réseaux hydrauliques*, *Modéliser un réseau d'assainissement — spécificités physiques et enjeux métier*, et *Dimensionnement d'un réseau gravitaire*. On aborde ici la chaîne complète pluie → ruissellement → débit dans le réseau, avec une attention particulière au calage et à ses difficultés spécifiques au contexte pluvial urbain.
+:::
+
+## La pluie comme donnée d'entrée : nature et représentations
+
+### Une variable aléatoire, spatiale et temporelle
+
+La pluie est fondamentalement différente des autres données d'entrée d'un modèle hydraulique. Un diamètre de conduite est une donnée géométrique mesurable avec précision. Une courbe de pompe est une caractéristique physique déterministe. La pluie, elle, est une **variable aléatoire** dans le temps et dans l'espace — elle ne se répète jamais exactement, et sa mesure en un point ne représente qu'imparfaitement ce qui tombe sur un bassin versant.
+
+Cette nature aléatoire est la source principale d'incertitude de toute modélisation pluviale. Même un modèle hydraulique parfaitement calé produira des résultats incertains si la pluie d'entrée est mal connue.
+
+### Les données disponibles
+
+**Le pluviographe** est l'instrument de mesure de référence. Il enregistre la hauteur de pluie en un point au pas de temps fin (1 à 5 minutes), permettant de reconstituer l'intensité instantanée. Sa limite est sa représentativité spatiale : un pluviographe représente typiquement un rayon de 5 à 15 km en zone de plaine, mais beaucoup moins en zone urbaine où les orages convectifs sont très localisés.
+
+**Le radar météorologique** fournit une image spatiale de la pluie sur une grille de 1 km × 1 km (produits Météo-France, réseau ARAMIS). Il est précieux pour les grands bassins versants et les études de ruissellement urbain étendu, mais sa précision en intensité est inférieure à celle du pluviographe — le signal radar mesure une réflectivité, pas directement une hauteur de pluie. La relation $Z = a \cdot R^b$ (Marshall-Palmer) qui convertit la réflectivité $Z$ en intensité de pluie $R$ est une source d'incertitude significative.
+
+**Les réanalyses climatiques** (ERA5, SAFRAN) reconstituent des champs de pluie historiques à partir de modèles météorologiques et de données d'observation. Utiles pour les études de changement climatique et les simulations longues durées, mais à résolution spatiale trop grossière (5 à 25 km) pour la modélisation urbaine fine.
+
+### La courbe IDF : l'outil statistique de référence
+
+La **courbe IDF** (Intensité-Durée-Fréquence) synthétise la statistique des pluies intenses en un lieu donné. Elle donne, pour une **durée** $d$ et une **fréquence** (ou période de retour $T$) données, l'intensité moyenne maximale $i(d, T)$ observée sur la série historique.
+
+Elle se lit ainsi : pour une durée de 30 minutes et une période de retour de 10 ans, l'intensité moyenne maximale est $i$ mm/h. Cela signifie qu'en moyenne, une pluie d'intensité supérieure à $i$ mm/h pendant 30 minutes consécutives survient une fois tous les 10 ans.
+
+Les courbes IDF sont établies par Météo-France à partir des séries longues des pluviographes. En France, les données sont disponibles via le portail Météo-France ou les études régionales (SHYREG, méthode du Gradex).
+
+### La période de retour : ce qu'elle signifie vraiment
+
+La notion de **période de retour** est l'une des plus mal comprises — et des plus mal communiquées — de l'hydrologie urbaine. Il est essentiel de la poser clairement.
+
+La période de retour $T$ d'un événement n'est **pas** "l'intervalle de temps entre deux occurrences de cet événement". C'est l'inverse de la probabilité annuelle de dépassement :
+
+$$T = \frac{1}{P(\text{événement dépassé en une année})}$$
+
+Une pluie décennale ($T = 10$ ans) a une probabilité $1/10 = 10\%$ d'être dépassée chaque année, indépendamment des années précédentes. Sur une durée de vie d'un ouvrage de 50 ans, la probabilité qu'une pluie décennale soit dépassée **au moins une fois** est :
+
+$$P = 1 - \left(1 - \frac{1}{T}\right)^n = 1 - \left(0{,}9\right)^{50} \approx 99{,}5\%$$
+
+::: {.callout-important}
+## Ce que cela signifie pour la communication avec les élus
+Un réseau dimensionné pour la pluie décennale sera très probablement mis en défaut au moins une fois dans sa vie de service. Ce n'est pas un défaut de conception — c'est la conséquence du choix de la période de retour, qui est un **choix politique et économique** (coût de l'ouvrage vs coût du dommage acceptable), pas un choix purement technique. L'ingénieur doit être capable d'expliquer cette réalité au maître d'ouvrage sans jargon.
+:::
+
+---
+
+## De la pluie brute à la pluie nette : le ruissellement
+
+### Le bilan hydrologique sur un bassin versant urbain
+
+Toute la pluie qui tombe sur un bassin versant ne rejoint pas le réseau d'assainissement. Une partie s'infiltre dans le sol, une partie s'évapore, une partie est interceptée par la végétation. Seule la fraction qui **ruisselle** sur les surfaces imperméabilisées atteint le réseau — c'est la **pluie nette** (ou pluie efficace).
+
+Le bilan s'écrit :
+
+$$P_{nette} = P_{brute} - I - E - F$$
+
+où $I$ est l'interception par la végétation, $E$ l'évapotranspiration, et $F$ l'infiltration dans le sol. En contexte urbain, $E$ et $I$ sont négligeables sur la durée d'un événement pluvieux intense (quelques heures) — c'est $F$ qui domine, et son estimation est le cœur du problème.
+
+### Le coefficient de ruissellement $C$
+
+La méthode la plus simple — et la plus utilisée en pratique courante — est d'exprimer la pluie nette comme une fraction de la pluie brute via le **coefficient de ruissellement** $C$ :
+
+$$P_{nette} = C \cdot P_{brute}, \quad 0 \leq C \leq 1$$
+
+$C$ est une propriété du bassin versant qui dépend principalement du **type de surface** :
+
+| Type de surface | $C$ typique |
+|---|---|
+| Toiture (béton, tuile, ardoise) | 0,85 — 0,95 |
+| Voirie bitumée | 0,80 — 0,90 |
+| Parking béton | 0,75 — 0,85 |
+| Trottoir pavé | 0,70 — 0,80 |
+| Espace vert tondu | 0,10 — 0,25 |
+| Jardin avec arbres | 0,05 — 0,15 |
+| Sol nu (argile) | 0,30 — 0,50 |
+| Sol nu (sable) | 0,05 — 0,15 |
+
+: Coefficients de ruissellement par type de surface {#tbl-ruissellement}
+
+Pour un bassin versant hétérogène (mélange de surfaces), on calcule un **coefficient de ruissellement moyen** pondéré par les surfaces :
+
+$$C_{moyen} = \frac{\sum_k C_k \cdot A_k}{\sum_k A_k}$$
+
+**Limites du coefficient constant :** $C$ est en réalité variable dans le temps — il augmente avec la durée de la pluie (saturation progressive du sol), avec l'état hydrique antérieur (sol déjà humide vs sol sec), et avec l'intensité (ruissellement hortonien sur sols peu perméables). L'utilisation d'un $C$ constant est une approximation acceptable pour le dimensionnement, mais insuffisante pour le calage fin sur des événements réels.
+
+### Les méthodes avancées de calcul de la pluie nette
+
+**La méthode SCS-CN** (Soil Conservation Service — Curve Number) est une alternative au coefficient constant qui intègre l'état hydrique antérieur du sol et la saturation progressive :
+
+$$P_{nette} = \frac{(P_{brute} - I_a)^2}{P_{brute} - I_a + S}$$
+
+où $S = 25400/CN - 254$ est la rétention potentielle maximale du sol (mm), $CN$ le *Curve Number* (0 à 100, tabulé selon le type de sol et d'occupation), et $I_a = 0{,}2 \cdot S$ l'abstraction initiale (interception + infiltration avant démarrage du ruissellement).
+
+Le *Curve Number* est un paramètre de calage puissant : il intègre à la fois le type de sol et le degré d'imperméabilisation, et sa valeur est bien documentée pour les contextes américains, moins pour le contexte français. Son utilisation en France nécessite une adaptation locale.
+
+**Le modèle de Green-Ampt** est une approche physique qui modélise l'infiltration par la loi de Darcy dans un sol à front d'humidification net. Plus physique que SCS-CN, il nécessite des paramètres de sol (conductivité hydraulique saturée, succion capillaire) difficiles à mesurer à l'échelle d'un bassin versant urbain.
+
+---
+
+## De la pluie nette au débit : la transformation hydrologique
+
+### Le temps de concentration : la grandeur clé
+
+Le **temps de concentration** $t_c$ est le temps que met la goutte d'eau tombant au point le plus éloigné du bassin versant pour atteindre l'exutoire. Il détermine la durée critique de la pluie de projet (la durée pour laquelle l'intensité moyenne est maximale et toute la surface du bassin contribue simultanément à l'écoulement) et conditionne directement le débit de pointe.
+
+Plusieurs formules empiriques permettent d'estimer $t_c$ :
+
+**Formule de Kirpich** (bassins versants ruraux, pentes > 3 %) :
+$$t_c = 0{,}0195 \cdot \frac{L^{0{,}77}}{S^{0{,}385}}$$
+
+**Formule de Passini** (bassins versants urbains) :
+$$t_c = 0{,}108 \cdot \frac{(A \cdot L)^{1/3}}{S^{1/2}}$$
+
+**Formule de Ventura** :
+$$t_c = 0{,}1272 \cdot \sqrt{\frac{A}{S}}$$
+
+où $L$ est la longueur du plus long chemin hydraulique (m), $A$ la superficie du bassin versant (km²), et $S$ la pente moyenne (m/m).
+
+Ces formules donnent des résultats très différents pour un même bassin — des écarts de 30 à 50 % sont courants. $t_c$ est l'un des paramètres les plus incertains de la modélisation pluviale, et l'un des plus sensibles sur le débit de pointe.
+
+::: {.callout-warning}
+## $t_c$ : une grandeur à caler, pas à calculer aveuglément
+Les formules empiriques de $t_c$ ont été calées sur des bassins versants spécifiques (ruraux américains pour Kirpich, urbains européens pour Passini). Leur application directe à un bassin versant différent peut induire des erreurs significatives. En pratique, $t_c$ est un **paramètre de calage** : on l'ajuste jusqu'à ce que le temps de montée de l'hydrogramme simulé corresponde à celui mesuré. Les formules empiriques donnent une valeur initiale, pas une valeur définitive.
+:::
+
+### La méthode rationnelle : le cas le plus simple
+
+La **méthode rationnelle** est la méthode de calcul du débit de pointe la plus ancienne et la plus utilisée pour les petits bassins versants urbains (< 1 km²) :
+
+$$Q_p = \frac{1}{360} \cdot C \cdot i(t_c, T) \cdot A$$
+
+où $Q_p$ est le débit de pointe (m³/s), $C$ le coefficient de ruissellement, $i(t_c, T)$ l'intensité de pluie pour une durée $t_c$ et une période de retour $T$ (mm/h), et $A$ la superficie du bassin versant (ha).
+
+Le facteur $1/360$ assure la cohérence des unités. La méthode rationnelle repose sur une hypothèse forte : **le débit de pointe est atteint lorsque toute la surface du bassin contribue simultanément**, ce qui correspond à une durée de pluie égale à $t_c$. Pour des durées inférieures à $t_c$, seule une partie du bassin contribue (débit inférieur) ; pour des durées supérieures, l'intensité est plus faible (débit aussi inférieur pour un $C$ constant).
+
+**Domaine de validité :** bassins versants < 1 km², temps de concentration < 30 minutes, réponse hydrologique simple (pas de stockage significatif, bassin homogène). Au-delà, les méthodes par hydrogramme unitaire sont indispensables.
+
+### L'hydrogramme unitaire : la forme temporelle de la réponse
+
+La méthode rationnelle donne le **débit de pointe**, mais pas la **forme temporelle** du débit (l'hydrogramme). Pour le dimensionnement des ouvrages de stockage (bassins de rétention) ou la simulation de la propagation dans le réseau, on a besoin de l'hydrogramme complet.
+
+Le principe de l'**hydrogramme unitaire** est de décomposer la pluie nette en une série d'impulsions élémentaires, et de convoluer chaque impulsion avec une **réponse unitaire** $u(t)$ (l'hydrogramme produit par une impulsion de pluie nette de 1 mm sur le bassin) :
+
+$$Q(t) = \sum_k P_{nette,k} \cdot u(t - k \cdot \Delta t)$$
+
+où la somme porte sur tous les pas de temps de pluie nette.
+
+Plusieurs formes de réponse unitaire sont utilisées en pratique :
+
+**Hydrogramme triangulaire** : montée linéaire jusqu'au pic à $t = t_c$, descente linéaire jusqu'à $t = 2{,}67 \cdot t_c$. Simple, deux paramètres ($t_c$ et $Q_p$), utilisé dans les méthodes SCS.
+
+**Hydrogramme de Desbordes** : développé spécifiquement pour les bassins versants urbains français. Il intègre un paramètre $w$ de forme qui tient compte du degré d'imperméabilisation.
+
+**Modèle de Nash** : hydrogramme en forme de gamma, caractérisé par $n$ réservoirs linéaires en série de temps de stockage $K$ chacun. Paramètres : $n$ et $K$, calés sur les hydrogrammes observés.
+
+---
+
+## Les pluies de projet : construction et choix
+
+### Les courbes Montana
+
+La **formule de Montana** est la représentation analytique simplifiée de la courbe IDF, valable pour des durées entre quelques minutes et quelques heures :
+
+$$i = a \cdot t^{-b}$$
+
+où $i$ est l'intensité moyenne (mm/h), $t$ la durée (minutes ou heures selon la convention), et $a$, $b$ les coefficients de Montana locaux. Ces coefficients varient selon la station pluviométrique et la période de retour considérée.
+
+Les coefficients de Montana sont disponibles auprès de Météo-France pour les principales stations françaises, ou peuvent être estimés à partir de la méthode SHYREG pour les zones sans données longues séries.
+
+**Exemple :** pour une station donnée, $a = 5{,}3$ et $b = 0{,}63$ pour $T = 10$ ans (durées en minutes). L'intensité pour une durée de 30 minutes est $i = 5{,}3 \times 30^{-0{,}63} \approx 15{,}8$ mm/h.
+
+### Le choix de la durée critique
+
+La **durée critique** de la pluie de projet est la durée pour laquelle le débit de pointe à l'exutoire est maximal. Pour la méthode rationnelle, cette durée est $t_c$ par construction. Pour des modèles plus sophistiqués, la durée critique peut différer de $t_c$ — notamment si le réseau présente des effets de stockage significatifs.
+
+En pratique, on teste souvent plusieurs durées (0,5 $t_c$, $t_c$, 2 $t_c$) et on retient la durée qui maximise le débit simulé à l'exutoire d'intérêt.
+
+### Les pluies à répartition temporelle : double triangle et Chicago
+
+La formule de Montana donne une **intensité moyenne** sur une durée donnée — elle ne dit rien de la **répartition temporelle** de la pluie au sein de cet épisode. Or, la forme temporelle de la pluie influence fortement la forme de l'hydrogramme et le débit de pointe, notamment pour les bassins versants avec effets de stockage.
+
+**La pluie double triangle** (ou pluie en bloc) répartit l'intensité uniformément sur toute la durée — c'est l'hypothèse la plus simple et la plus conservatrice pour le débit de pointe d'un bassin sans stockage.
+
+**La pluie de Chicago** (*Chicago Design Storm*, Keifer & Chu, 1957) est une pluie synthétique dont la courbe IDF est respectée pour toutes les durées centrées sur le pic. Elle est construite de façon à ce que l'intensité maximale sur toute sous-durée $d$ soit exactement l'intensité de la courbe IDF pour cette durée et cette période de retour. Elle produit un pic d'intensité très marqué, généralement plus défavorable que la pluie en bloc pour les réseaux avec stockage.
+
+Le paramètre $r$ de la pluie de Chicago ($0 < r < 1$) positionne le pic dans la durée totale : $r = 0{,}5$ place le pic au milieu, $r = 0{,}3$ place le pic à 30 % de la durée (pic précoce). En France, $r = 0{,}5$ est la valeur conventionnelle la plus utilisée.
+
+::: {.callout-tip}
+## Pluie de projet vs pluie observée : quand utiliser laquelle ?
+La **pluie de projet** (Montana, Chicago) est l'outil du **dimensionnement** : elle permet de vérifier qu'un ouvrage résiste à une pluie de fréquence donnée, avec un cadre réglementaire clair. La **pluie observée** (pluviogramme réel) est l'outil du **calage** et de la **simulation longue durée** : elle permet de confronter le modèle à la réalité et de calculer des statistiques de fonctionnement sur longue période. Les deux usages sont complémentaires et nécessaires — un modèle calé uniquement sur des pluies de projet n'a pas été confronté à la variabilité réelle des événements pluvieux.
+:::
+
+---
+
+## La modélisation continue longue durée
+
+### Pourquoi simuler sur une longue série ?
+
+La simulation événementielle (une pluie de projet → un hydrogramme de sortie) est l'outil standard du dimensionnement. Mais elle présente une limite fondamentale : elle ne permet pas de calculer des **statistiques de fonctionnement** sur longue période — fréquence de débordement, volume annuel déversé, nombre de jours de mise en charge.
+
+Ces statistiques sont pourtant indispensables pour deux types d'applications :
+
+- **L'évaluation réglementaire des déversoirs d'orage** : la DCE et les arrêtés de rejet imposent des limites sur le volume annuel déversé ou le nombre d'événements de déversement. Ces indicateurs ne peuvent être calculés que par simulation sur une longue série pluviométrique.
+- **L'analyse coût-bénéfice des ouvrages de stockage** : le dimensionnement optimal d'un bassin de rétention dépend de la distribution statistique des volumes ruisselés, pas d'un seul événement de référence.
+
+### Les données nécessaires
+
+Une simulation longue durée nécessite une **série pluviométrique continue** sur 10 à 30 ans, au pas de temps fin (1 à 5 minutes) pour capter les épisodes intenses. En France, Météo-France dispose de séries longues pour les principales stations pluviographiques. Pour les zones sans station de référence proche, les produits radar longues séries (ANTILOPE, COMEPHORE) sont une alternative, avec les réserves sur leur précision en intensité.
+
+La qualité de la série est critique : les lacunes, les pannes d'instruments, et les changements de site de mesure introduisent des biais qui se répercutent directement sur les statistiques simulées.
+
+### Les indicateurs de sortie
+
+Les sorties d'une simulation longue durée sont des **séries temporelles** de débit, hauteur d'eau et volume déversé, à partir desquelles on calcule :
+
+- **Fréquence de débordement** : nombre moyen d'événements par an où la hauteur d'eau dépasse le niveau du tampon de regard en un point donné
+- **Volume annuel déversé** au déversoir d'orage : moyenne sur la série simulée, à comparer aux limites réglementaires
+- **Courbe de dépassement** : durée cumulée par an pendant laquelle le débit dépasse un seuil donné
+- **Statistiques de mise en charge** : fréquence et durée des épisodes de mise en charge par tronçon
+
+Ces indicateurs permettent de positionner le réseau par rapport aux objectifs réglementaires et de quantifier l'effet des aménagements envisagés (bassin de rétention, séparation de réseau, désimperméabilisation).
+
+---
+
+## Le calage du modèle pluvial : méthodes et difficultés
+
+### Les paramètres à caler
+
+Un modèle pluvial complet a plusieurs familles de paramètres ajustables :
+
+**Paramètres hydrologiques** (transformation pluie → ruissellement) :
+- Coefficient de ruissellement $C$ (ou *Curve Number* $CN$)
+- Temps de concentration $t_c$ par sous-bassin versant
+- Paramètre de forme de l'hydrogramme unitaire ($n$, $K$ pour Nash ; $w$ pour Desbordes)
+
+**Paramètres hydrauliques** (propagation dans le réseau) :
+- Coefficient de Strickler $K_s$ des collecteurs (par matériau ou par tronçon)
+- Pertes de charge singulières aux ouvrages
+- Paramètres des ouvrages de régulation (cotes de seuil, coefficients de débit)
+
+### Les données de calage
+
+Le calage d'un modèle pluvial nécessite des données **synchrones** : la pluie mesurée et le débit mesuré doivent être enregistrés simultanément, au même pas de temps, pendant le même événement.
+
+**Pluviogrammes** : enregistrements au pas de 1 à 5 minutes, sur les pluviographes les plus représentatifs du bassin versant. Si plusieurs pluviographes sont disponibles, une spatialisation de la pluie (interpolation de Thiessen, krigeage) est nécessaire.
+
+**Hydrogrammes mesurés** : débits enregistrés à l'exutoire du secteur de calage (débitmètre électromagnétique ou à ultrasons, limnigraphe couplé à une courbe de tarage). Le pas de temps doit être inférieur au temps de montée de l'hydrogramme — typiquement 5 à 15 minutes pour les petits bassins versants urbains.
+
+### La procédure de calage
+
+Le calage se conduit en **deux phases successives**, comme pour le modèle AEP — du global vers le local :
+
+**Phase 1 — Calage volumétrique :**
+On vérifie d'abord que le volume ruisselé simulé correspond au volume mesuré à l'exutoire. C'est le bilan de masse du modèle : si le volume simulé est systématiquement supérieur au volume mesuré, le coefficient de ruissellement est surestimé (ou les pertes initiales sont sous-estimées). Si le volume simulé est inférieur, l'imperméabilisation est sous-estimée ou des apports non modélisés existent (ECP, débordements de réseau voisin).
+
+**Phase 2 — Calage de la forme de l'hydrogramme :**
+Une fois le bilan volumétrique correct, on ajuste les paramètres qui gouvernent la **forme temporelle** de l'hydrogramme :
+- Le **temps de montée** est principalement gouverné par $t_c$ : si le pic simulé arrive trop tôt, $t_c$ est sous-estimé.
+- L'**amplitude du pic** est gouvernée conjointement par $C$ (volume) et $t_c$ (concentration dans le temps).
+- La **décrue** est principalement gouvernée par le stockage dans le réseau et les paramètres de l'hydrogramme unitaire.
+
+### Les difficultés spécifiques au calage pluvial
+
+Le calage d'un modèle pluvial est **beaucoup plus difficile** que celui d'un modèle AEP, pour plusieurs raisons structurelles :
+
+**La corrélation entre paramètres.** $C$ et $t_c$ sont fortement corrélés sur le débit de pointe : une augmentation de $C$ (plus de ruissellement) peut être compensée par une augmentation de $t_c$ (étalement dans le temps) pour produire le même pic. Il existe donc de nombreuses combinaisons de paramètres qui reproduisent le même hydrogramme observé — c'est le problème de l'**équifinalité**. Un modèle peut être bien calé pour les mauvaises raisons physiques.
+
+**La sensibilité à la pluie d'entrée.** Une incertitude de 10 % sur la hauteur de pluie se traduit par une incertitude de 10 à 20 % sur le débit de pointe via $C$. Si le pluviographe de calage n'est pas représentatif de la pluie réellement tombée sur le bassin (variabilité spatiale de l'orage), le calage est biaisé dès le départ.
+
+**La non-stationnarité des paramètres.** $C$ varie selon l'état hydrique antérieur du sol — un même bassin versant ne réagit pas de la même façon à une pluie tombant sur sol sec ou sur sol saturé. Un modèle calé sur des événements estivaux (sol sec) peut surestimer le ruissellement lors d'événements automnaux (sol saturé), et inversement.
+
+**Le nombre d'événements disponibles.** Un modèle AEP peut être calé sur des données continues de pression (des milliers de points de mesure). Un modèle pluvial est calé sur des événements pluvieux bien instrumentés — souvent 3 à 10 événements en pratique, ce qui est insuffisant pour contraindre tous les paramètres. La validation sur des événements indépendants est d'autant plus importante.
+
+::: {.callout-warning}
+## Le calage sur un seul événement : un piège courant
+Un modèle calé sur un unique événement pluvieux peut reproduire cet événement avec une excellente précision tout en étant très mauvais sur d'autres événements — notamment si l'événement de calage était exceptionnel (orage très localisé, saturation du sol particulière). Le calage minimum acceptable couvre **au moins trois événements de caractéristiques différentes** : pluie courte et intense, pluie longue et modérée, événement post-pluie sur sol humide.
+:::
+
+---
+
+## La validation et les limites du modèle
+
+### Caler ≠ valider
+
+Le **calage** ajuste les paramètres pour reproduire les observations sur un jeu de données. La **validation** teste le modèle calé sur un jeu de données **indépendant** — des événements qui n'ont pas servi au calage.
+
+Un modèle qui se cale bien mais se valide mal souffre de **surapprentissage** : ses paramètres ont été ajustés pour coller aux spécificités des événements de calage (bruit de mesure, variabilité spatiale d'un orage particulier) plutôt qu'aux caractéristiques physiques permanentes du bassin versant.
+
+La procédure recommandée est de **séparer les données disponibles** en deux jeux dès le début : 60 à 70 % pour le calage, 30 à 40 % pour la validation. Si les données sont insuffisantes pour cette séparation, une validation croisée (*leave-one-out*) est possible.
+
+### Indicateurs de qualité
+
+Les mêmes indicateurs que pour le modèle AEP s'appliquent, avec des nuances spécifiques au pluvial :
+
+| Indicateur | Formule | Seuil acceptable | Ce qu'il mesure |
+|---|---|---|---|
+| Nash-Sutcliffe (NSE) sur débit | $1 - \frac{\sum(Q_{sim}-Q_{obs})^2}{\sum(Q_{obs}-\bar{Q}_{obs})^2}$ | $> 0{,}70$ | Performance globale sur l'hydrogramme |
+| NSE sur $\sqrt{Q}$ | Idem avec $\sqrt{Q}$ | $> 0{,}75$ | Plus sensible aux débits faibles |
+| Erreur sur le volume | $\frac{V_{sim} - V_{obs}}{V_{obs}}$ | $< \pm 10\%$ | Bilan de masse |
+| Erreur sur le pic | $\frac{Q_{p,sim} - Q_{p,obs}}{Q_{p,obs}}$ | $< \pm 15\%$ | Valeur dimensionnante |
+| Erreur sur le temps au pic | $|t_{p,sim} - t_{p,obs}|$ | $< \Delta t$ du pas de temps | Dynamique temporelle |
+
+: Indicateurs de qualité du calage pour un modèle pluvial {#tbl-qualite}
+
+Le **NSE sur $\sqrt{Q}$** est particulièrement utile en assainissement pluvial : il donne plus de poids aux débits faibles et modérés (qui correspondent aux événements fréquents) sans ignorer les pointes. Le NSE classique, dominé par les écarts aux pics, peut conduire à optimiser uniquement le débit de pointe au détriment de la reproduction du volume et de la dynamique de décrue.
+
+### Ce que le modèle pluvial ne peut pas faire
+
+**Extrapoler aux pluies extrêmes hors domaine de calage.** Un modèle calé sur des événements décennaux n'a aucune garantie de performance pour une pluie centennale — les mécanismes de ruissellement peuvent changer de nature (saturation généralisée, voies d'eau préférentielles, débordements de réseaux). La prudence s'impose dans l'interprétation des résultats pour les périodes de retour très élevées.
+
+**Intégrer le changement climatique.** Les coefficients de Montana et les courbes IDF sont établis sur des séries historiques supposées stationnaires. Or, le changement climatique modifie la fréquence et l'intensité des précipitations extrêmes — les études récentes suggèrent une augmentation des pluies courtes et intenses en France métropolitaine. Un modèle calé sur des données historiques peut sous-estimer les débits futurs.
+
+**Simuler l'évolution de l'urbanisation.** Un modèle calé sur le bassin versant actuel ne prédit pas correctement les débits après densification ou désimperméabilisation futures. Les études prospectives doivent modifier les coefficients de ruissellement en conséquence — et quantifier l'incertitude associée.
+
+**Localiser les inondations de surface.** Un modèle 1D de réseau simule la mise en charge et les débordements aux regards, mais ne prédit pas où va l'eau une fois en surface ni comment elle s'écoule dans les rues. Cette question nécessite un couplage avec un modèle 2D de surface (cf. note 2.B3 et note 3.2).
+
+---
+
+## Conclusion
+
+La modélisation pluviale est la discipline hydraulique où l'incertitude est la plus grande et où la rigueur du calage est la plus exigeante. Elle mobilise à la fois des compétences hydrologiques (statistiques des pluies, modèles de ruissellement) et hydrauliques (propagation dans le réseau), dans un contexte où les données sont souvent insuffisantes et où les paramètres sont corrélés entre eux.
+
+La valeur d'un modèle pluvial bien conduit n'est pas dans la précision de ses résultats absolus — elle est dans sa capacité à **comparer des scénarios** de façon cohérente : un bassin de rétention réduit-il la fréquence de débordement ? Une désimperméabilisation améliore-t-elle le bilan des déversoirs d'orage ? Ces questions relatives sont bien plus robustes à l'incertitude des paramètres que les valeurs absolues de débit ou de hauteur d'eau.
+
+---
+
+## Pour aller plus loin dans cette série
+
+- **Note 2.B3** — *Surcharges et engorgements : modéliser les événements extrêmes en assainissement* : Saint-Venant transitoire, fente de Preissmann en pratique, dual-drainage 1D/2D
+- **Note 3.1** — *Calage et validation de modèles hydrauliques* : méthodes d'optimisation automatique, analyse de sensibilité formelle, équifinalité
+- **Note 3.2** — *Quand le 1D ne suffit plus* : couplage réseau/surface, modèles 2D de ruissellement urbain

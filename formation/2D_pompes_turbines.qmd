@@ -1,0 +1,1688 @@
+---
+title: "Pompes et turbines : machines hydrauliques en réseau"
+subtitle: "Caractéristiques, similitude, point de fonctionnement et cavitation"
+date: "2026-05-17"
+author: ""
+categories: [Hydraulique, Turbomachines, Modélisation, Ingénierie]
+page-layout: article
+toc: true
+toc-title: "Sommaire"
+toc-depth: 3
+number-sections: true
+lang: fr
+format:
+  html:
+    embed-resources: true
+    html-math-method: katex
+    theme: cosmo
+execute:
+  echo: false
+  warning: false
+  fig-format: svg
+  fig-responsive: true
+  fig-width: 8
+  fig-height: 4.5
+jupyter: python3
+---
+
+::: {.callout-note}
+## Note de fondement de la série — La machine comme condition aux limites active
+
+Cette note occupe une position charnière dans la série. Elle s'appuie sur les fondements énergétiques posés en **note 0.2** (charge, puissance, dégradation de l'énergie), sur les conditions aux limites du réseau de la **note 0.3**, et sur les outils de similitude de la **note 0.4** (vitesse spécifique, coefficients adimensionnels). Elle alimente directement les notes d'application : **2.A1** (dimensionnement AEP, choix de pompe), **2.A2** (arrêt de pompe, coup de bélier), **2.C2** (irrigation sous pression), **2.C3** (transitoires et régulation) et **3.1** (calage des courbes machine).
+
+**Ce que cette note traite** : la machine comme organe inséré dans un réseau, le couplage machine–système, le point de fonctionnement, la modélisation 1D permanente, la cavitation, les transitoires développés.
+
+**Ce que cette note ne traite pas** : la conception mécanique interne des aubes, la machine électrique en détail.
+
+---
+
+**Ancre énergétique de toute la note.** La puissance hydraulique échangée entre une machine et le fluide est :
+
+$$P_{hyd} = \rho \, g \, Q \, H$$
+
+où $H$ est la hauteur manométrique échangée. Dès ici, une distinction essentielle :
+
+$$\text{Pompe :}\quad P_{arbre} = \frac{\rho g Q H}{\eta} \qquad \text{Turbine :}\quad P_{arbre} = \rho g Q H\,\eta$$
+
+Le même symbole $H$ change de sens physique — hauteur **fournie** au fluide pour la pompe, hauteur **prélevée** sur le fluide pour la turbine. Le rendement $\eta$ passe au **dénominateur** pour la pompe (l'arbre fournit plus que le fluide ne reçoit) et au **numérateur** pour la turbine (l'arbre reçoit moins que le fluide ne cède). Inverser ce signe est l'erreur de bilan énergétique la plus fréquente en modélisation de réseau.
+:::
+
+---
+
+## La machine hydraulique comme organe énergétique du réseau
+
+### Pompe et turbine : deux discontinuités de la ligne de charge
+
+La note 0.2 a établi que l'écoulement en charge peut être suivi par une **ligne de charge** $H = p/(\rho g) + z + V^2/(2g)$ qui décroît continuellement par pertes de charge. Une machine hydraulique est une **discontinuité** de cette ligne : la pompe la fait sauter vers le haut, la turbine la fait chuter.
+
+Pour un écoulement permanent, incompressible, entre la section amont (1) et la section aval (2) d'une pompe, le bilan de Bernoulli généralisé donne :
+
+$$\frac{p_1}{\rho g} + z_1 + \frac{V_1^2}{2g} + H_{pompe} = \frac{p_2}{\rho g} + z_2 + \frac{V_2^2}{2g} + \Delta H_{12}$$
+
+Pour une turbine, la machine prélève de l'énergie — elle apparaît en soustraction dans le bilan :
+
+$$\frac{p_1}{\rho g} + z_1 + \frac{V_1^2}{2g} = \frac{p_2}{\rho g} + z_2 + \frac{V_2^2}{2g} + H_{turbine} + \Delta H_{12}$$
+
+La **Hauteur Manométrique Totale (HMT)** d'une pompe se calcule en développant le bilan entre les bâches d'aspiration (asp) et de refoulement (ref) :
+
+$$\text{HMT} = (z_{ref} - z_{asp}) + \frac{p_{ref} - p_{asp}}{\rho g} + \frac{V_{ref}^2 - V_{asp}^2}{2g} + \sum \Delta H$$
+
+::: {.callout-important}
+## Piège classique — HMT $\neq$ hauteur géométrique
+
+La HMT inclut les pertes de charge $\sum \Delta H$, qui **dépendent du débit**. La HMT n'est donc pas une constante géométrique : c'est une fonction de $Q$. C'est précisément cette dépendance qui rend le point de fonctionnement non trivial — il ne peut pas être déduit de la seule géométrie de l'installation.
+:::
+
+```{python}
+#| label: fig-ligne-charge-machine
+#| fig-cap: "Lignes de charge et piézométrique le long d'un système de refoulement (bâche d'aspiration → pompe → conduite → réservoir aval). La pompe matérialise un saut de charge $H_{pompe}$ à son abscisse. La ligne de charge décroît ensuite régulièrement (pertes linéaires) jusqu'au réservoir aval. En miroir, une turbine produirait une chute de charge à son emplacement. Conventions de couleur : énergie totale (`C_CHARGE`) et charge piézométrique (`C_PIEZO`)."
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+fig, axes = plt.subplots(1, 2, figsize=(10, 4.2))
+
+# ── Cas pompe ──────────────────────────────────────────────────────────────
+ax = axes[0]
+# abscisses : 0=bâche asp, 0.3=pompe, 1.0=réservoir aval
+x_asp  = np.linspace(0,   0.28, 30)
+x_pump = np.linspace(0.32, 1.0,  50)
+z_asp_bache  = 0.0   # cote bâche aspiration
+z_ref_bache  = 2.5   # cote réservoir aval
+H_geo        = z_ref_bache - z_asp_bache
+H_pump       = 4.5   # HMT
+pertes_aspir = 0.3   # pertes côté aspiration
+pertes_refoul= 1.7   # pertes côté refoulement
+
+# Ligne de charge amont pompe
+lc_amont = z_asp_bache + 0.0 - pertes_aspir * (x_asp / 0.28)
+lp_amont = lc_amont - 0.15   # vitesse faible, piézo ≈ charge
+
+# Ligne de charge aval pompe
+lc_aval_start = lc_amont[-1] + H_pump
+lc_aval = lc_aval_start - pertes_refoul * ((x_pump - 0.32) / 0.68)
+lp_aval = lc_aval - 0.10
+
+ax.plot(x_asp,  lc_amont, color=C_CHARGE, lw=2.2, label="Ligne de charge")
+ax.plot(x_pump, lc_aval,  color=C_CHARGE, lw=2.2)
+ax.plot(x_asp,  lp_amont, color=C_PIEZO,  lw=1.6, ls="--", label="Ligne piézométrique")
+ax.plot(x_pump, lp_aval,  color=C_PIEZO,  lw=1.6, ls="--")
+# Saut pompe
+ax.annotate("", xy=(0.30, lc_aval_start), xytext=(0.30, lc_amont[-1]),
+            arrowprops=dict(arrowstyle="<->", color=C_ACCENT, lw=1.8))
+ax.text(0.32, (lc_aval_start + lc_amont[-1])/2, r"$H_{pompe}$",
+        color=C_ACCENT, fontsize=9, va="center")
+# Niveaux réservoirs
+ax.axhline(z_asp_bache,  xmin=0,    xmax=0.06, color="#888", lw=1.5, ls="-.")
+ax.axhline(z_ref_bache,  xmin=0.94, xmax=1.0,  color="#888", lw=1.5, ls="-.")
+ax.axvline(0.30, color=C_ACCENT, lw=1, ls=":")
+ax.text(0.30, -0.5, "Pompe", ha="center", fontsize=8, color=C_ACCENT)
+ax.set_xlim(-0.05, 1.05); ax.set_ylim(-1, 7)
+ax.set_xlabel("Abscisse (normalisée)", fontsize=8.5)
+ax.set_ylabel("Charge $H$ (m)", fontsize=8.5)
+ax.set_title("Système de refoulement — Pompe", fontsize=9.5)
+ax.legend(fontsize=8); ax.grid(alpha=0.2)
+ax.tick_params(labelsize=8)
+
+# ── Cas turbine ───────────────────────────────────────────────────────────
+ax = axes[1]
+z_amont = 5.0
+z_aval  = 1.0
+H_turb  = 3.0
+pertes_amont  = 0.4
+pertes_aval   = 0.3
+
+x_up  = np.linspace(0,    0.28, 30)
+x_dn  = np.linspace(0.32, 1.0,  50)
+lc_up = z_amont - pertes_amont * (x_up / 0.28)
+lc_dn_start = lc_up[-1] - H_turb
+lc_dn = lc_dn_start - pertes_aval * ((x_dn - 0.32) / 0.68)
+
+ax.plot(x_up, lc_up,  color=C_CHARGE, lw=2.2, label="Ligne de charge")
+ax.plot(x_dn, lc_dn,  color=C_CHARGE, lw=2.2)
+ax.plot(x_up, lc_up - 0.08, color=C_PIEZO, lw=1.6, ls="--", label="Ligne piézométrique")
+ax.plot(x_dn, lc_dn - 0.08, color=C_PIEZO, lw=1.6, ls="--")
+ax.annotate("", xy=(0.30, lc_dn_start), xytext=(0.30, lc_up[-1]),
+            arrowprops=dict(arrowstyle="<->", color=C_ACCENT, lw=1.8))
+ax.text(0.32, (lc_dn_start + lc_up[-1])/2, r"$H_{turbine}$",
+        color=C_ACCENT, fontsize=9, va="center")
+ax.axhline(z_amont, xmin=0,    xmax=0.06, color="#888", lw=1.5, ls="-.")
+ax.axhline(z_aval,  xmin=0.94, xmax=1.0,  color="#888", lw=1.5, ls="-.")
+ax.axvline(0.30, color=C_ACCENT, lw=1, ls=":")
+ax.text(0.30, 0.3, "Turbine", ha="center", fontsize=8, color=C_ACCENT)
+ax.set_xlim(-0.05, 1.05); ax.set_ylim(0, 6)
+ax.set_xlabel("Abscisse (normalisée)", fontsize=8.5)
+ax.set_ylabel("Charge $H$ (m)", fontsize=8.5)
+ax.set_title("Aménagement hydroélectrique — Turbine", fontsize=9.5)
+ax.legend(fontsize=8); ax.grid(alpha=0.2)
+ax.tick_params(labelsize=8)
+
+fig.tight_layout()
+plt.show()
+```
+
+### Puissances et rendements : la chaîne de conversion
+
+Une machine hydraulique n'est pas un convertisseur idéal. Trois familles de pertes s'enchaînent :
+
+- **Pertes hydrauliques** ($\eta_{hyd}$) : frottement et tourbillons dans les canaux de la roue et les volutes
+- **Pertes volumétriques** ($\eta_{vol}$) : recirculations internes, fuites par les joints
+- **Pertes mécaniques** ($\eta_{méc}$) : frottement des paliers, garnitures, disques tournants
+
+Le rendement global est le produit de ces trois composantes :
+
+$$\eta_{global} = \eta_{hyd}\,\eta_{vol}\,\eta_{méc}$$
+
+La chaîne de conversion complète, pour un groupe pompe et pour un groupe turbine :
+
+$$P_{élec} \xrightarrow{\eta_{mot}} P_{arbre} \xrightarrow{\eta_{pompe}} P_{hyd}=\rho g Q H$$
+
+$$P_{hyd}=\rho g Q H \xrightarrow{\eta_{turb}} P_{arbre} \xrightarrow{\eta_{gén}} P_{élec}$$
+
+Les définitions de rendement qui en découlent :
+
+$$\eta = \frac{\rho g Q H}{P_{arbre}}\ \text{(pompe)} \qquad \eta = \frac{P_{arbre}}{\rho g Q H}\ \text{(turbine)}$$
+
+::: {.callout-tip}
+## Bon sens de l'ingénieur — Le rendement au point réel, pas au point nominal
+
+L'énergie spécifique de pompage en réseau (kWh/m³) dépend du rendement **au point de fonctionnement réel**, pas du rendement nominal affiché au catalogue. Un point décalé du BEP de 20 % peut dégrader le rendement de 10 à 15 points — ce qui représente un surcoût d'exploitation très significatif sur la durée de vie de l'installation. De plus, le variateur de fréquence (VFD) possède son propre rendement ($\eta_{VFD} \approx 0{,}95$ à pleine charge, mais pouvant chuter à 0{,}85 à charge partielle) : l'oublier dans le bilan électrique est une erreur fréquente de chiffrage.
+:::
+
+---
+
+## La théorie d'Euler des turbomachines
+
+### Triangles de vitesses et équation d'Euler
+
+La relation $H(Q)$ d'une machine n'est pas un artefact de catalogue : elle découle d'un bilan de quantité de mouvement angulaire sur la roue. Comprendre cette origine permet de lire intelligemment une courbe constructeur et d'anticiper son comportement hors des conditions nominales.
+
+Dans la roue tournante à vitesse angulaire $\omega$, trois vecteurs vitesse se superposent en chaque point :
+
+$$\vec{C} = \vec{U} + \vec{W}$$
+
+où $\vec{C}$ est la vitesse absolue du fluide, $\vec{U} = \omega r$ la vitesse d'entraînement de la paroi, et $\vec{W}$ la vitesse relative du fluide par rapport à la roue. L'application du théorème du moment cinétique au volume de contrôle délimité par la roue (entre l'entrée de la roue notée 1 et la sortie notée 2) donne l'**équation d'Euler des turbomachines** :
+
+$$H_{th,\infty} = \frac{U_2 C_{u2} - U_1 C_{u1}}{g}$$
+
+où $C_{u}$ est la composante tangentielle (de giration) de la vitesse absolue. Pour une pompe centrifuge à entrée radiale (conception optimale usuelle qui annule la giration à l'entrée, $C_{u1} = 0$) :
+
+$$H_{th,\infty} = \frac{U_2\,C_{u2}}{g}$$
+
+```{python}
+#| label: fig-triangles-vitesses
+#| fig-cap: "Triangles de vitesses en entrée (1) et sortie (2) d'une roue centrifuge, pour le cas nominal $C_{u1}=0$ (entrée radiale pure). La vitesse absolue $C$ est la diagonale du parallélogramme formé par la vitesse d'entraînement $U$ (tangentielle) et la vitesse relative $W$ (orientée selon l'aube). C'est la composante tangentielle $C_{u2}$ à la sortie qui produit la hauteur d'Euler. Les angles $\\alpha$ (entre $C$ et $U$) et $\\beta$ (entre $W$ et $-U$) définissent la géométrie d'aube."
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+from matplotlib.patches import FancyArrowPatch
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(9, 3.8))
+
+def draw_triangle(ax, U, Cm, beta_deg, title, label_side="left"):
+    beta = np.radians(beta_deg)
+    W    = np.array([-Cm / np.tan(beta) + U, -Cm])  # relative vel components
+    Cu   = U + W[0]  # = U - Cm/tan(beta)
+    C    = np.array([Cu, Cm])
+
+    origin = np.array([0., 0.])
+    kw = dict(length_includes_head=True, head_width=0.05, head_length=0.05)
+
+    ax.arrow(*origin, U, 0,     color=C_ACCENT, **kw, label=r"$U$")
+    ax.arrow(*origin, C[0], C[1], color=C_CHARGE, **kw, label=r"$C$")
+    ax.arrow(C[0], C[1], -C[0]+U, -C[1], color=C_PIEZO, **kw, label=r"$W$")
+
+    # annotations
+    ax.text(U/2,       -0.12, r"$U$",  color=C_ACCENT, ha="center", fontsize=10)
+    ax.text(C[0]/2-0.1, C[1]/2+0.05, r"$C$", color=C_CHARGE, ha="center", fontsize=10)
+    ax.text((C[0]+U)/2+0.05, C[1]/2, r"$W$", color=C_PIEZO,  ha="center", fontsize=10)
+
+    # Cu dashed projection
+    ax.plot([0, C[0]], [0, 0], color=C_CHARGE, ls=":", lw=1.2)
+    ax.text(C[0]/2, -0.22, r"$C_u$", color=C_CHARGE, ha="center", fontsize=8.5)
+
+    # Cm dashed projection
+    ax.plot([C[0], C[0]], [0, C[1]], color="#999", ls=":", lw=1)
+    ax.text(C[0]+0.07, C[1]/2, r"$C_m$", color="#555", fontsize=8)
+
+    ax.set_xlim(-0.3, max(U, C[0])+0.5)
+    ax.set_ylim(-0.5, max(C[1], 0.2)+0.4)
+    ax.set_aspect("equal"); ax.axis("off")
+    ax.set_title(title, fontsize=9.5)
+
+# Entrée : Cu1=0 → alpha1=90°, W1 = -U1 + Cm direction → beta1 dépend de Cm/U
+# On simplifie : U1=0.6, Cm1=0.4 → Cu1=0 imposed → W1x = -U1
+draw_triangle(ax1, U=0.8, Cm=0.45, beta_deg=151,
+              title="Entrée (1) — $C_{u1}=0$, entrée radiale")
+
+# Sortie : beta2 < 90° (aubes arrière)
+draw_triangle(ax2, U=1.4, Cm=0.45, beta_deg=145,
+              title="Sortie (2) — Aubes à $\\beta_2 < 90°$")
+
+fig.suptitle(r"Triangles de vitesses — Roue centrifuge", fontsize=10.5, y=1.01)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-warning}
+## Alerte modélisation — Euler donne une borne, pas une valeur utilisable
+
+$H_{th,\infty}$ est la hauteur **théorique à nombre d'aubes infini** et à fluide parfait. La hauteur réelle est toujours inférieure, du fait du glissement (nombre fini d'aubes), des pertes hydrauliques et de la recirculation. Ne jamais utiliser l'équation d'Euler pour prédire une HMT réelle à utiliser dans un dimensionnement : c'est un outil de **compréhension de la forme** de la courbe caractéristique, pas de calcul d'ingénierie.
+:::
+
+### De l'équation d'Euler à la forme de la caractéristique H(Q)
+
+La composante méridienne $C_{m2}$ (axiale à la sortie de la roue) est directement liée au débit par la continuité :
+
+$$C_{m2} = \frac{Q}{\pi D_2 b_2}$$
+
+où $D_2$ est le diamètre extérieur de la roue et $b_2$ la largeur du canal à la sortie. La triangle de vitesses à la sortie donne :
+
+$$C_{u2} = U_2 - C_{m2}\cot\beta_2$$
+
+En substituant dans l'équation d'Euler :
+
+$$H_{th,\infty}(Q) = \frac{U_2^2}{g} - \frac{U_2 \cot\beta_2}{g\,\pi D_2 b_2}\,Q$$
+
+C'est une **droite en Q** dont la pente dépend du signe de $\cot\beta_2$, donc de l'angle de sortie d'aube :
+
+- $\beta_2 < 90°$ (aubes en retour, standard industriel) : $\cot\beta_2 > 0$, pente **négative** → courbe descendante, stable
+- $\beta_2 = 90°$ (aubes radiales) : pente nulle → caractéristique plate
+- $\beta_2 > 90°$ (aubes en avant) : pente **positive** → caractéristique montante, instable
+
+```{python}
+#| label: fig-euler-hq
+#| fig-cap: "Effet de l'angle de sortie d'aube $\\beta_2$ sur la caractéristique d'Euler $H_{th,\\infty}(Q)$ (traits pleins, trois cas). La courbe réelle (tirets, même machine avec $\\beta_2 < 90°$) s'obtient après soustraction des pertes par frottement ($\\propto Q^2$) et des pertes par choc (minimales au BEP). L'écart entre Euler et le réel illustre l'importance des pertes internes — qui augmentent rapidement hors BEP."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+Q = np.linspace(0, 1.2, 200)
+H0 = 1.0  # H à Q=0 normalisé
+
+fig, ax = plt.subplots(figsize=(7, 4))
+
+# Euler droites
+slope_retro  = -0.5
+slope_radial =  0.0
+slope_avant  =  0.4
+
+H_retro  = H0 + slope_retro  * Q
+H_radial = H0 + slope_radial * Q
+H_avant  = H0 + slope_avant  * Q
+
+ax.plot(Q, H_retro,  color=C_CHARGE, lw=2.2, label=r"$\beta_2 < 90°$ — aubes en retour (standard)")
+ax.plot(Q, H_radial, color="#8e44ad", lw=2.2, label=r"$\beta_2 = 90°$ — aubes radiales")
+ax.plot(Q, H_avant,  color=C_ACCENT,  lw=2.2, label=r"$\beta_2 > 90°$ — aubes en avant (instable)")
+
+# Courbe réelle : H_th(beta<90) - pertes_frot - pertes_choc
+Q_bep = 0.65
+kf = 0.18
+kc = 0.30
+H_reel = H_retro - kf*Q**2 - kc*(Q - Q_bep)**2
+H_reel = np.where(H_reel > 0, H_reel, np.nan)
+ax.plot(Q, H_reel, color=C_CHARGE, lw=2.2, ls="--", label="Courbe réelle ($\\beta_2<90°$) — après pertes")
+
+# BEP
+idx_bep = np.nanargmax(H_reel / (H_reel + 0.001))  # rendement max ≈ pertes choc minimales
+idx_bep = np.argmin(np.abs(Q - Q_bep))
+ax.axvline(Q_bep, color="#aaa", lw=1, ls=":")
+ax.scatter([Q_bep], [H_reel[idx_bep]], color=C_ACCENT, zorder=5, s=60, label="BEP")
+
+ax.set_xlabel("Débit $Q$ (normalisé)", fontsize=9)
+ax.set_ylabel("Hauteur $H$ (normalisée)", fontsize=9)
+ax.set_title("Effet de l'angle de sortie d'aube sur la caractéristique d'Euler", fontsize=10)
+ax.legend(fontsize=8, loc="lower left")
+ax.set_xlim(0, 1.2); ax.set_ylim(0, 1.5)
+ax.grid(alpha=0.2)
+ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-warning}
+## Alerte modélisation — La courbe montante et l'instabilité de pompage
+
+Une caractéristique localement **montante** ($dH/dQ > 0$) est dangereuse dans deux situations : en réseau à faible débit (risque d'oscillation de débit entre deux points d'intersection stables) et en association de pompes en parallèle (risque que l'une des pompes impose à l'autre de travailler en dehors de sa plage stable). Le modélisateur doit **refuser toute courbe non monotone décroissante** au-delà du point d'instabilité et renvoyer le fournisseur à une caractéristique validée.
+:::
+
+---
+
+## Les courbes caractéristiques réelles
+
+### Du modèle théorique aux pertes : la courbe H–Q réelle
+
+La courbe réelle se construit en retranchant à $H_{th,\infty}$ deux familles de pertes :
+
+$$H(Q) = H_{th,\infty}(Q) - \underbrace{k_f Q^2}_{\text{pertes frottement}} - \underbrace{k_c (Q - Q_{BEP})^2}_{\text{pertes choc/incidence}}$$
+
+Les pertes par frottement ($\propto Q^2$) dominent à fort débit. Les pertes par choc ou incidence (flux mal orienté à l'entrée des aubes) sont minimales au **Point de Meilleur Rendement (BEP)** et croissent de part et d'autre.
+
+Pour la modélisation de réseau, le modèle polynomial usuel est :
+
+$$H(Q) = a - b\,Q^{2} \qquad \text{ou} \qquad H(Q) = a + bQ + cQ^{2}$$
+
+La norme ISO 9906 définit la **Plage de Fonctionnement Préférentielle (POR)** comme la plage de débit autour du BEP où le rendement reste supérieur à 80 % du rendement BEP, et la **Plage de Fonctionnement Admissible (AOR)** comme la plage au-delà de laquelle des dommages peuvent survenir.
+
+```{python}
+#| label: fig-courbes-hq-eta-p
+#| fig-cap: "Courbes caractéristiques constructeur typiques d'une pompe centrifuge : H–Q (axe gauche, bleu), rendement η–Q (axe gauche secondaire, vert) et puissance absorbée P–Q (axe droit, rouge). Le BEP est marqué par le point orange. La bande verte claire représente la POR (rendement > 80 % du max), la bande grise élargie l'AOR. Fonctionner durablement hors AOR expose à la recirculation, l'échauffement et l'usure accélérée."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+Q = np.linspace(0, 130, 300)  # m3/h
+a, b = 28.0, 0.0012
+H = a - b * Q**2
+
+Q_bep = 80.0
+eta_max = 0.78
+keta = 0.0001
+eta = eta_max - keta * (Q - Q_bep)**2
+eta = np.clip(eta, 0, 1)
+
+rho, g = 1000, 9.81
+P = rho * g * (Q/3600) * H / np.where(eta > 0.05, eta, 0.05) / 1000  # kW
+
+fig, ax1 = plt.subplots(figsize=(8, 4.2))
+
+ax1.plot(Q, H, color=C_CHARGE, lw=2.5, label="H–Q")
+ax1.set_xlabel("Débit $Q$ (m³/h)", fontsize=9)
+ax1.set_ylabel("HMT $H$ (m)", color=C_CHARGE, fontsize=9)
+ax1.tick_params(axis="y", labelcolor=C_CHARGE, labelsize=8.5)
+ax1.tick_params(axis="x", labelsize=8.5)
+ax1.set_xlim(0, 130); ax1.set_ylim(0, 35)
+
+ax2 = ax1.twinx()
+ax2.plot(Q, eta*100, color=C_PIEZO, lw=2.2, ls="-.", label="η–Q")
+ax2.set_ylabel("Rendement η (%)", color=C_PIEZO, fontsize=9)
+ax2.tick_params(axis="y", labelcolor=C_PIEZO, labelsize=8.5)
+ax2.set_ylim(0, 100)
+
+ax3 = ax1.twinx()
+ax3.spines["right"].set_position(("outward", 55))
+ax3.plot(Q, P, color=C_ACCENT, lw=1.8, ls=":", label="P–Q")
+ax3.set_ylabel("Puissance absorbée $P$ (kW)", color=C_ACCENT, fontsize=9)
+ax3.tick_params(axis="y", labelcolor=C_ACCENT, labelsize=8.5)
+ax3.set_ylim(0, 20)
+
+# BEP
+H_bep  = a - b * Q_bep**2
+ax1.scatter([Q_bep], [H_bep], color="darkorange", zorder=6, s=70, label="BEP")
+
+# POR / AOR
+eta_80 = 0.80 * eta_max
+Q_por = Q[eta >= eta_80]
+Q_aor = Q[(eta >= 0.60 * eta_max)]
+if len(Q_por) > 1:
+    ax1.axvspan(Q_por[0], Q_por[-1], alpha=0.12, color=C_PIEZO, label="POR")
+if len(Q_aor) > 1:
+    ax1.axvspan(Q_aor[0], Q_aor[-1], alpha=0.06, color="#888", label="AOR")
+
+lines1, labs1 = ax1.get_legend_handles_labels()
+lines2, labs2 = ax2.get_legend_handles_labels()
+lines3, labs3 = ax3.get_legend_handles_labels()
+ax1.legend(lines1+lines2+lines3, labs1+labs2+labs3,
+           fontsize=8, loc="upper right", ncol=2)
+ax1.set_title("Courbes caractéristiques constructeur d'une pompe centrifuge", fontsize=10)
+ax1.grid(alpha=0.2)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-warning}
+## Alerte modélisation — Le modèle à deux points et ses limites
+
+Les logiciels de réseau (EPANET, WNTR) proposent souvent une saisie simplifiée à deux points ($H_0$ et un point nominal) qui suppose une parabole $H = a - bQ^2$ passant par $Q = 0$. Ce modèle est **invalide** si la courbe constructeur ne suit pas cette forme — ce qui est fréquent pour les pompes à vitesse spécifique élevée ou les pompes multi-étages. Toujours préférer un calage sur ≥ 3 points, et vérifier la fidélité du modèle dans toute la plage AOR (renvoi note 3.1).
+:::
+
+### Lois de similitude des turbomachines (lois d'affinité) {#sec-affinite}
+
+Les lois d'affinité découlent directement de l'analyse dimensionnelle (note 0.4). À géométrie de roue constante, les coefficients adimensionnels de débit, de hauteur et de puissance sont invariants d'une vitesse à l'autre :
+
+$$\varphi = \frac{Q}{N D^{3}} \quad (\text{débit}), \qquad \psi = \frac{gH}{N^{2} D^{2}} \quad (\text{hauteur}), \qquad \lambda_P = \frac{P}{\rho N^{3} D^{5}} \quad (\text{puissance})$$
+
+En pratique, pour un changement de vitesse de $N_1$ à $N_2$ (à diamètre $D$ constant) :
+
+$$\frac{Q_2}{Q_1} = \frac{N_2}{N_1}, \qquad \frac{H_2}{H_1} = \left(\frac{N_2}{N_1}\right)^{2}, \qquad \frac{P_2}{P_1} = \left(\frac{N_2}{N_1}\right)^{3}$$
+
+Pour un **rognage de roue** (changement de $D$ à vitesse $N$ constante, approximation valable pour des réductions de diamètre modérées ≤ 15 %) :
+
+$$\frac{Q_2}{Q_1} = \frac{D_2}{D_1}, \qquad \frac{H_2}{H_1} = \left(\frac{D_2}{D_1}\right)^{2}$$
+
+```{python}
+#| label: fig-affinite-vfd
+#| fig-cap: "Famille de courbes H–Q obtenues par affinité depuis la courbe nominale à 50 Hz, pour quatre fréquences d'alimentation. La courbe en pointillé rouge est la **parabole d'iso-affinité** passant par le BEP nominal : tout point de cette parabole est homologue du BEP. À ne pas confondre avec la courbe du réseau (qui passerait par l'origine si la composante statique est nulle) — ce sont deux familles de courbes distinctes, une erreur fréquente dans les études VFD."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_ACCENT = "#c0392b"
+
+Q0 = np.linspace(0, 100, 300)
+a0, b0 = 30.0, 0.0025
+H0_func = lambda Q: a0 - b0 * Q**2
+
+freqs = [50, 45, 40, 35]
+colors = [C_CHARGE, "#2980b9", "#8e44ad", "#16a085"]
+
+fig, ax = plt.subplots(figsize=(7.5, 4.2))
+
+Q_bep_nom = 75.0
+H_bep_nom = H0_func(Q_bep_nom)
+
+for f, col in zip(freqs, colors):
+    r = f / 50.0
+    Q_f = Q0 * r
+    H_f = H0_func(Q0) * r**2
+    ax.plot(Q_f, H_f, color=col, lw=2.2, label=f"{f} Hz")
+    # BEP à cette fréquence
+    Q_bep_f = Q_bep_nom * r
+    H_bep_f = H_bep_nom * r**2
+    ax.scatter([Q_bep_f], [H_bep_f], color=col, s=45, zorder=5)
+
+# Parabole d'iso-affinité passant par BEP nominal
+r_arr = np.linspace(0.6, 1.02, 100)
+Q_iso = Q_bep_nom * r_arr
+H_iso = H_bep_nom * r_arr**2
+ax.plot(Q_iso, H_iso, color=C_ACCENT, lw=2, ls="--",
+        label="Parabole d'iso-affinité (BEP)")
+
+ax.set_xlabel("Débit $Q$ (m³/h)", fontsize=9)
+ax.set_ylabel("HMT $H$ (m)", fontsize=9)
+ax.set_title("Lois d'affinité — Famille de courbes par variateur de fréquence", fontsize=10)
+ax.legend(fontsize=8.5, loc="upper left")
+ax.set_xlim(0, 105); ax.set_ylim(0, 33)
+ax.grid(alpha=0.2)
+ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-warning}
+## Alerte modélisation — Trois pièges des lois d'affinité
+
+**1. La conservation du rendement est approximative.** Les lois d'affinité supposent le rendement constant le long de la parabole d'iso-affinité. En pratique, la courbe iso-rendement se déplace : un point optimal à 50 Hz ne l'est plus à 35 Hz. Ne pas surestimer les gains d'un VFD à très basse vitesse.
+
+**2. Le gain cubique de puissance ne s'applique qu'en absence de hauteur statique.** Avec une composante statique $H_{geo}$ significative, la trajectoire réelle de fonctionnement quitte la parabole d'affinité : le gain en puissance est bien inférieur à $(N_2/N_1)^3$. C'est l'erreur classique des promesses de VFD sur les réseaux de refoulement AEP à forte cote géostatique.
+
+**3. Parabole d'iso-affinité $\neq$ courbe réseau.** Sur les figures VFD, les deux paraboles se ressemblent et peuvent être confondues. Elles coïncident seulement si $H_{geo} = 0$ (réseau purement résistif). Dès qu'une hauteur statique existe, la courbe réseau ne passe pas par l'origine et dévie fortement de la parabole d'affinité aux basses fréquences.
+:::
+
+### La vitesse spécifique : classifier les machines
+
+La vitesse spécifique $n_s$ est l'empreinte dimensionnelle d'un type de machine. Elle est définie au point de meilleur rendement et caractérise la forme de la roue (renvoi note 0.4 pour la démonstration par analyse dimensionnelle) :
+
+$$n_{s} = \frac{N\sqrt{Q}}{H^{3/4}} \qquad \text{(pompe, forme métier — $N$ en tr/min, $Q$ en m³/s, $H$ en m)}$$
+
+La forme adimensionnelle rigoureuse (note 0.4) est :
+
+$$\Omega_s = \frac{\omega \sqrt{Q}}{(gH)^{3/4}}$$
+
+Pour les turbines, la vitesse spécifique est définie par rapport à la puissance :
+
+$$n_{s}^{(turbine)} = \frac{N\sqrt{P}}{H^{5/4}} \qquad \text{($P$ en kW)}$$
+
+```{python}
+#| label: fig-vitesse-specifique
+#| fig-cap: "Classification des turbomachines par vitesse spécifique $n_s$ (forme métier, $Q$ en m³/s, $H$ en m, $N$ en tr/min). Les silhouettes de roue schématisent l'évolution de la géométrie : la roue centrifuge passe progressivement à la roue hélicocentrifuge puis à la roue axiale au fur et à mesure que $n_s$ croît. Pour les turbines, les domaines d'emploi de Pelton, Francis et Kaplan sont superposés. La courbe en tirets représente l'enveloppe du rendement maximum atteignable par type de machine."
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+fig, ax = plt.subplots(figsize=(9, 4.2))
+
+# Axe ns
+ns_vals = np.linspace(10, 400, 400)
+
+# Courbe enveloppe rendement max (empirique)
+eta_env = 0.60 + 0.22 * np.exp(-((np.log(ns_vals) - np.log(70))**2) / 1.5)
+eta_env = np.clip(eta_env, 0.55, 0.93)
+
+ax.plot(ns_vals, eta_env * 100, color=C_CHARGE, lw=2.5,
+        label="Enveloppe rendement max (%)")
+ax.set_ylim(0, 105)
+ax.set_xlim(10, 410)
+
+# Bandes types de machines (pompes)
+bandes = [
+    (10, 60,  "#d6eaf8", "Centrifuge"),
+    (60, 150, "#d5f5e3", "Hélicocentrifuge"),
+    (150,400, "#fdebd0", "Axiale"),
+]
+for x0, x1, col, lbl in bandes:
+    ax.axvspan(x0, x1, alpha=0.35, color=col)
+    ax.text((x0+x1)/2, 98, lbl, ha="center", fontsize=8, color="#333")
+
+# Bandes turbines (en bas)
+turbines = [
+    (10,  60,  C_ACCENT,  "Pelton"),
+    (60,  250, "#8e44ad",  "Francis"),
+    (250, 400, "#16a085",  "Kaplan"),
+]
+for x0, x1, col, lbl in turbines:
+    ax.axvspan(x0, x1, alpha=0.10, color=col)
+    ax.text((x0+x1)/2, 5, lbl, ha="center", fontsize=8, color=col, style="italic")
+
+# Silhouettes schématiques (cercles simplifiés)
+# centrifuge : cercle large plat
+for ns_c, r_x, r_y, col in [(35, 1.5, 0.5, C_CHARGE),
+                              (100, 1.1, 0.8, C_PIEZO),
+                              (280, 0.7, 1.2, "#e67e22")]:
+    from matplotlib.patches import Ellipse
+    e = Ellipse((ns_c, 72), width=r_x*22, height=r_y*8,
+                edgecolor=col, facecolor="none", lw=1.5, zorder=5)
+    ax.add_patch(e)
+    ax.text(ns_c, 64, "⟳", ha="center", fontsize=12, color=col, zorder=6)
+
+ax.set_xlabel("Vitesse spécifique $n_s$ (tr/min, m³/s, m)", fontsize=9)
+ax.set_ylabel("Rendement maximum atteignable (%)", fontsize=9)
+ax.set_title("Classification des turbomachines par vitesse spécifique", fontsize=10)
+ax.legend(fontsize=8.5, loc="lower right")
+ax.grid(alpha=0.2)
+ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-important}
+## Piège — La vitesse spécifique de catalogue est dimensionnelle
+
+La $n_s$ « de catalogue » dépend du système d'unités choisi. La même machine aura $n_s = 50$ en unités SI (m³/s, m, tr/min) et $n_s \approx 2500$ en unités américaines (gpm, ft, rpm). Comparer deux vitesses spécifiques sans harmoniser les unités conduit à un **contresens total** sur le type de machine sélectionné. Toujours indiquer explicitement la convention d'unités. Préférer $\Omega_s$ (adimensionnel) pour toute comparaison inter-catalogue.
+:::
+
+---
+
+## Le point de fonctionnement : couplage machine–réseau
+
+### La courbe caractéristique du réseau (courbe de système)
+
+Le réseau impose à la pompe une demande en hauteur qui dépend du débit : c'est la **courbe de système** ou courbe réseau :
+
+$$H_{requis}(Q) = H_{geo} + \sum \Delta H(Q) = H_{geo} + R\,Q^{2}$$
+
+où $H_{geo} = z_{ref} - z_{asp}$ est la hauteur géostatique (différence de niveau entre les réservoirs) et $R$ est la résistance hydraulique du réseau :
+
+$$R = \frac{8\,\lambda L}{\pi^{2} g D^{5}} + \sum \frac{8\,K}{\pi^{2} g D^{4}}$$
+
+::: {.callout-note}
+## Note de fondement — Lien avec Darcy-Weisbach (note 0.2/0.3)
+
+Le terme en $\lambda L / D^5$ est la résistance de la conduite principale (formule de Darcy-Weisbach exprimée en débit volumique), et les termes en $K/D^4$ représentent les singularités (coudes, vannes, rétrécissements). Le paramètre $\lambda$ est lui-même fonction du Reynolds et de la rugosité relative — cf. diagramme de Moody, note 0.4.
+:::
+
+```{python}
+#| label: fig-courbe-systeme
+#| fig-cap: "Courbe de système pour trois niveaux du réservoir aval (marnage ±2 m autour du niveau moyen). La hauteur géostatique $H_{geo}$ déplace verticalement la parabole, créant une **bande** de fonctionnement possible plutôt qu'une courbe unique. Le point de fonctionnement (intersection avec la courbe pompe) se déplace en conséquence : le débit refoulé varie d'environ ±8 % entre basses et hautes eaux, ce qui peut suffire à sortir la pompe de sa POR en situation extrême."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+Q = np.linspace(0, 120, 300)
+R = 0.0018
+a_pompe, b_pompe = 30.0, 0.0020
+
+H_geo_vals = [22.0, 24.0, 26.0]
+labels = ["Basses eaux ($H_{geo}=22$ m)", "Niveau moyen ($H_{geo}=24$ m)", "Hautes eaux ($H_{geo}=26$ m)"]
+colors_sys = [C_PIEZO, "#27ae60", "#1a5e35"]
+colors_fp  = [C_ACCENT, "darkorange", "#7f0000"]
+
+fig, ax = plt.subplots(figsize=(7.5, 4.2))
+
+# Courbe pompe
+H_pompe = a_pompe - b_pompe * Q**2
+ax.plot(Q, H_pompe, color=C_CHARGE, lw=2.5, label="Courbe pompe")
+
+for H_geo, lbl, col_s, col_fp in zip(H_geo_vals, labels, colors_sys, colors_fp):
+    H_sys = H_geo + R * Q**2
+    ax.plot(Q, H_sys, color=col_s, lw=1.8, ls="--", label=lbl)
+    # intersection
+    Q_star = np.sqrt((a_pompe - H_geo) / (b_pompe + R))
+    H_star = H_geo + R * Q_star**2
+    ax.scatter([Q_star], [H_star], color=col_fp, zorder=5, s=60)
+
+# Bande marnage
+H_sys_lo = H_geo_vals[0] + R * Q**2
+H_sys_hi = H_geo_vals[-1] + R * Q**2
+ax.fill_between(Q, H_sys_lo, H_sys_hi, alpha=0.10, color=C_PIEZO,
+                label="Bande marnage")
+
+ax.set_xlabel("Débit $Q$ (m³/h)", fontsize=9)
+ax.set_ylabel("HMT / Hauteur requise (m)", fontsize=9)
+ax.set_title("Courbe de système — Effet du marnage du réservoir aval", fontsize=10)
+ax.legend(fontsize=8, loc="upper right")
+ax.set_xlim(0, 120); ax.set_ylim(0, 35)
+ax.grid(alpha=0.2)
+ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-warning}
+## Alerte modélisation — La courbe système n'est pas une ligne fixe
+
+La résistance $R$ n'est pas constante : le coefficient de frottement $\lambda$ dépend faiblement du Reynolds (et donc du débit), et le vieillissement ou l'entartrage de la conduite augmente la rugosité sur la durée de vie. La hauteur géostatique varie avec le marnage des réservoirs. La courbe système est donc une **bande** dans le plan (Q, H). Le dimensionnement doit couvrir toute cette bande (pompe efficace dans toute la plage de débit résultante) — renvoi note 2.A1.
+:::
+
+### Détermination du point de fonctionnement
+
+Le point de fonctionnement est défini par l'équilibre entre l'énergie fournie par la pompe et l'énergie requise par le réseau :
+
+$$H_{pompe}(Q) = H_{requis}(Q)$$
+
+Dans le cas du modèle parabolique $H_{pompe} = a - bQ^2$ et $H_{requis} = H_{geo} + RQ^2$, la solution analytique est immédiate :
+
+$$Q^{*} = \sqrt{\frac{a - H_{geo}}{b + R}}, \qquad H^{*} = H_{geo} + R\,Q^{*2}$$
+
+Dans le cas général (courbe constructeur tabulée, réseau non parabolique), on résout numériquement :
+
+$$g(Q) = H_{pompe}(Q) - H_{requis}(Q) = 0 \qquad \text{(Newton–Raphson ou bissection / Brent)}$$
+
+```{python}
+#| label: fig-point-fonctionnement
+#| fig-cap: "Détermination graphique et numérique du point de fonctionnement $Q^*$, $H^*$ par intersection de la courbe pompe (bleu) et de la courbe réseau (vert). Le rendement au point de fonctionnement $\\eta^*$ est lu sur la courbe η–Q (axe secondaire droit). La position du point réel par rapport au BEP (ici légèrement à droite) doit toujours être vérifiée : un écart de plus de 10 % sur le débit nominal peut sortir la pompe de sa POR."
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import brentq
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+# Paramètres machine (calés sur 3 points fictifs)
+a, b = 30.0, 0.0020
+Q_bep, eta_max, k_eta = 80.0, 0.78, 0.00008
+
+def H_pompe(Q):
+    return a - b * Q**2
+
+def eta_pompe(Q):
+    return np.clip(eta_max - k_eta * (Q - Q_bep)**2, 0, 1)
+
+# Paramètres réseau
+H_geo, R = 24.0, 0.0018
+def H_reseau(Q):
+    return H_geo + R * Q**2
+
+# Résolution
+Q_star = brentq(lambda Q: H_pompe(Q) - H_reseau(Q), 1, 120)
+H_star = H_pompe(Q_star)
+eta_star = eta_pompe(Q_star)
+
+Q_arr = np.linspace(0, 120, 300)
+
+fig, ax1 = plt.subplots(figsize=(7.5, 4.2))
+ax1.plot(Q_arr, H_pompe(Q_arr), color=C_CHARGE, lw=2.5, label="Courbe pompe $H_p(Q)$")
+ax1.plot(Q_arr, H_reseau(Q_arr), color=C_PIEZO,  lw=2.5, ls="--",
+         label="Courbe réseau $H_{rés}(Q)$")
+ax1.scatter([Q_star], [H_star], color=C_ACCENT, zorder=6, s=80,
+            label=f"Point de fonctionnement\n$Q^*={Q_star:.1f}$ m³/h, $H^*={H_star:.1f}$ m")
+
+# BEP
+H_bep = H_pompe(Q_bep)
+ax1.axvline(Q_bep, color="#aaa", lw=1, ls=":", label="BEP")
+ax1.scatter([Q_bep], [H_bep], color="darkorange", s=55, zorder=6)
+
+ax2 = ax1.twinx()
+ax2.plot(Q_arr, eta_pompe(Q_arr)*100, color="#8e44ad", lw=1.8, ls="-.",
+         label=f"η–Q ($\\eta^*={eta_star*100:.0f}$ %)")
+ax2.set_ylabel("Rendement η (%)", color="#8e44ad", fontsize=9)
+ax2.tick_params(axis="y", labelcolor="#8e44ad", labelsize=8.5)
+ax2.set_ylim(0, 100)
+
+ax1.set_xlabel("Débit $Q$ (m³/h)", fontsize=9)
+ax1.set_ylabel("HMT / Hauteur requise (m)", fontsize=9)
+ax1.set_title("Point de fonctionnement — Intersection courbe pompe / courbe réseau", fontsize=10)
+ax1.set_xlim(0, 120); ax1.set_ylim(0, 35)
+
+lines1, labs1 = ax1.get_legend_handles_labels()
+lines2, labs2 = ax2.get_legend_handles_labels()
+ax1.legend(lines1+lines2, labs1+labs2, fontsize=8, loc="upper right", ncol=2)
+ax1.grid(alpha=0.2)
+ax1.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-note}
+## Le coin du puriste — Code Python pédagogique : résolution par `scipy.optimize.brentq`
+
+La structure du script de résolution (à adapter à une courbe constructeur réelle) est la suivante :
+
+```python
+import numpy as np
+from scipy.optimize import brentq
+import matplotlib.pyplot as plt
+
+# 1. Courbe pompe (coefficients calés sur ≥ 3 points constructeur)
+a, b = 30.0, 0.0020          # H(Q) = a - b*Q² [m, m³/h]
+
+def H_pompe(Q):
+    return a - b * Q**2
+
+def eta_pompe(Q):             # polynôme calé de même façon
+    return np.clip(0.78 - 0.00008*(Q - 80.0)**2, 0, 1)
+
+# 2. Courbe réseau
+H_geo, R = 24.0, 0.0018      # hauteur statique [m], résistance [(m/(m³/h)²)]
+
+def H_reseau(Q):
+    return H_geo + R * Q**2
+
+# 3. Résolution de H_pompe(Q) - H_reseau(Q) = 0
+Q_star = brentq(lambda Q: H_pompe(Q) - H_reseau(Q), a=1.0, b=120.0)
+H_star = H_pompe(Q_star)
+eta_star = eta_pompe(Q_star)
+
+print(f"Q* = {Q_star:.1f} m³/h,  H* = {H_star:.1f} m,  η* = {eta_star*100:.0f} %")
+```
+
+En modèle de réseau maillé, ce couplage est résolu globalement par le solveur hydraulique — voir le mode *pump* d'EPANET/WNTR, note 2.A1.
+:::
+
+::: {.callout-warning}
+## Alerte modélisation — Vérifier la position du point réel par rapport au BEP
+
+Un modèle qui « débite » n'est pas nécessairement correct. Si le point de fonctionnement est loin du BEP (réseau sur- ou sous-estimé par rapport au dimensionnement initial), la pompe fonctionne en dehors de sa POR : mauvais rendement, échauffement, recirculation interne, usure accélérée des garnitures. La première vérification à faire après calcul du point de fonctionnement est toujours : **où suis-je par rapport au BEP ?**
+:::
+
+### Réglage du point : VFD, vannage, by-pass
+
+Trois stratégies permettent de déplacer le point de fonctionnement quand le débit requis diffère du débit naturel d'intersection :
+
+**Vannage** : on ajoute une perte de charge artificielle (vanne en sortie) qui déplace la courbe réseau vers le haut. L'énergie dissipée dans la vanne est :
+
+$$H_{vanne} = H_{pompe}(Q^{*}) - H_{requis,utile}(Q^{*})$$
+
+**Variateur de fréquence (VFD)** : on modifie la vitesse de rotation, ce qui déplace la courbe pompe par affinité ($H \propto N^2$, $Q \propto N$). La puissance suit la loi cubique $P \propto N^3$.
+
+**By-pass** : une fraction du débit est recirculée vers l'aspiration. Rarement économique, surtout utilisé pour protéger la pompe du fonctionnement à débit nul.
+
+```{python}
+#| label: fig-vfd-vs-vannage
+#| fig-cap: "Comparaison des stratégies de réglage du point de fonctionnement. (a) **Vannage** : la pompe fonctionne à son point naturel d'intersection avec la courbe réseau augmentée de la vanne (point vert). L'aire hachurée rouge représente la puissance dissipée inutilement dans la vanne. (b) **VFD** : la pompe est ralentie jusqu'à l'intersection de la courbe réseau utile avec la courbe d'affinité (point bleu). La réduction de puissance est cubique en l'absence de composante statique — mais le gain réel est moindre ici car $H_{geo}$ est significatif."
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import brentq
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+a, b   = 30.0, 0.0020
+H_geo, R = 24.0, 0.0018
+Q_target = 55.0  # débit souhaité (inférieur au débit naturel)
+
+H_p0 = lambda Q: a - b*Q**2
+H_sys = lambda Q: H_geo + R*Q**2
+
+# Point naturel
+Q_nat = brentq(lambda Q: H_p0(Q) - H_sys(Q), 1, 120)
+H_nat = H_p0(Q_nat)
+
+# Vannage : H_sys augmentée pour que l'intersection soit en Q_target
+H_vanne_val = H_p0(Q_target) - H_sys(Q_target)
+H_sys_vanne = lambda Q: H_sys(Q) + H_vanne_val
+
+# VFD : trouver la fréquence (ratio r) telle que la courbe d'affinité passe par (Q_target, H_sys(Q_target))
+H_target_sys = H_sys(Q_target)
+# H_p(r) = r²*(a - b*(Q/r)²) = r²*a - b*Q² → H_p_vfd(Q_target, r) = H_target_sys
+# r²*a - b*Q_target² = H_target_sys → r = sqrt((H_target_sys + b*Q_target²)/a)
+r_vfd = np.sqrt((H_target_sys + b*Q_target**2) / a)
+H_p_vfd = lambda Q: r_vfd**2 * a - b * Q**2
+
+Q_arr = np.linspace(0, 115, 300)
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10.5, 4.2))
+
+for ax, title, show_vanne, show_vfd in [
+        (ax1, "(a) Stratégie : Vannage", True, False),
+        (ax2, "(b) Stratégie : VFD", False, True)]:
+
+    ax.plot(Q_arr, H_p0(Q_arr), color=C_CHARGE, lw=2.5, label="Courbe pompe (50 Hz)")
+    ax.plot(Q_arr, H_sys(Q_arr), color=C_PIEZO, lw=2.0, ls="--", label="Courbe réseau utile")
+
+    if show_vanne:
+        ax.plot(Q_arr, H_sys_vanne(Q_arr), color="#e67e22", lw=1.8, ls="-.",
+                label="Réseau + vanne")
+        ax.scatter([Q_target], [H_p0(Q_target)], color="darkorange", s=70, zorder=6,
+                   label=f"Point vanné ($Q={Q_target:.0f}$ m³/h)")
+        # Zone énergie gaspillée
+        Qs = Q_arr[Q_arr <= Q_target + 1]
+        ax.fill_between(Qs,
+                        np.clip(H_sys_vanne(Qs), 0, 40),
+                        np.clip(H_sys(Qs), 0, 40),
+                        alpha=0.22, color=C_ACCENT, label="Énergie dissipée (vanne)")
+        # Point naturel pour référence
+        ax.scatter([Q_nat], [H_nat], color="#888", s=50, zorder=5, marker="x",
+                   label=f"Point naturel ($Q={Q_nat:.0f}$ m³/h)")
+
+    if show_vfd:
+        ax.plot(Q_arr, H_p_vfd(Q_arr), color=C_CHARGE, lw=2.0, ls=":",
+                label=f"Courbe pompe VFD ({r_vfd*50:.0f} Hz)")
+        ax.scatter([Q_target], [H_sys(Q_target)], color=C_CHARGE, s=70, zorder=6,
+                   label=f"Point VFD ($Q={Q_target:.0f}$ m³/h)")
+        # Parabole d'affinité
+        r_a = np.linspace(r_vfd, 1.01, 80)
+        ax.plot(Q_nat*r_a, H_nat*r_a**2, color="#8e44ad", lw=1.4, ls="--",
+                label="Trajectoire d'affinité")
+        ax.scatter([Q_nat], [H_nat], color="#888", s=50, zorder=5, marker="x",
+                   label=f"Point naturel ({50:.0f} Hz)")
+
+    ax.set_xlabel("Débit $Q$ (m³/h)", fontsize=9)
+    ax.set_ylabel("HMT (m)", fontsize=9)
+    ax.set_title(title, fontsize=9.5)
+    ax.set_xlim(0, 115); ax.set_ylim(0, 35)
+    ax.legend(fontsize=7.5, loc="upper right")
+    ax.grid(alpha=0.2)
+    ax.tick_params(labelsize=8.5)
+
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-tip}
+## Bon sens de l'ingénieur — Quand le VFD est vraiment intéressant
+
+Le gain de puissance cubique du VFD est spectaculaire sur les réseaux **purement résistifs** (réseaux de distribution d'eau en charge gravitaire, réseaux de refroidissement industriel à faible hauteur statique). Il est **très atténué** sur les réseaux à forte hauteur géostatique (refoulement AEP vers château d'eau perché) : à 70 % du débit nominal, on ne récupère parfois que 15 à 20 % de puissance au lieu des 66 % annoncés par la loi cubique. Chiffrer systématiquement le gain réel sur la courbe réseau réelle avant de dimensionner le VFD.
+:::
+
+### Associations de pompes : série et parallèle
+
+Deux pompes peuvent être couplées pour atteindre un point de fonctionnement hors de portée d'une machine unique.
+
+**Association en série** — les hauteurs s'additionnent à débit égal :
+
+$$H_{eq}(Q) = H_1(Q) + H_2(Q)$$
+
+Adapté aux réseaux à **forte composante statique** (on empile de la hauteur sans augmenter le débit).
+
+**Association en parallèle** — les débits s'additionnent à hauteur égale :
+
+$$Q_{eq}(H) = Q_1(H) + Q_2(H)$$
+
+Adapté aux réseaux à **faible composante statique et courbe réseau plate** (on empile du débit en restant à hauteur constante).
+
+```{python}
+#| label: fig-serie-parallele
+#| fig-cap: "Associations de pompes en série (courbe rouge) et en parallèle (courbe verte), obtenues à partir de deux pompes identiques (courbe bleue unitaire). Deux courbes réseau sont superposées : une courbe plate (faibles pertes, forte $H_{geo}$, pointillé gris) et une courbe raide (fortes pertes, tiret-point gris). Sur réseau plat, la mise en parallèle apporte un gain de débit significatif (point P1 vs P2). Sur réseau raide, le gain est bien moindre — une seconde pompe en parallèle peut même se retrouver à débit quasi nul, risquant le déclenchement sur sécurité thermique."
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import brentq
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+Q_u = np.linspace(0, 100, 400)
+a, b = 28.0, 0.0025
+H_unit = a - b * Q_u**2
+
+# Série : même courbe mais Q inchangé, H doublé
+H_serie = 2*(a - b * Q_u**2)
+
+# Parallèle : même H, Q doublé → inverser courbe
+# H_paral(Q) = H_unit(Q/2) = a - b*(Q/2)² = a - b*Q²/4
+Q_par = np.linspace(0, 200, 400)
+H_para = a - b*(Q_par/2)**2
+H_para = np.where(H_para > 0, H_para, np.nan)
+
+fig, ax = plt.subplots(figsize=(8.5, 4.5))
+
+ax.plot(Q_u,  H_unit,  color=C_CHARGE, lw=2.2, label="1 pompe unitaire")
+ax.plot(Q_u,  H_serie, color=C_ACCENT,  lw=2.2, label="2 pompes en série")
+ax.plot(Q_par, H_para, color=C_PIEZO,  lw=2.2, label="2 pompes en parallèle")
+
+# Courbe réseau plate (faibles pertes)
+H_geo_plat, R_plat = 12.0, 0.0005
+H_plat = lambda Q: H_geo_plat + R_plat * Q**2
+ax.plot(Q_par, H_plat(Q_par), color="#888", lw=1.5, ls="--",
+        label="Réseau plat ($H_{geo}=12$ m, faibles pertes)")
+
+# Courbe réseau raide
+H_geo_raide, R_raide = 20.0, 0.0040
+H_raide = lambda Q: H_geo_raide + R_raide * Q**2
+ax.plot(Q_par, H_raide(Q_par), color="#555", lw=1.5, ls="-.",
+        label="Réseau raide ($H_{geo}=20$ m, fortes pertes)")
+
+# Points de fonctionnement
+def pfct(H_mach_func, Q_arr, H_res_func):
+    try:
+        return brentq(lambda Q: H_mach_func(Q) - H_res_func(Q), 0.5, Q_arr[-1]-0.5)
+    except:
+        return None
+
+Hup = lambda Q: a - b*Q**2
+Hpar = lambda Q: a - b*(Q/2)**2
+
+for H_res, col in [(H_plat, "#27ae60"), (H_raide, "#c0392b")]:
+    for H_mach, lbl_sfx in [(Hup, "1p"), (Hpar, "2p//")]:
+        Q_s = pfct(H_mach, Q_par, H_res)
+        if Q_s and 0 < Q_s < 200:
+            H_s = H_mach(Q_s)
+            ax.scatter([Q_s], [H_s], s=70, zorder=6,
+                       edgecolors="k", linewidths=0.8,
+                       color=col, marker="D" if "2p" in lbl_sfx else "o")
+
+ax.set_xlabel("Débit $Q$ (m³/h)", fontsize=9)
+ax.set_ylabel("HMT (m)", fontsize=9)
+ax.set_title("Associations série / parallèle — Effet de la raideur du réseau", fontsize=10)
+ax.legend(fontsize=8, loc="upper right", ncol=2)
+ax.set_xlim(0, 200); ax.set_ylim(0, 65)
+ax.grid(alpha=0.2)
+ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-warning}
+## Alerte modélisation — Le mythe du doublement de débit en parallèle
+
+Sur un réseau à **forte composante statique ou courbe raide**, ajouter une 2ᵉ pompe en parallèle augmente très peu le débit total. Chaque pompe recule sur sa courbe individuelle, et le gain réel est souvent de 10 à 30 % seulement au lieu des 100 % attendus. Plus grave : si les deux pompes ne sont pas identiques, la moins puissante peut se retrouver refoulant à débit quasi nul — elle s'échauffe, déclenche sur sécurité thermique, et le clapet de non-retour la protège à peine si la pression aval est trop élevée. Toujours **tracer le point de fonctionnement de chaque pompe individuellement** dans la configuration d'association, et vérifier que toutes restent dans leur AOR.
+:::
+
+---
+
+## La cavitation et le NPSH
+
+### Physique de la cavitation
+
+La cavitation survient lorsque la pression locale du fluide descend en dessous de la **pression de vapeur saturante** $p_v(T)$ : le liquide se vaporise localement, formant des bulles. Ces bulles, entraînées vers des zones de plus haute pression, s'y **impllosent** violemment, générant des ondes de pression locales pouvant atteindre plusieurs GPa. Les conséquences sont multiples : érosion des aubes et de la volute, bruit caractéristique (crépitement), vibrations, et **chute brutale des performances** (effondrement de la courbe H–Q).
+
+La condition d'apparition :
+
+$$p_{local} \le p_{v}(T)$$
+
+La zone la plus exposée dans une pompe centrifuge est l'**entrée de la roue** (œillard), où la pression est minimale en raison de l'accélération du fluide et des effets centrifuges.
+
+```{python}
+#| label: fig-profil-pression-cavitation
+#| fig-cap: "Profil de pression le long du chemin d'aspiration jusqu'à l'entrée de la roue. La pression diminue depuis la bâche d'aspiration (à pression atmosphérique) en raison des pertes de charge et de l'accélération à l'œillard. Si le minimum local de pression descend sous $p_v(T)$ (ligne horizontale rouge), la cavitation apparaît dans la zone ombrée. L'amplitude de la dépression dépend du débit (plus le débit est élevé, plus la vitesse à l'œillard est grande et plus la dépression est marquée)."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+fig, ax = plt.subplots(figsize=(8, 3.8))
+
+x = np.linspace(0, 1, 200)
+p_atm = 101325.0  # Pa
+rho_g = 9810.0
+z_asp = -3.5      # profondeur bâche / pompe (m)
+pertes_aspir = 1.2  # m
+vitesse_oeillard = 2.8  # m/s composante axiale
+g = 9.81
+
+# Profil de pression (en m de charge)
+p_bache_m = p_atm / rho_g + 0.0  # niveau bâche = ref
+# Trajet aspiration : décroît linéairement par pertes + gravité
+p_aspir = p_bache_m + z_asp - pertes_aspir * x - 0.5 * vitesse_oeillard**2 / g * x**2
+# Minimum à l'œillard (x=1, accélération maximale)
+p_oeil  = p_bache_m + z_asp - pertes_aspir - vitesse_oeillard**2 / (2*g)
+
+# Pression vapeur à 20°C et à 35°C (effet température)
+pv_20 = 2340.0 / rho_g   # m
+pv_35 = 5600.0 / rho_g   # m
+
+ax.plot(x, p_aspir, color=C_CHARGE, lw=2.5, label="Pression locale (m de charge)")
+ax.axhline(pv_20, color=C_ACCENT, lw=1.8, ls="-.",
+           label=f"$p_v(20°C) = {pv_20:.2f}$ m")
+ax.axhline(pv_35, color="#e67e22", lw=1.8, ls=":",
+           label=f"$p_v(35°C) = {pv_35:.2f}$ m")
+
+# Zone de cavitation (si p < pv à 20°C)
+cav_mask = p_aspir <= pv_20
+if cav_mask.any():
+    x_cav = x[cav_mask]
+    ax.fill_between(x_cav, pv_20, p_aspir[cav_mask],
+                    alpha=0.30, color=C_ACCENT, label="Zone de cavitation (20°C)")
+
+ax.set_xlabel("Abscisse normalisée (aspiration → œillard)", fontsize=9)
+ax.set_ylabel("Pression (m de charge)", fontsize=9)
+ax.set_title("Profil de pression en aspiration — Apparition de la cavitation", fontsize=10)
+ax.legend(fontsize=8.5, loc="upper right")
+ax.grid(alpha=0.2)
+ax.tick_params(labelsize=8.5)
+ax.text(0.85, pv_20+0.15, "Œillard", ha="center", fontsize=8, color=C_ACCENT)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-warning}
+## Alerte modélisation — La température de l'eau change tout
+
+La pression de vapeur saturante $p_v$ croît très rapidement avec la température (de 2 340 Pa à 20 °C à 19 940 Pa à 60 °C). Un calcul NPSH effectué pour l'eau à 15 °C peut être **faux à 35 °C** (eau de réseau en été, eau industrielle). En irrigation ou en altitude (renvoi note 2.C2), la pression atmosphérique est plus faible — ce qui réduit la marge disponible. Ne jamais figer $p_v$ : la calculer pour la température maximale d'exploitation prévue.
+:::
+
+### NPSH disponible et NPSH requis
+
+Le **NPSH disponible** ($NPSH_d$) est la marge de pression que le circuit d'aspiration offre à l'entrée de la pompe. En développant le bilan de Bernoulli entre la surface libre de la bâche d'aspiration et l'entrée de la pompe :
+
+$$NPSH_{d} = \frac{p_{atm} - p_{v}}{\rho g} - z_{asp} - \Delta H_{asp}(Q)$$
+
+où $z_{asp}$ est la hauteur géométrique d'aspiration (positive si la pompe est au-dessus de la bâche) et $\Delta H_{asp}(Q)$ les pertes de charge dans la conduite d'aspiration.
+
+Le **NPSH requis** ($NPSH_r$) est une caractéristique machine fournie par le constructeur : c'est la dépression minimale à l'entrée de la roue qui provoque une chute de 3 % de la hauteur (norme ISO 9906). La courbe $NPSH_r(Q)$ est croissante.
+
+Le critère d'absence de cavitation est :
+
+$$NPSH_{d} \ge NPSH_{r} + \text{marge} \qquad \text{(typiquement 0,5 m ou } 1{,}3 \times NPSH_r\text{)}$$
+
+```{python}
+#| label: fig-npsh
+#| fig-cap: "Courbes de NPSH disponible (décroissante avec $Q$, bleue) et requis (croissante avec $Q$, rouge) sur le même graphe. Leur intersection définit le **débit critique de cavitation** $Q_{cav}$ au-delà duquel la machine cavite. La marge de sécurité réglementaire (zone ombrée verte) doit être respectée à tout débit d'exploitation. Le modélisateur doit vérifier ce critère **au débit réel de fonctionnement**, pas seulement au débit nominal."
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import brentq
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+Q = np.linspace(0.1, 130, 300)
+
+# NPSHd : décroissant
+p_atm_pv_rhoG = 8.5   # (p_atm - p_v)/(rho*g) à 20°C, altitude 0 [m]
+z_asp   = 3.0          # hauteur d'aspiration [m]
+k_asp   = 0.00015      # coeff pertes aspiration
+NPSHd = p_atm_pv_rhoG - z_asp - k_asp * Q**2
+
+# NPSHr : croissant
+NPSH_r0 = 1.2          # NPSH requis au débit nul [m]
+k_r     = 0.00025
+NPSHr = NPSH_r0 + k_r * Q**2
+
+# Intersection
+Q_cav = brentq(lambda Q_: (p_atm_pv_rhoG - z_asp - k_asp*Q_**2) - (NPSH_r0 + k_r*Q_**2), 1, 129)
+
+# Marge
+marge = 0.5
+NPSHd_marge = NPSHd - marge
+
+fig, ax = plt.subplots(figsize=(7.5, 4.0))
+ax.plot(Q, NPSHd,        color=C_CHARGE, lw=2.5, label="$NPSH_d$ disponible")
+ax.plot(Q, NPSHr,        color=C_ACCENT,  lw=2.5, label="$NPSH_r$ requis (constructeur)")
+ax.plot(Q, NPSHd_marge,  color=C_CHARGE, lw=1.5, ls="--",
+        label=f"$NPSH_d$ − marge ({marge} m)")
+
+# Zone OK
+Q_ok = Q[NPSHd_marge >= NPSHr]
+if len(Q_ok):
+    ax.fill_between(Q_ok,
+                    np.interp(Q_ok, Q, NPSHr),
+                    np.interp(Q_ok, Q, NPSHd_marge),
+                    alpha=0.18, color=C_PIEZO, label="Marge de sécurité")
+
+ax.axvline(Q_cav, color=C_ACCENT, lw=1.2, ls=":", label=f"$Q_{{cav}}={Q_cav:.0f}$ m³/h")
+ax.scatter([Q_cav], [NPSH_r0 + k_r*Q_cav**2], color=C_ACCENT, s=70, zorder=6)
+
+ax.set_xlabel("Débit $Q$ (m³/h)", fontsize=9)
+ax.set_ylabel("NPSH (m)", fontsize=9)
+ax.set_title("NPSH disponible vs requis — Débit critique de cavitation", fontsize=10)
+ax.legend(fontsize=8.5, loc="upper right")
+ax.set_xlim(0, 130); ax.set_ylim(0, 12)
+ax.grid(alpha=0.2)
+ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-warning}
+## Alerte modélisation — Vérifier au débit réel, pas au débit nominal
+
+$NPSH_d$ **diminue** quand $Q$ augmente (davantage de pertes à l'aspiration), tandis que $NPSH_r$ **augmente**. La marge se referme aux deux extrémités de la plage de fonctionnement. La vérification doit être faite **au débit réel d'exploitation** (qui peut différer du nominal si la courbe réseau est mal estimée) et pour la **température d'eau maximale** prévue. En montagne ou en irrigation de haute altitude, ne jamais oublier la correction de pression atmosphérique : à 1 500 m d'altitude, $p_{atm}$ est environ 85 kPa au lieu de 101 kPa, soit une réduction de $NPSH_d$ de 1,6 m — critique pour les pompes d'irrigation (renvoi note 2.C2).
+:::
+
+### Cavitation côté turbine et coefficient de Thoma
+
+Pour les turbines à réaction (Francis, Kaplan), la cavitation se produit à la **sortie de la roue** (côté aspirateur), là où la dépression est la plus forte. L'analyse se fait via le **coefficient de Thoma** $\sigma$ :
+
+$$\sigma = \frac{NPSH}{H} = \frac{(p_{atm} - p_v)/(\rho g) - H_s}{H}$$
+
+où $H_s$ est la hauteur d'aspiration (positive si la turbine est au-dessus du niveau aval, négative si elle est noyée). La condition sans cavitation est :
+
+$$\sigma > \sigma_{critique}$$
+
+où $\sigma_{critique}$ est fourni par le constructeur pour chaque type de turbine (typiquement 0,05 à 0,10 pour Francis lentes, jusqu'à 0,5 à 0,8 pour Kaplan).
+
+::: {.callout-warning}
+## Alerte modélisation — Le calage altimétrique d'une turbine est dicté par la cavitation
+
+La cote d'implantation d'une turbine Francis ou Kaplan n'est **pas** un choix de génie civil — c'est une **contrainte hydraulique impérative**. Sous-estimer $\sigma_{critique}$ lors de l'avant-projet conduit à placer la roue trop haut, à des dégâts d'érosion sur les aubes et à une perte de rendement à long terme. Dans les aménagements de haute chute avec Francis rapides ou les Kaplan, la turbine doit parfois être **noyée** ($H_s < 0$, roue sous le niveau aval) — ce qui impose un aspirateur profond et des coûts de génie civil élevés.
+:::
+
+---
+
+## Les turbines hydrauliques en réseau et en aménagement
+
+### Typologie : turbines à action et à réaction
+
+Les turbines hydrauliques se divisent en deux grandes familles selon la façon dont l'énergie du fluide est convertie :
+
+**Turbines à action (Pelton)** — toute la charge est convertie en énergie cinétique dans les injecteurs avant d'atteindre les augets de la roue. La pression à la roue est atmosphérique. L'équation de puissance :
+
+$$H_{th} = \frac{U(C_1 - U)(1 + k\cos\beta_2)}{g}, \qquad U_{opt} \approx \frac{C_1}{2}$$
+
+**Turbines à réaction (Francis, Kaplan/hélice, bulbe)** — l'énergie cinétique et l'énergie de pression sont toutes deux utilisées dans la roue. L'équation d'Euler s'applique avec un signe inversé par rapport à la pompe (la machine prélève le moment cinétique) :
+
+$$H_{th} = \frac{U_1 C_{u1} - U_2 C_{u2}}{g}$$
+
+::: {.callout-important}
+## Piège — Le signe d'Euler s'inverse entre pompe et turbine
+
+En pompe, la roue **confère** du moment cinétique au fluide : $H_{th} = (U_2 C_{u2} - U_1 C_{u1})/g > 0$. En turbine, la roue **prélève** le moment cinétique : $H_{th} = (U_1 C_{u1} - U_2 C_{u2})/g > 0$. Appliquer la formule pompe à une turbine sans inverser le signe est une erreur de bilan fréquente dans les études de reconversion de pompes en turbines (PAT).
+:::
+
+```{python}
+#| label: fig-abaque-ht
+#| fig-cap: "Abaque de sélection des turbines hydrauliques dans le plan chute nette $H$ — débit $Q$ (échelles logarithmiques). Les domaines d'emploi de Pelton (hautes chutes, faibles débits), Francis (chutes intermédiaires) et Kaplan/bulbe (faibles chutes, forts débits) sont délimités. Quelques points de projets-types sont superposés à titre illustratif. Le choix final dépend aussi de la vitesse spécifique (renvoi §3.3) et des contraintes de site (cavitation, génie civil)."
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon
+from matplotlib.collections import PatchCollection
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+fig, ax = plt.subplots(figsize=(8, 4.5))
+
+# Domaines approximatifs dans plan log(Q) vs log(H)
+turbines_domains = {
+    "Pelton\n(action)": {
+        "Q": [0.05, 0.05, 15, 15],
+        "H": [100,  2000, 2000, 200],
+        "color": "#d6eaf8", "edge": C_CHARGE
+    },
+    "Francis\n(réaction)": {
+        "Q": [0.5,  0.5,  500,  500],
+        "H": [30,  700,  700,   30],
+        "color": "#d5f5e3", "edge": C_PIEZO
+    },
+    "Kaplan / Bulbe\n(réaction axiale)": {
+        "Q": [5,   5,    2000, 2000],
+        "H": [2,   80,   80,    2],
+        "color": "#fdebd0", "edge": "#e67e22"
+    },
+}
+
+for name, d in turbines_domains.items():
+    xs = d["Q"]
+    ys = d["H"]
+    ax.fill(xs, ys, alpha=0.35, color=d["color"], label=name, zorder=2)
+    ax.plot(xs + [xs[0]], ys + [ys[0]], color=d["edge"], lw=1.5, zorder=3)
+
+# Projets-types fictifs
+projets = [
+    (0.08, 800,  "Pelton\nAlpes"),
+    (1.5,  350,  "Francis\nbarrage"),
+    (2.5,  50,   "Francis\nfil de l'eau"),
+    (120,  15,   "Kaplan\nfluvial"),
+    (800,  5,    "Bulbe\nestuaire"),
+    (0.5,  1200, "Pelton\nmulti-jets"),
+]
+for Q_p, H_p, lbl in projets:
+    ax.scatter([Q_p], [H_p], s=60, color="#333", zorder=6)
+    ax.annotate(lbl, (Q_p, H_p), textcoords="offset points",
+                xytext=(6, 4), fontsize=7.5, color="#333")
+
+ax.set_xscale("log"); ax.set_yscale("log")
+ax.set_xlabel("Débit $Q$ (m³/s)", fontsize=9)
+ax.set_ylabel("Chute nette $H$ (m)", fontsize=9)
+ax.set_title("Abaque de sélection des turbines hydrauliques", fontsize=10)
+ax.legend(fontsize=8.5, loc="upper left")
+ax.set_xlim(0.03, 3000); ax.set_ylim(1.5, 3000)
+ax.grid(alpha=0.2, which="both")
+ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+### Caractéristiques, colline de rendement et lois de similitude
+
+Les caractéristiques d'une turbine sont représentées par la **colline de rendement** (*hill chart*) : une cartographie du rendement $\eta$ dans le plan des **variables réduites** (débit unitaire $Q_{11}$ et vitesse unitaire $N_{11}$), qui rendent les résultats indépendants de la chute :
+
+$$Q_{11} = \frac{Q}{D^{2}\sqrt{H}}, \qquad N_{11} = \frac{N\,D}{\sqrt{H}}, \qquad \eta = f(Q_{11}, N_{11})$$
+
+Ces variables sont l'expression turbine des coefficients adimensionnels $\varphi$ et $\psi$ vus au §3.2. Les lois de similitude s'appliquent de façon symétrique : à $\sigma$ constant, on navigue sur la colline de rendement.
+
+La régulation de la puissance se fait par ouverture du distributeur (Francis) ou par double réglage (distributeur + inclinaison des pales, Kaplan). Chaque ouverture du distributeur trace une courbe sur la colline.
+
+```{python}
+#| label: fig-colline-rendement
+#| fig-cap: "Colline de rendement schématique d'une turbine Francis dans le plan ($Q_{11}$, $N_{11}$). Les courbes de niveau représentent les iso-rendements, et les lignes en tirets les ouvertures successives du distributeur. Le point de rendement maximum (BEP turbine, ici η ≈ 92 %) est centré sur la colline. La trajectoire d'exploitation annuelle (en rouge) suit les variations de chute et de débit de la rivière — le point se déplace sur la colline, et un rendement constant est une approximation grossière pour le calcul de productible."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+fig, ax = plt.subplots(figsize=(7, 4.5))
+
+# Grille Q11 - N11
+Q11 = np.linspace(0.05, 0.45, 200)
+N11 = np.linspace(30,   110,  200)
+Q11g, N11g = np.meshgrid(Q11, N11)
+
+# Rendement modèle gaussien centré sur BEP
+Q11_bep, N11_bep = 0.22, 72.0
+eta_max_turb = 92.0
+sig_Q, sig_N = 0.10, 20.0
+eta_map = eta_max_turb * np.exp(-((Q11g - Q11_bep)**2/(2*sig_Q**2) +
+                                   (N11g - N11_bep)**2/(2*sig_N**2)))
+
+levels = [60, 70, 78, 84, 88, 90, 91.5]
+ct = ax.contourf(Q11g, N11g, eta_map, levels=levels,
+                 cmap="YlGn", alpha=0.80)
+cs = ax.contour(Q11g, N11g, eta_map, levels=levels,
+                colors="k", linewidths=0.8, alpha=0.5)
+ax.clabel(cs, fmt="%.0f %%", fontsize=7.5)
+plt.colorbar(ct, ax=ax, label="Rendement η (%)", shrink=0.9)
+
+# Courbes ouverture distributeur (lignes en tirets)
+for a_dist in [0.30, 0.22, 0.15, 0.10]:
+    N11_line = np.linspace(35, 105, 100)
+    Q11_line = a_dist * (1 + 0.3*(N11_line - N11_bep)/N11_bep)
+    ax.plot(Q11_line, N11_line, color="#555", lw=1, ls="--", alpha=0.6)
+
+# Trajectoire exploitation annuelle
+np.random.seed(42)
+Q11_traj = 0.18 + 0.08*np.random.rand(12)
+N11_traj = 65 + 15*np.random.rand(12)
+ax.plot(Q11_traj, N11_traj, color=C_ACCENT, lw=2, ls="-", marker="o",
+        ms=5, label="Trajectoire annuelle")
+ax.scatter([Q11_bep], [N11_bep], s=90, color="white", edgecolors=C_CHARGE,
+           lw=2, zorder=6, label="BEP (η = 92 %)")
+
+ax.set_xlabel("Débit unitaire $Q_{11} = Q/(D^2\\sqrt{H})$", fontsize=9)
+ax.set_ylabel("Vitesse unitaire $N_{11} = ND/\\sqrt{H}$", fontsize=9)
+ax.set_title("Colline de rendement — Turbine Francis (schématique)", fontsize=10)
+ax.legend(fontsize=8.5, loc="lower right")
+ax.grid(alpha=0.15)
+ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-warning}
+## Alerte modélisation — Ne jamais modéliser le rendement d'une turbine comme une constante
+
+Une turbine fonctionne rarement à chute constante (variation du plan d'eau de la retenue, variation du débit de la rivière). Le point se déplace sur la colline : dans les creux et aux extrêmes d'ouverture du distributeur, le rendement peut tomber de 92 % à 70 %, soit une réduction de productible de 24 %. Modéliser le productible annuel avec $\eta = cste$ conduit à une surestimation significative. En calage de modèle, interpoler $\eta(Q_{11}, N_{11})$ depuis la colline de rendement réelle du constructeur.
+:::
+
+### Turbines en réseau : récupération d'énergie et PAT
+
+Dans les réseaux sous pression (adductions AEP, périmètres irrigués, réseaux industriels), les vannes de régulation **dissipent** de l'énergie habituellement perdue. Cette énergie est récupérable par substitution d'une turbine ou d'une **pompe fonctionnant en turbine** (PAT, *Pump As Turbine*) :
+
+$$P_{récup} = \rho\,g\,Q\,\Delta H_{dissip}\,\eta_{turb}$$
+
+où $\Delta H_{dissip}$ est la chute normalement perdue dans la vanne.
+
+La **PAT** utilise une pompe centrifuge standard en sens turbine. Son avantage est le coût (équipement de série) et sa disponibilité. Son inconvénient majeur : il n'existe pas de caractéristique turbine fournie par le constructeur — les formules de conversion pompe→turbine (Stepanoff, Sharma, etc.) ont une incertitude de ±15 à ±30 %.
+
+::: {.callout-warning}
+## Alerte modélisation — La PAT n'est pas une vanne à $K$ fixe
+
+En modèle de réseau, il est tentant de représenter une turbine ou une PAT comme une singularité à coefficient de perte $K$ constant. C'est **incorrect** : la machine a sa propre courbe $\Delta H(Q)$, variable avec le débit, et elle génère une puissance qui dépend du point de fonctionnement. La bonne représentation est une **condition aux limites de chute imposée variable** (courbe $H_{turbine}(Q)$ calée sur les données constructeur ou les formules de conversion). En l'absence de données fiables pour une PAT, dimensionner avec une marge de ±30 % sur la puissance récupérée et prévoir une régulation adaptée (renvoi notes 2.A1, 2.C2).
+:::
+
+---
+
+## Modélisation des machines en régime transitoire
+
+### La machine en transitoire : courbes complètes 4 quadrants
+
+En fonctionnement permanent, la caractéristique $H(Q)$ suffit à décrire la pompe. Lors d'un **arrêt brutal** (coupure d'alimentation, claquage de vanne), la machine traverse rapidement des régimes qui sortent du premier quadrant ($Q > 0$, $N > 0$, pompage) :
+
+1. **Quadrant I** : fonctionnement normal (pompe)
+2. **Quadrant II** : débit inversé, rotation positive (freinage hydraulique, dissipation)
+3. **Quadrant III** : débit inversé, rotation inversée (turbine inverse)
+4. **Quadrant IV** : débit positif, rotation inversée (rotation en sens inverse sans pomper)
+
+L'équation de la dynamique du groupe est :
+
+$$I\,\frac{d\omega}{dt} = T_{moteur} - T_{hydraulique}$$
+
+où $I$ est le moment d'inertie du groupe (roue + arbre + moteur) et $GD^2$ est son effet volant (paramètre usuel de catalogue) :
+
+$$I = \frac{GD^2}{4g}$$
+
+Pour simuler correctement un arrêt ou un démarrage rapide, les **courbes de Suter** représentent les couples hydrauliques et hydrauliques adimensionnels dans les 4 quadrants. Elles sont le résultat d'essais spécifiques ou de modèles numériques (CFD + systèmes).
+
+```{python}
+#| label: fig-4-quadrants
+#| fig-cap: "Représentation schématique des 4 quadrants de fonctionnement d'un groupe pompe–moteur, dans le plan vitesse de rotation $N$ (ordonnée) – débit $Q$ (abscisse), tous deux signés. Le quadrant I est le fonctionnement normal de pompage. Lors d'un arrêt brusque, la trajectoire du point de fonctionnement suit la courbe fléchée rouge : retour de débit, freinage, survitesse transitoire inverse possible. La caractéristique permanente $H(Q)$ (visible uniquement en quadrant I) est insuffisante pour décrire cette trajectoire — les courbes de Suter couvrent l'ensemble des 4 quadrants."
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
+C_CHARGE = "#1f4e79"
+C_PIEZO  = "#2e8b57"
+C_ACCENT = "#c0392b"
+
+fig, ax = plt.subplots(figsize=(6.5, 5.5))
+
+# Axes
+ax.axhline(0, color="k", lw=1.2)
+ax.axvline(0, color="k", lw=1.2)
+ax.set_xlim(-1.4, 1.4); ax.set_ylim(-1.4, 1.4)
+
+# Quadrant labels
+kw_ql = dict(fontsize=11, alpha=0.18, ha="center", va="center", fontweight="bold")
+ax.text( 0.7,  0.7, "I\nPOMPE", color=C_CHARGE, **kw_ql)
+ax.text(-0.7,  0.7, "II\nFREINAGE\nHYDRAULIQUE", color="#8e44ad", **kw_ql)
+ax.text(-0.7, -0.7, "III\nTURBINE\nINVERSE", color=C_PIEZO, **kw_ql)
+ax.text( 0.7, -0.7, "IV\nROTATION\nINVERSE", color="#e67e22", **kw_ql)
+
+# Courbe H(Q) schématique (quadrant I uniquement)
+Q_i = np.linspace(0, 1.1, 100)
+H_i = 1.1 - 0.9*Q_i**2
+ax.plot(Q_i, H_i, color=C_CHARGE, lw=2, label="Caractéristique $H(Q)$ (Q.I)")
+
+# Trajectoire transitoire lors d'un arrêt
+theta = np.linspace(np.pi/2 * 0.05, np.pi * 1.55, 120)
+r = 0.85 + 0.15*np.sin(2.5*theta)
+Q_traj = r * np.cos(theta)
+N_traj = r * np.sin(theta)
+ax.plot(Q_traj, N_traj, color=C_ACCENT, lw=2.2, ls="--",
+        label="Trajectoire transitoire (arrêt brusque)")
+ax.annotate("", xy=(Q_traj[60], N_traj[60]),
+            xytext=(Q_traj[55], N_traj[55]),
+            arrowprops=dict(arrowstyle="->", color=C_ACCENT, lw=1.8))
+
+# Limites Suter schématiques
+for theta_line in np.linspace(0, 2*np.pi, 9)[:-1]:
+    ax.plot([0, 1.35*np.cos(theta_line)], [0, 1.35*np.sin(theta_line)],
+            color="#ddd", lw=0.7)
+
+ax.set_xlabel("Débit $Q$ (normalisé, signé)", fontsize=9)
+ax.set_ylabel("Vitesse de rotation $N$ (normalisée, signée)", fontsize=9)
+ax.set_title("4 quadrants de fonctionnement — Groupe pompe–moteur", fontsize=10)
+ax.legend(fontsize=8.5, loc="lower right")
+ax.grid(alpha=0.15)
+ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-warning}
+## Alerte modélisation — L'arrêt de pompe ne se modélise pas avec la courbe permanente
+
+Modéliser un arrêt de pompe en utilisant seulement la caractéristique $H(Q)$ du quadrant I **sous-estime gravement** les dépressions transitoires (risque de coup de bélier dépressionnaire, vaporisation, rupture de veine). Il faut les **courbes 4 quadrants + l'inertie du groupe** ($GD^2$ disponible au catalogue ou calculable). Pour le calcul complet des transitoires et du coup de bélier, renvoi **note 2.A2** (pompes AEP) et **note 2.C3** (régulation et transitoires en canaux sous pression).
+:::
+
+### Emballement de turbine et survitesse
+
+Lors d'un **déclenchement de charge** (perte soudaine du réseau électrique), le couple résistant s'annule instantanément. Le couple hydraulique accélère la machine jusqu'à la **vitesse d'emballement** (*runaway speed*) $N_{emb}$, où le couple hydraulique s'annule à son tour :
+
+$$T_{hydraulique}(N_{emb}, Q_{emb}) = 0$$
+
+Cette survitesse est caractéristique du type de turbine :
+
+$$N_{emb} \approx \begin{cases} 1{,}8 \times N_{nom} & \text{Pelton} \\ 2{,}0 \text{ à } 2{,}5 \times N_{nom} & \text{Francis} \\ 2{,}5 \text{ à } 3{,}0 \times N_{nom} & \text{Kaplan} \end{cases}$$
+
+La dynamique de montée en survitesse est gouvernée par :
+
+$$I\,\frac{d\omega}{dt} = T_{hyd}(\omega, Q) \qquad \text{avec } T_{moteur} = 0$$
+
+```{python}
+#| label: fig-survitesse
+#| fig-cap: "Courbe schématique de survitesse $N(t)$ après déclenchement de charge pour une turbine Francis. La vitesse monte rapidement vers $N_{emb}$ (environ 2,2 × la vitesse nominale), puis le distributeur se ferme progressivement (temps de fermeture $t_{ferm}$), ramenant la vitesse vers zéro ou vers la vitesse de ralenti. L'aire sous la courbe entre $t_0$ et $t_{ferm}$ représente l'énergie mécanique qui sollicite l'arbre et l'alternateur — elle dimensionne la tenue mécanique du groupe et du génie civil."
+import numpy as np
+import matplotlib.pyplot as plt
+
+C_CHARGE = "#1f4e79"
+C_ACCENT = "#c0392b"
+
+fig, ax = plt.subplots(figsize=(7.5, 3.8))
+
+t = np.linspace(0, 25, 500)
+N_nom = 1.0
+N_emb = 2.2  # Francis typique
+
+# Montée vers emballement (approche exponentielle saturée)
+t_reach = 8.0
+tau_up = 2.5
+N_rise = N_nom + (N_emb - N_nom) * (1 - np.exp(-t/tau_up))
+
+# Fermeture distributeur à partir de t=6s (temps de fermeture 10s)
+t_ferm_start = 6.0
+t_ferm_dur   = 10.0
+t_ferm_end   = t_ferm_start + t_ferm_dur
+
+def N_profile(t_):
+    if t_ < t_ferm_start:
+        return N_nom + (N_emb - N_nom) * (1 - np.exp(-t_/tau_up))
+    elif t_ < t_ferm_end:
+        progress = (t_ - t_ferm_start) / t_ferm_dur
+        N_at_start = N_nom + (N_emb - N_nom) * (1 - np.exp(-t_ferm_start/tau_up))
+        return N_at_start * (1 - 0.95*progress**0.7)
+    else:
+        return 0.05 * N_nom
+
+N_curve = np.array([N_profile(ti) for ti in t])
+
+ax.plot(t, N_curve, color=C_CHARGE, lw=2.5, label="$N(t)$ après déclenchement")
+ax.axhline(N_nom, color="#888", lw=1, ls=":", label="$N_{nom}$")
+ax.axhline(N_emb, color=C_ACCENT, lw=1.5, ls="--", label=f"$N_{{emb}} = {N_emb:.1f}\\times N_{{nom}}$")
+ax.axvline(t_ferm_start, color="#27ae60", lw=1.2, ls="-.", label=f"Début fermeture distributeur ($t={t_ferm_start:.0f}$ s)")
+ax.axvline(t_ferm_end,   color="#e67e22", lw=1.2, ls="-.", label=f"Fin fermeture ($t={t_ferm_end:.0f}$ s)")
+
+ax.scatter([0], [N_nom], color=C_CHARGE, s=60, zorder=6)
+ax.text(0.3, N_nom+0.04, "Déclenchement\nde charge", fontsize=8, color=C_CHARGE)
+
+# Zone sollicitation mécanique
+t_zone = t[(t >= 0) & (t <= t_ferm_end)]
+N_zone = N_curve[(t >= 0) & (t <= t_ferm_end)]
+ax.fill_between(t_zone, N_nom, N_zone, where=N_zone > N_nom,
+                alpha=0.15, color=C_ACCENT, label="Sollicitation mécanique")
+
+ax.set_xlabel("Temps (s)", fontsize=9)
+ax.set_ylabel("Vitesse $N / N_{nom}$", fontsize=9)
+ax.set_title("Survitesse après déclenchement de charge — Turbine Francis", fontsize=10)
+ax.legend(fontsize=8, loc="upper right", ncol=2)
+ax.set_xlim(0, 25); ax.set_ylim(0, 2.5)
+ax.grid(alpha=0.2)
+ax.tick_params(labelsize=8.5)
+fig.tight_layout()
+plt.show()
+```
+
+::: {.callout-important}
+## Piège dimensionnant — La survitesse d'emballement dicte le dimensionnement mécanique
+
+La vitesse d'emballement $N_{emb}$ impose les contraintes mécaniques **maximales** que subit le groupe en exploitation. L'arbre, le rotor de l'alternateur et le génie civil de l'alternateur sont dimensionnés pour résister à cette survitesse, qui peut durer plusieurs dizaines de secondes avant que le distributeur ne se ferme complètement. L'ignorer en avant-projet conduit à un sous-dimensionnement mécanique découvert tardivement, avec des surcoûts majeurs. Renvoi **note 2.C3** pour la régulation des canaux d'amenée et des conduites forcées associées à la manœuvre du distributeur.
+:::
+
+### Modèles de simulation des transitoires
+
+La simulation complète d'un transitoire machine nécessite de coupler :
+
+- L'**équation de dynamique** du groupe : $I\,d\omega/dt = T_{moteur} - T_{hyd}(\omega, Q)$
+- Les **courbes 4 quadrants** (Suter) ou la **colline de rendement** complète pour $T_{hyd}(\omega, Q)$
+- Les **équations de continuité et de quantité de mouvement** dans le réseau (méthode des caractéristiques pour les conduites en charge, renvoi note 2.A2)
+- La loi de **manœuvre du distributeur** ou de **fermeture du clapet** (courbe temporelle)
+
+Le couplage de ces quatre éléments est résolu par intégration temporelle (Runge-Kutta explicite ou schéma implicite pour la rigidité numérique). Les outils métier dédiés (Hammer, Wanda, SIMSEN, Flowmaster) implémentent ces couplages. Leur paramétrage correct exige de disposer des courbes 4 quadrants — données rares qui font souvent défaut en avant-projet et justifient une étude spécifique (CFD ou essais modèles).
+
+---
+
+## Exemple chiffré complet : sélection d'une pompe pour un refoulement AEP
+
+### Présentation du cas
+
+Un syndicat d'eau potable doit alimenter un château d'eau depuis un réservoir de tête de réseau. Les données de l'installation :
+
+| Paramètre | Valeur |
+|-----------|--------|
+| Hauteur géostatique $z_{ref} - z_{asp}$ | 24 m |
+| Longueur de conduite | 1 850 m |
+| Diamètre intérieur (acier revêtu) | 200 mm |
+| Rugosité absolue | 0,05 mm |
+| Débit nominal souhaité | 80 m³/h |
+| Température eau | 15 °C |
+| Altitude du site | 200 m (correction $p_{atm}$ mineure) |
+| Hauteur géométrique d'aspiration | 2,5 m (pompe au-dessus de la bâche) |
+| Longueur conduite aspiration | 6 m (DN 200, même rugosité) |
+
+### Calcul de la courbe réseau
+
+Le coefficient de frottement $\lambda$ est calculé par Colebrook–White :
+
+$$\frac{1}{\sqrt{\lambda}} = -2\log_{10}\!\left(\frac{\varepsilon/D}{3{,}7} + \frac{2{,}51}{Re\sqrt{\lambda}}\right)$$
+
+À $Q = 80$ m³/h, $V = Q / (\pi D^2/4) = 0{,}707$ m/s, $Re = V D / \nu \approx 1{,}41 \times 10^5$, $\varepsilon/D = 2{,}5 \times 10^{-4}$ → $\lambda \approx 0{,}018$.
+
+Perte de charge Darcy-Weisbach sur la conduite de refoulement :
+
+$$\Delta H_{ref} = \lambda \frac{L}{D} \frac{V^2}{2g} = 0{,}018 \times \frac{1850}{0{,}2} \times \frac{0{,}707^2}{2 \times 9{,}81} \approx 4{,}3\ \text{m}$$
+
+En ajoutant les singularités (deux coudes, une vanne, clapet) : $\Delta H_{sing} \approx 0{,}8$ m.
+
+La résistance hydraulique $R$ vaut :
+
+$$R = \frac{\Delta H_{total}}{Q^2} = \frac{4{,}3 + 0{,}8}{80^2} \approx 7{,}97 \times 10^{-4}\ \text{m/(m³/h)²}$$
+
+La courbe réseau en tenant compte du marnage $\pm 1{,}5$ m :
+
+$$H_{requis}(Q) = [22{,}5 \text{ à } 25{,}5] + 7{,}97 \times 10^{-4}\,Q^2$$
+
+### Sélection de la pompe
+
+La HMT au débit nominal ($Q = 80$ m³/h, niveau moyen $H_{geo} = 24$ m) :
+
+$$H^{*} = 24 + 7{,}97 \times 10^{-4} \times 80^2 \approx 29{,}1\ \text{m}$$
+
+Le catalogue constructeur propose une pompe centrifuge monoétage dont la courbe est calée sur trois points :
+
+| Q (m³/h) | 0 | 80 | 110 |
+|----------|---|----|-----|
+| H (m)    | 36| 30 | 24  |
+
+Calage polynomial : $H(Q) = 36 - 1{,}98 \times 10^{-3}\,Q^2$ (vérification : $H(80) = 36 - 12{,}7 = 23{,}3$... on ajuste : on utilise un polynôme complet $H = 36{,}5 - 0{,}04\,Q - 1{,}4\times10^{-3}\,Q^2$ passant exactement par les 3 points).
+
+Point de fonctionnement résolu numériquement : $Q^* = 80{,}4$ m³/h, $H^* = 29{,}2$ m, $\eta^* = 76{,}5$ % (lecture sur la courbe η–Q constructeur). Le BEP est à $Q_{BEP} = 85$ m³/h — le point de fonctionnement est à 5,4 % du BEP, dans la POR.
+
+### Vérification NPSH
+
+À $Q = 80{,}4$ m³/h :
+
+$$NPSH_d = \frac{101\,325 - 1\,705}{\,9\,810} - 2{,}5 - \underbrace{0{,}018 \times \frac{6}{0{,}2} \times \frac{0{,}707^2}{2 \times 9{,}81}}_{\approx\,0{,}07\ \text{m}} \approx 10{,}1 - 2{,}5 - 0{,}07 \approx 7{,}5\ \text{m}$$
+
+$NPSH_r$ constructeur à 80 m³/h : 3,2 m. Marge disponible : $7{,}5 - 3{,}2 = 4{,}3$ m $\gg 0{,}5$ m → **pas de risque de cavitation**.
+
+### Calcul de la vitesse spécifique
+
+$$n_s = \frac{N\sqrt{Q}}{H^{3/4}} = \frac{1\,450 \times \sqrt{80/3600}}{29{,}2^{3/4}} = \frac{1\,450 \times 0{,}149}{12{,}2} \approx 17{,}7$$
+
+Une pompe centrifuge radiale à faible vitesse spécifique (confirme la sélection d'une roue radiale fermée, adapté à cette hauteur et ce débit).
+
+### Synthèse du cas AEP
+
+::: {.callout-tip}
+## Bon sens de l'ingénieur — Synthèse du dimensionnement
+
+| Critère | Valeur calculée | Seuil | Statut |
+|---------|----------------|-------|--------|
+| HMT au point nominal | 29,2 m | 29,1 m requis | ✓ |
+| Rendement au point réel | 76,5 % | > 70 % (POR) | ✓ |
+| Écart BEP | −5,4 % | < ±10 % (POR) | ✓ |
+| Marge NPSH | 4,3 m | > 0,5 m | ✓ |
+| Vitesse spécifique $n_s$ | 17,7 | 10–60 (centrifuge) | ✓ |
+
+Deux vérifications complémentaires à mener avant finalisation : (1) point de fonctionnement en **hautes eaux** ($H_{geo} = 25{,}5$ m) — la pompe reste-t-elle dans son AOR ? (2) puissance absorbée au **débit de runout** (vanne grand ouverte, réseau minimal) — le moteur est-il protégé ?
+:::
+
+---
+
+## Synthèse : la machine dans le modèle de réseau
+
+### Quelle modélisation pour quel besoin
+
+| Représentation | Donnée nécessaire | Usage typique | Note associée | Limite |
+|----------------|-------------------|---------------|---------------|--------|
+| Point fixe $(Q_0, H_0)$ | 1 point de la courbe | Bilan simplifié, avant-projet | 2.A1 | Invalide hors du point de calage |
+| Parabole $H = a - bQ^2$ | $H_0$ + 1 point nominal | Modèle de réseau simple (EPANET 2 points) | 3.1 | Erroné si courbe non parabolique |
+| Polynôme calé ≥ 3 points | ≥ 3 points constructeur | Modèle de réseau précis | 3.1 | Extrapolation dangereuse hors calage |
+| Affinité VFD $N_2/N_1$ | Courbe nominale + lois d'affinité | Optimisation énergétique, VFD | 2.A1 | Rendement conservé seulement approximativement ; gain cubique atténué si $H_{geo}$ élevé |
+| Courbes 4 quadrants (Suter) | Essais ou CFD spécifiques | Calcul de coup de bélier, arrêt de pompe | 2.A2, 2.C3 | Données rarement disponibles en avant-projet |
+| Colline de rendement ($Q_{11}$, $N_{11}$) | Colline constructeur | Productible turbine, calage | 6.2, 3.1 | Rendement $\neq$ cste ; interpolation requise |
+
+: Représentations d'une machine hydraulique selon le besoin de modélisation {#tbl-synthese-machine}
+
+Les trois relations pivots à retenir :
+
+$$P = \rho g Q H \qquad ; \qquad H_{pompe}(Q) = H_{requis}(Q) \qquad ; \qquad \frac{Q_2}{Q_1} = \frac{N_2}{N_1},\ \frac{H_2}{H_1} = \left(\frac{N_2}{N_1}\right)^{2}$$
+
+::: {.callout-warning}
+## Alerte modélisation — La courbe réseau est souvent la première source d'erreur
+
+La machine la plus précisément modélisée ne sauvera pas une courbe réseau mal estimée. La rugosité vieillie, les singularités oubliées, le marnage non borné, l'entartrage progressif des conduites : ce sont ces incertitudes qui déplacent réellement le point de fonctionnement. Dans toute étude de réseau comportant une machine, **caler d'abord la courbe réseau** sur des mesures terrain (renvoi note 3.1), puis confronter au modèle machine.
+:::
+
+### Check-list du modélisateur
+
+::: {.callout-tip}
+## Bon sens de l'ingénieur — Check-list avant validation d'un modèle contenant une machine
+
+- [ ] **Calage de la courbe pompe/turbine sur ≥ 3 points** constructeur — rejeter le modèle à 2 points si la courbe est non parabolique
+- [ ] **Position du point de fonctionnement par rapport au BEP** — vérifier que le point est dans la POR pour le régime normal, et dans l'AOR pour les régimes extrêmes (basses eaux, hautes eaux)
+- [ ] **Critère NPSH vérifié au débit réel d'exploitation** — pas seulement au débit nominal, et pour la température d'eau maximale prévue
+- [ ] **Unités de la vitesse spécifique $n_s$ clairement précisées** — ne pas comparer deux $n_s$ sans harmoniser les conventions
+- [ ] **Monotonie de la courbe pompe vérifiée** — signaler et traiter toute zone de caractéristique montante
+- [ ] **Pertinence du modèle d'affinité évaluée** — quantifier la composante statique $H_{geo}$ avant d'appliquer la loi cubique à un VFD
+- [ ] **Besoin de calcul transitoire évalué** — si arrêt de pompe, manœuvre rapide de vanne ou déclenchement de turbine est à l'étude, les courbes 4 quadrants et l'inertie sont indispensables
+- [ ] **Courbe réseau tracée comme une bande** (marnage + vieillissement), pas comme une ligne unique
+:::
+
+---
+
+## Conclusion
+
+La machine hydraulique n'est pas un objet isolé : elle est une **condition aux limites énergétique active** du réseau, dont le comportement ne peut être compris — ni modélisé correctement — qu'en couplant simultanément la caractéristique machine et la caractéristique du système.
+
+Trois idées-force structurent cette note :
+
+**1. Le point de fonctionnement est une intersection, pas une donnée.** La HMT réelle dépend du débit, la courbe réseau aussi. Le point d'exploitation émerge de leur rencontre, et il se déplace avec le marnage, le vieillissement du réseau, et le réglage de vitesse. Le modélisateur ne peut jamais le supposer fixe sans vérification.
+
+**2. La similitude et les lois d'affinité fondent deux outils essentiels.** La vitesse spécifique classe les machines et guide le choix de type. Les lois d'affinité permettent de transposer une courbe entre vitesses (VFD) ou entre diamètres (rognage). Mais leurs limites — conservation approchée du rendement, gain cubique atténué en présence de hauteur statique — doivent être quantifiées sur chaque cas.
+
+**3. La cavitation et les transitoires sont les deux limites physiques à ne jamais négliger.** Le critère $NPSH_d > NPSH_r$ doit être vérifié au débit réel et à la température réelle. Pour les turbines, la vitesse d'emballement dimensionne l'ensemble du groupe. Pour les pompes, les courbes 4 quadrants et l'inertie du groupe sont indispensables dès qu'un transitoire rapide est à l'étude.
+
+Un modèle de réseau est aussi bon que sa **courbe système**. La machine la plus précisément décrite ne compense pas une rugosité fausse ou un marnage non borné.
+
+---
+
+## Pour aller plus loin dans cette série
+
+- **Note 0.2** — *Énergétique des réseaux en charge* : le cadre général charge/puissance/$P = \rho g Q H$, la notion de dégradation de l'énergie et la ligne de charge — fondement de tous les bilans de cette note
+- **Note 0.4** — *Analyse dimensionnelle et similitude* : la démonstration rigoureuse des lois d'affinité et de la vitesse spécifique adimensionnelle $\Omega_s$ par le théorème de Vaschy-Buckingham
+- **Note 2.A1** — *Dimensionnement d'un réseau AEP et choix de pompe* : mise en œuvre du couplage machine/système dans un réseau maillé, mode *pump* d'EPANET/WNTR, stratégies de régulation
+- **Note 2.A2** — *Coups de bélier en réseau AEP* : le calcul complet des transitoires après arrêt de pompe — courbes 4 quadrants, inertie, protection du réseau (protection antiBélier)
+- **Note 2.C2** — *Irrigation sous pression* : application NPSH en altitude et en eau chaude, turbinage de surpression aux bornes de périmètre
+- **Note 2.C3** — *Transitoires et régulation en réseaux sous pression* : régulation de la survitesse de turbine, fermeture de distributeur, interaction machine/conduite forcée
+- **Note 3.1** — *Calage et validation de modèles hydrauliques* : calage de la courbe pompe sur mesures terrain, calage de la courbe réseau (rugosité, singularités), réduction de la dimensionnalité par adimensionnement
