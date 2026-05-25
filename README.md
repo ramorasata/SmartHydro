@@ -29,3 +29,11 @@ Projet qui va décrire certaines expériences de modélisation hydraulique réal
 - **Note 3.4** — *Transport solide et morphodynamique* : quand le fond rétroagit sur l'écoulement — le couplage fort
 - **Note 3.5** — *Méthodes numériques* : schémas, stabilité, DNS/LES/RANS — le détail de la résolution invoqué ici
 - **Note 3.6** — *Limites et responsabilité du modélisateur* : documenter les hypothèses, tracer les incertitudes, responsabilité professionnelle
+
+## ⚖️ Licence & Propriété Intellectuelle
+
+Le projet SmartHydro utilise un double système de licence pour protéger ses différents contenus :
+* **Code informatique & Scripts :** Distribués sous licence **MIT** (libre d'utilisation, modification et distribution avec citation).
+* **Articles & Contenu textuel :** Protégés par la licence **Creative Commons (CC BY-NC-ND 4.0)** (Partage autorisé avec citation, mais utilisation commerciale et modifications interdites).
+
+Veuillez consulter le fichier [LICENSE.md](./LICENSE.md) pour lire l'intégralité des termes juridiques ainsi que la **clause de non-responsabilité (Disclaimer)** relative aux calculs hydrauliques.
