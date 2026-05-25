@@ -79,6 +79,12 @@ format:
         code-tools: false
         code-copy: true
         highlight-style: github
+        format:
+        include-after-body:
+          text: |
+            <footer style="text-align:center; margin-top:2rem; font-size:0.85em; color:#888;">
+              Copyright &copy; 2026 SmartHydro
+            </footer>
 
 execute:
     freeze: auto
