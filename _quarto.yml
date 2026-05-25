@@ -1,94 +1,86 @@
 project:
-    type: website
-    output-dir: docs
+  type: website
+  output-dir: docs
 
 website:
-    title: "Johary - Ingénieur Hydraulicien"
-    description: "hydraulique urbaine, eau potable, AEP, assainissement, python, code, SIG"
-    favicon: static/avatar.jpg
-    sidebar:
-      style: "floating"
-      collapse-level: 2
-      align: left
-      contents:
-          - text: "🏠 Accueil"
-            href: index.qmd
-          - text: "🌊 Formation"
-            href: formation/index.qmd
-          - text: "📐 Études de cas"
-            href: etudes-de-cas/index.qmd
-          - text: "🌍 Géomatique"
-            href: geomatique/index.qmd
-          - text: "🐍 Programmation"
-            href: programmation/index.qmd
-          - text: "🗺️ Parcours"
-            href: parcours/index.qmd
-          - text: "✉️ Contact"
-            href: contact.qmd
+  title: "Johary - Ingénieur Hydraulicien"
+  description: "hydraulique urbaine, eau potable, AEP, assainissement, python, code, SIG"
+  favicon: static/avatar.jpg
+  search: true
+  open-graph:
+    locale: fr_FR
 
-# Barre de navigation
-navbar:
+  sidebar:
+    style: "floating"
+    collapse-level: 2
+    align: left
+    contents:
+      - text: "🏠 Accueil"
+        href: index.qmd
+      - text: "🌊 Formation"
+        href: formation/index.qmd
+      - text: "📐 Études de cas"
+        href: etudes-de-cas/index.qmd
+      - text: "🌍 Géomatique"
+        href: geomatique/index.qmd
+      - text: "🐍 Programmation"
+        href: programmation/index.qmd
+      - text: "🗺️ Parcours"
+        href: parcours/index.qmd
+      - text: "✉️ Contact"
+        href: contact.qmd
+
+  navbar:
     left:
-        - text: "Accueil"
-          href: index.qmd
-        - text: "Formation"
-          href: formation/index.qmd
-        - text: "Études de cas"
-          href: etudes-de-cas/index.qmd
-        - text: "Géomatique"
-          href: geomatique/index.qmd
-        - text: "Programmation"
-          href: programmation/index.qmd
-        - text: "Parcours"
-          href: parcours/index.qmd
-        - text: "Contact"
-          href: contact.qmd
+      - text: "Accueil"
+        href: index.qmd
+      - text: "Formation"
+        href: formation/index.qmd
+      - text: "Études de cas"
+        href: etudes-de-cas/index.qmd
+      - text: "Géomatique"
+        href: geomatique/index.qmd
+      - text: "Programmation"
+        href: programmation/index.qmd
+      - text: "Parcours"
+        href: parcours/index.qmd
+      - text: "Contact"
+        href: contact.qmd
     right:
-        - icon: github
-          href: https://github.com/ramorasata
-        - icon: linkedin
-          href: https://www.linkedin.com/in/johariniaina-ramorasata
-        - text: "EN"
-          href: /en/index.qmd
+      - icon: github
+        href: https://github.com/ramorasata
+      - icon: linkedin
+        href: https://www.linkedin.com/in/johariniaina-ramorasata
+      - text: "EN"
+        href: /en/index.qmd
 
-# Pied de page
-page-footer:
+  page-footer:
     left: "© 2026 Johary - Ingénieur Hydraulicien"
+    center: |
+      <span style="font-size:0.85em; color:#888;">
+        Copyright &copy; 2026 SmartHydro
+      </span>
     right: "Conception par Johary Ramorasata"
 
-search: true
-
-open_graph:
-    title: "Johary - Ingénieur Hydraulicien"
-    image: static/avatar.jpg
-    locale: "fr_FR"
-
 format:
-    html:
-        embed-resources: true
-        theme:
-            light: cosmo
-            dark: darkly
-        css: styles.css
-        toc: true
-        toc-depth: 3
-        toc-title: "Sommaire"
-        number-sections: false
-        smooth-scroll: true
-        code-fold: true
-        code-tools: false
-        code-copy: true
-        highlight-style: github
-        format:
-        include-after-body:
-          text: |
-            <footer style="text-align:center; margin-top:2rem; font-size:0.85em; color:#888;">
-              Copyright &copy; 2026 SmartHydro
-            </footer>
+  html:
+    theme:
+      light: cosmo
+      dark: darkly
+    css: styles.css
+    toc: true
+    toc-depth: 3
+    toc-title: "Sommaire"
+    number-sections: false
+    smooth-scroll: true
+    code-fold: true
+    code-tools: false
+    code-copy: true
+    highlight-style: github
 
 execute:
-    freeze: auto
-    echo: true
-    warning: false
+  freeze: auto
+  echo: true
+  warning: false
 
 lang: fr
