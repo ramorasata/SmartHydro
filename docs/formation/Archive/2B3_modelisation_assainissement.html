@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="fr" xml:lang="fr"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="">
+
+<title>Surcharges et engorgements : modéliser les événements extrêmes en assainissement – Johary - Ingénieur Hydraulicien</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<link href="../../static/avatar.jpg" rel="icon" type="image/jpeg">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark-23bbe8b5e4efc1e257f6d59dce478b08.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-7f128302b46659ec05c1cdf12d27b5f1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-dark-fcb2e74b6da07224c5b59afd36009af3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../../site_libs/bootstrap/bootstrap-7f128302b46659ec05c1cdf12d27b5f1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "Pas de résultats",
+    "search-matching-documents-text": "documents trouvés",
+    "search-copy-link-title": "Copier le lien vers la recherche",
+    "search-hide-matches-text": "Cacher les correspondances additionnelles",
+    "search-more-match-text": "correspondance de plus dans ce document",
+    "search-more-matches-text": "correspondances de plus dans ce document",
+    "search-clear-button-title": "Effacer",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Annuler",
+    "search-submit-button-title": "Envoyer",
+    "search-label": "Recherche"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+<meta property="og:title" content="Surcharges et engorgements : modéliser les événements extrêmes en assainissement – Johary - Ingénieur Hydraulicien">
+<meta property="og:description" content="Saint-Venant transitoire, fente de Preissmann et dual-drainage">
+<meta property="og:site_name" content="Johary - Ingénieur Hydraulicien">
+<meta property="og:locale" content="fr_FR">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Johary - Ingénieur Hydraulicien</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Recherche"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Basculer la navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link active" href="../../index.html" aria-current="page"> 
+<span class="menu-text">Accueil</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../formation/index.html"> 
+<span class="menu-text">Formation</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../etudes-de-cas/index.html"> 
+<span class="menu-text">Études de cas</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../geomatique/index.html"> 
+<span class="menu-text">Géomatique</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../programmation/index.html"> 
+<span class="menu-text">Programmation</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../parcours/index.html"> 
+<span class="menu-text">Parcours</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../contact.html"> 
+<span class="menu-text">Contact</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/ramorasata"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://www.linkedin.com/in/johariniaina-ramorasata"> <i class="bi bi-linkedin" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../en/index.qmd"> 
+<span class="menu-text">EN</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Basculer le mode sombre"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Basculer la barre latérale" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item">Surcharges et engorgements : modéliser les événements extrêmes en assainissement</li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Basculer la barre latérale" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🏠 Accueil</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../formation/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🌊 Formation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../etudes-de-cas/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">📐 Études de cas</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../geomatique/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🌍 Géomatique</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../programmation/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🐍 Programmation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../parcours/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🗺️ Parcours</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../contact.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">✉️ Contact</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Sommaire</h2>
+   
+  <ul>
+  <li><a href="#quest-ce-quun-événement-extrême-pour-un-réseau-dassainissement" id="toc-quest-ce-quun-événement-extrême-pour-un-réseau-dassainissement" class="nav-link active" data-scroll-target="#quest-ce-quun-événement-extrême-pour-un-réseau-dassainissement"><span class="header-section-number">1</span> Qu’est-ce qu’un événement extrême pour un réseau d’assainissement ?</a>
+  <ul class="collapse">
+  <li><a href="#la-gradation-des-dysfonctionnements" id="toc-la-gradation-des-dysfonctionnements" class="nav-link" data-scroll-target="#la-gradation-des-dysfonctionnements"><span class="header-section-number">1.1</span> La gradation des dysfonctionnements</a></li>
+  <li><a href="#les-mécanismes-déclencheurs" id="toc-les-mécanismes-déclencheurs" class="nav-link" data-scroll-target="#les-mécanismes-déclencheurs"><span class="header-section-number">1.2</span> Les mécanismes déclencheurs</a></li>
+  <li><a href="#capacité-de-transit-vs-capacité-de-stockage" id="toc-capacité-de-transit-vs-capacité-de-stockage" class="nav-link" data-scroll-target="#capacité-de-transit-vs-capacité-de-stockage"><span class="header-section-number">1.3</span> Capacité de transit vs capacité de stockage</a></li>
+  </ul></li>
+  <li><a href="#saint-venant-transitoire-le-modèle-complet" id="toc-saint-venant-transitoire-le-modèle-complet" class="nav-link" data-scroll-target="#saint-venant-transitoire-le-modèle-complet"><span class="header-section-number">2</span> Saint-Venant transitoire : le modèle complet</a>
+  <ul class="collapse">
+  <li><a href="#ce-que-le-transitoire-capture-que-le-permanent-manque" id="toc-ce-que-le-transitoire-capture-que-le-permanent-manque" class="nav-link" data-scroll-target="#ce-que-le-transitoire-capture-que-le-permanent-manque"><span class="header-section-number">2.1</span> Ce que le transitoire capture que le permanent manque</a></li>
+  <li><a href="#le-schéma-de-preissmann-implicite" id="toc-le-schéma-de-preissmann-implicite" class="nav-link" data-scroll-target="#le-schéma-de-preissmann-implicite"><span class="header-section-number">2.2</span> Le schéma de Preissmann implicite</a></li>
+  <li><a href="#le-pas-de-temps-adaptatif" id="toc-le-pas-de-temps-adaptatif" class="nav-link" data-scroll-target="#le-pas-de-temps-adaptatif"><span class="header-section-number">2.3</span> Le pas de temps adaptatif</a></li>
+  </ul></li>
+  <li><a href="#la-fente-de-preissmann-fonctionnement-détaillé" id="toc-la-fente-de-preissmann-fonctionnement-détaillé" class="nav-link" data-scroll-target="#la-fente-de-preissmann-fonctionnement-détaillé"><span class="header-section-number">3</span> La fente de Preissmann : fonctionnement détaillé</a>
+  <ul class="collapse">
+  <li><a href="#rappel-du-principe" id="toc-rappel-du-principe" class="nav-link" data-scroll-target="#rappel-du-principe"><span class="header-section-number">3.1</span> Rappel du principe</a></li>
+  <li><a href="#la-largeur-de-fente-et-la-célérité-artificielle" id="toc-la-largeur-de-fente-et-la-célérité-artificielle" class="nav-link" data-scroll-target="#la-largeur-de-fente-et-la-célérité-artificielle"><span class="header-section-number">3.2</span> La largeur de fente et la célérité artificielle</a></li>
+  <li><a href="#le-compromis-précisionstabilité" id="toc-le-compromis-précisionstabilité" class="nav-link" data-scroll-target="#le-compromis-précisionstabilité"><span class="header-section-number">3.3</span> Le compromis précision/stabilité</a></li>
+  </ul></li>
+  <li><a href="#le-dual-drainage-couplage-réseau-et-surface" id="toc-le-dual-drainage-couplage-réseau-et-surface" class="nav-link" data-scroll-target="#le-dual-drainage-couplage-réseau-et-surface"><span class="header-section-number">4</span> Le dual-drainage : couplage réseau et surface</a>
+  <ul class="collapse">
+  <li><a href="#le-principe-deux-réseaux-superposés" id="toc-le-principe-deux-réseaux-superposés" class="nav-link" data-scroll-target="#le-principe-deux-réseaux-superposés"><span class="header-section-number">4.1</span> Le principe : deux réseaux superposés</a></li>
+  <li><a href="#les-échanges-réseausurface-modélisation-des-regards" id="toc-les-échanges-réseausurface-modélisation-des-regards" class="nav-link" data-scroll-target="#les-échanges-réseausurface-modélisation-des-regards"><span class="header-section-number">4.2</span> Les échanges réseau/surface : modélisation des regards</a></li>
+  <li><a href="#modélisation-1d1d-deux-réseaux-de-canaux-couplés" id="toc-modélisation-1d1d-deux-réseaux-de-canaux-couplés" class="nav-link" data-scroll-target="#modélisation-1d1d-deux-réseaux-de-canaux-couplés"><span class="header-section-number">4.3</span> Modélisation 1D/1D : deux réseaux de canaux couplés</a></li>
+  <li><a href="#modélisation-1d2d-réseau-souterrain-couplé-à-un-modèle-de-surface-2d" id="toc-modélisation-1d2d-réseau-souterrain-couplé-à-un-modèle-de-surface-2d" class="nav-link" data-scroll-target="#modélisation-1d2d-réseau-souterrain-couplé-à-un-modèle-de-surface-2d"><span class="header-section-number">4.4</span> Modélisation 1D/2D : réseau souterrain couplé à un modèle de surface 2D</a></li>
+  <li><a href="#quand-choisir-quelle-approche" id="toc-quand-choisir-quelle-approche" class="nav-link" data-scroll-target="#quand-choisir-quelle-approche"><span class="header-section-number">4.5</span> Quand choisir quelle approche ?</a></li>
+  </ul></li>
+  <li><a href="#les-ouvrages-de-régulation-en-événement-extrême" id="toc-les-ouvrages-de-régulation-en-événement-extrême" class="nav-link" data-scroll-target="#les-ouvrages-de-régulation-en-événement-extrême"><span class="header-section-number">5</span> Les ouvrages de régulation en événement extrême</a>
+  <ul class="collapse">
+  <li><a href="#les-déversoirs-dorage-en-surcharge" id="toc-les-déversoirs-dorage-en-surcharge" class="nav-link" data-scroll-target="#les-déversoirs-dorage-en-surcharge"><span class="header-section-number">5.1</span> Les déversoirs d’orage en surcharge</a></li>
+  <li><a href="#les-bassins-de-rétention-dimensionnement-pour-les-événements-rares" id="toc-les-bassins-de-rétention-dimensionnement-pour-les-événements-rares" class="nav-link" data-scroll-target="#les-bassins-de-rétention-dimensionnement-pour-les-événements-rares"><span class="header-section-number">5.2</span> Les bassins de rétention : dimensionnement pour les événements rares</a></li>
+  <li><a href="#les-clapets-anti-retour-protection-et-risque" id="toc-les-clapets-anti-retour-protection-et-risque" class="nav-link" data-scroll-target="#les-clapets-anti-retour-protection-et-risque"><span class="header-section-number">5.3</span> Les clapets anti-retour : protection et risque</a></li>
+  </ul></li>
+  <li><a href="#la-modélisation-des-événements-extrêmes-données-et-limites" id="toc-la-modélisation-des-événements-extrêmes-données-et-limites" class="nav-link" data-scroll-target="#la-modélisation-des-événements-extrêmes-données-et-limites"><span class="header-section-number">6</span> La modélisation des événements extrêmes : données et limites</a>
+  <ul class="collapse">
+  <li><a href="#le-problème-de-la-validation-sans-données" id="toc-le-problème-de-la-validation-sans-données" class="nav-link" data-scroll-target="#le-problème-de-la-validation-sans-données"><span class="header-section-number">6.1</span> Le problème de la validation sans données</a></li>
+  <li><a href="#lanalyse-de-sensibilité-comme-substitut-à-la-validation" id="toc-lanalyse-de-sensibilité-comme-substitut-à-la-validation" class="nav-link" data-scroll-target="#lanalyse-de-sensibilité-comme-substitut-à-la-validation"><span class="header-section-number">6.2</span> L’analyse de sensibilité comme substitut à la validation</a></li>
+  </ul></li>
+  <li><a href="#du-modèle-à-la-décision-carte-daléa-et-gestion-des-risques" id="toc-du-modèle-à-la-décision-carte-daléa-et-gestion-des-risques" class="nav-link" data-scroll-target="#du-modèle-à-la-décision-carte-daléa-et-gestion-des-risques"><span class="header-section-number">7</span> Du modèle à la décision : carte d’aléa et gestion des risques</a>
+  <ul class="collapse">
+  <li><a href="#cartographie-des-zones-inondables-par-débordement-de-réseau" id="toc-cartographie-des-zones-inondables-par-débordement-de-réseau" class="nav-link" data-scroll-target="#cartographie-des-zones-inondables-par-débordement-de-réseau"><span class="header-section-number">7.1</span> Cartographie des zones inondables par débordement de réseau</a></li>
+  <li><a href="#fréquence-de-débordement-par-nœud-de-la-simulation-à-la-carte-de-risque" id="toc-fréquence-de-débordement-par-nœud-de-la-simulation-à-la-carte-de-risque" class="nav-link" data-scroll-target="#fréquence-de-débordement-par-nœud-de-la-simulation-à-la-carte-de-risque"><span class="header-section-number">7.2</span> Fréquence de débordement par nœud : de la simulation à la carte de risque</a></li>
+  <li><a href="#mesures-de-réduction-du-risque" id="toc-mesures-de-réduction-du-risque" class="nav-link" data-scroll-target="#mesures-de-réduction-du-risque"><span class="header-section-number">7.3</span> Mesures de réduction du risque</a></li>
+  <li><a href="#la-résilience-urbaine-concevoir-pour-lextrême-pas-seulement-contre-lui" id="toc-la-résilience-urbaine-concevoir-pour-lextrême-pas-seulement-contre-lui" class="nav-link" data-scroll-target="#la-résilience-urbaine-concevoir-pour-lextrême-pas-seulement-contre-lui"><span class="header-section-number">7.4</span> La résilience urbaine : concevoir pour l’extrême, pas seulement contre lui</a></li>
+  </ul></li>
+  <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion"><span class="header-section-number">8</span> Conclusion</a></li>
+  <li><a href="#pour-aller-plus-loin-dans-cette-série" id="toc-pour-aller-plus-loin-dans-cette-série" class="nav-link" data-scroll-target="#pour-aller-plus-loin-dans-cette-série"><span class="header-section-number">9</span> Pour aller plus loin dans cette série</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Surcharges et engorgements : modéliser les événements extrêmes en assainissement</h1>
+<p class="subtitle lead">Saint-Venant transitoire, fente de Preissmann et dual-drainage</p>
+  <div class="quarto-categories">
+    <div class="quarto-category">Hydraulique</div>
+    <div class="quarto-category">Assainissement</div>
+    <div class="quarto-category">Modélisation</div>
+    <div class="quarto-category">Transitoire</div>
+    <div class="quarto-category">Ingénierie</div>
+  </div>
+  </div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+    <div>
+    <div class="quarto-title-meta-heading">Date de publication</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">16 mai 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Note de la série
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Cette note fait partie d’une série sur la modélisation des réseaux hydrauliques. Elle suppose la lecture des notes <em>Généralités sur la modélisation des réseaux hydrauliques</em>, <em>Modéliser un réseau d’assainissement</em>, <em>Dimensionnement d’un réseau gravitaire</em> et <em>Modélisation pluviale</em>. On aborde ici le régime de fonctionnement le plus complexe : l’événement extrême qui sature le réseau, provoque des débordements, et met en jeu des couplages réseau/surface que les modèles 1D standard ne peuvent pas capturer seuls.</p>
+</div>
+</div>
+<section id="quest-ce-quun-événement-extrême-pour-un-réseau-dassainissement" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="quest-ce-quun-événement-extrême-pour-un-réseau-dassainissement"><span class="header-section-number">1</span> Qu’est-ce qu’un événement extrême pour un réseau d’assainissement ?</h2>
+<section id="la-gradation-des-dysfonctionnements" class="level3" data-number="1.1">
+<h3 data-number="1.1" class="anchored" data-anchor-id="la-gradation-des-dysfonctionnements"><span class="header-section-number">1.1</span> La gradation des dysfonctionnements</h3>
+<p>Un réseau d’assainissement ne passe pas instantanément du fonctionnement normal à l’inondation catastrophique. La dégradation suit une <strong>gradation progressive</strong> de dysfonctionnements, chacun avec ses conséquences et ses outils de modélisation associés :</p>
+<p><strong>Niveau 1 — Mise en charge :</strong> le collecteur est plein, la pression monte au-dessus du sommet de la conduite. L’eau ne déborde pas encore — elle est sous pression dans le réseau. C’est un état inconfortable (risque de refoulement dans les caves via les branchements privés) mais pas encore catastrophique. La fente de Preissmann permet de le simuler en 1D.</p>
+<p><strong>Niveau 2 — Débordement au regard :</strong> la pression dans le réseau dépasse la cote du tampon de regard. L’eau sort par les bouches d’égout et les regards, formant des flaques en surface. Le débit débordant est soustrait du débit en transit dans le réseau — le modèle 1D peut calculer le volume débordé mais pas ce qu’il devient en surface.</p>
+<p><strong>Niveau 3 — Inondation de surface et ruissellement urbain :</strong> l’eau débordée s’écoule en surface, emprunte les rues comme des canaux à ciel ouvert, s’accumule dans les points bas topographiques, et peut réentrer dans le réseau par d’autres regards ou bouches d’égout. Ce <strong>cycle réseau→surface→réseau</strong> est le phénomène de dual-drainage — il échappe entièrement au modèle 1D seul.</p>
+<p><strong>Niveau 4 — Saturation généralisée :</strong> plusieurs tronçons sont simultanément en charge, les déversoirs d’orage déversent à pleine capacité, les stations de pompage sont à pleine puissance. Le réseau fonctionne hors de son domaine de conception — les hypothèses de dimensionnement ne sont plus valides.</p>
+</section>
+<section id="les-mécanismes-déclencheurs" class="level3" data-number="1.2">
+<h3 data-number="1.2" class="anchored" data-anchor-id="les-mécanismes-déclencheurs"><span class="header-section-number">1.2</span> Les mécanismes déclencheurs</h3>
+<p>Un événement extrême résulte rarement d’un seul facteur — c’est presque toujours une <strong>combinaison de mécanismes</strong> qui se renforcent mutuellement :</p>
+<p><strong>Pluie intense et localisée :</strong> un orage convectif de courte durée (20 à 45 minutes) peut produire des intensités de 50 à 100 mm/h sur quelques km², saturant instantanément les collecteurs pluviaux dimensionnés pour des pluies décennales de 30 à 60 mm/h. L’intensité spatiale et temporelle de la pluie est souvent mal capturée par les pluviographes ponctuels.</p>
+<p><strong>Bousculement aval :</strong> la rivière réceptrice est en crue simultanément. L’exutoire du réseau est noyé — la mise en charge remonte vers l’amont alors même que la pluie alimente le réseau par l’amont. La conjonction pluie intense + crue de la rivière est un scénario particulièrement sévère, souvent sous-estimé dans les études de dimensionnement qui traitent les deux phénomènes séparément.</p>
+<p><strong>Saturation du sol et ECP pluviales :</strong> sur un sol saturé (événement pluvieux précédent, nappe haute), les infiltrations dans le réseau (ECP) augmentent fortement, réduisant la capacité résiduelle disponible pour les eaux pluviales. Un réseau qui fonctionnait correctement en temps sec peut se retrouver déjà à 50 % de remplissage avant même le début de l’orage.</p>
+<p><strong>Défaillance d’un ouvrage :</strong> obstruction d’un déversoir d’orage, panne d’une station de pompage, vanne bloquée en position fermée — une défaillance localisée peut provoquer une mise en charge en cascade vers l’amont.</p>
+</section>
+<section id="capacité-de-transit-vs-capacité-de-stockage" class="level3" data-number="1.3">
+<h3 data-number="1.3" class="anchored" data-anchor-id="capacité-de-transit-vs-capacité-de-stockage"><span class="header-section-number">1.3</span> Capacité de transit vs capacité de stockage</h3>
+<p>Une distinction conceptuelle utile pour aborder les événements extrêmes est celle entre <strong>capacité de transit</strong> et <strong>capacité de stockage</strong> du réseau :</p>
+<p>La <strong>capacité de transit</strong> est le débit maximal que le réseau peut évacuer vers l’exutoire à un instant donné — c’est la grandeur que dimensionne l’approche classique (Manning-Strickler, taux de remplissage).</p>
+<p>La <strong>capacité de stockage</strong> est le volume d’eau que le réseau peut temporairement retenir dans ses collecteurs en attendant que la pointe de débit passe — c’est une ressource implicite du réseau souvent ignorée dans les études de dimensionnement en régime permanent, mais très significative pour les événements extrêmes.</p>
+<p>Un réseau de grand diamètre avec des pentes faibles a une capacité de stockage élevée — il peut absorber une pointe de débit en se remplissant progressivement, sans déborder immédiatement. Un réseau de faible diamètre à forte pente a une capacité de stockage faible — il réagit très vite aux pointes mais déborde aussi très vite. Ces deux comportements ne sont capturables qu’avec un modèle transitoire.</p>
+<hr>
+</section>
+</section>
+<section id="saint-venant-transitoire-le-modèle-complet" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="saint-venant-transitoire-le-modèle-complet"><span class="header-section-number">2</span> Saint-Venant transitoire : le modèle complet</h2>
+<section id="ce-que-le-transitoire-capture-que-le-permanent-manque" class="level3" data-number="2.1">
+<h3 data-number="2.1" class="anchored" data-anchor-id="ce-que-le-transitoire-capture-que-le-permanent-manque"><span class="header-section-number">2.1</span> Ce que le transitoire capture que le permanent manque</h3>
+<p>Les équations de Saint-Venant transitoires (cf.&nbsp;note socle) contiennent les termes <span class="math inline">\(\partial/\partial t\)</span> qui décrivent l’évolution temporelle de l’écoulement. En régime permanent, ces termes sont nuls — on perd toute information sur la <strong>dynamique</strong> du système. Pour les événements extrêmes, cette dynamique est précisément ce qui importe :</p>
+<ul>
+<li><p><strong>La propagation de la mise en charge</strong> : la mise en charge ne se produit pas simultanément sur tout le réseau. Elle commence à l’aval (exutoire en charge, collecteur sous-capacitaire) et remonte vers l’amont à la vitesse des ondes de pression. Un modèle permanent ne peut pas capturer ce front de mise en charge.</p></li>
+<li><p><strong>L’effet de stockage dans le réseau</strong> : un collecteur en cours de remplissage stocke temporairement un volume d’eau qui atténue la pointe de débit à l’aval. Cet effet d’écrêtement naturel est non nul sur les grands collecteurs et est entièrement ignoré par le modèle permanent.</p></li>
+<li><p><strong>La dynamique amont/aval</strong> : en régime transitoire fluvial, l’information se propage dans les deux sens. Une mise en charge aval remonte vers l’amont — ce phénomène de bousculement dynamique n’est modélisable qu’en transitoire.</p></li>
+</ul>
+</section>
+<section id="le-schéma-de-preissmann-implicite" class="level3" data-number="2.2">
+<h3 data-number="2.2" class="anchored" data-anchor-id="le-schéma-de-preissmann-implicite"><span class="header-section-number">2.2</span> Le schéma de Preissmann implicite</h3>
+<p>Les équations de Saint-Venant transitoires sont des équations aux dérivées partielles hyperboliques qui requièrent un schéma numérique pour leur résolution. Le <strong>schéma de Preissmann</strong> (Preissmann, 1961) est le schéma de discrétisation standard pour l’hydraulique à surface libre en réseau — il est utilisé dans la plupart des logiciels d’assainissement (SWMM, CANOE, Infoworks ICM).</p>
+<p>C’est un schéma <strong>implicite aux différences finies à quatre points</strong> : il évalue les termes des équations à un instant intermédiaire <span class="math inline">\(t + \theta \Delta t\)</span> entre deux pas de temps consécutifs, sur deux sections consécutives du réseau :</p>
+<p><span class="math display">\[f \approx \theta \cdot f_{i+1}^{n+1} + (1-\theta) \cdot f_{i+1}^n + \theta \cdot f_i^{n+1} + (1-\theta) \cdot f_i^n \over 2\]</span></p>
+<p>Le paramètre <span class="math inline">\(\theta \in [0{,}5 ; 1]\)</span> est le <strong>coefficient de pondération temporelle</strong> :</p>
+<ul>
+<li><span class="math inline">\(\theta = 0{,}5\)</span> : schéma de Crank-Nicolson, précision d’ordre 2 en temps, mais peut présenter des oscillations numériques</li>
+<li><span class="math inline">\(\theta = 1\)</span> : schéma totalement implicite, précision d’ordre 1, très stable mais légèrement dissipatif</li>
+<li>En pratique : <span class="math inline">\(\theta = 0{,}6\)</span> à <span class="math inline">\(0{,}7\)</span> est souvent le meilleur compromis précision/stabilité</li>
+</ul>
+<p>La propriété fondamentale du schéma implicite est sa <strong>stabilité inconditionnelle</strong> : contrairement aux schémas explicites (qui imposent une condition CFL <span class="math inline">\(\Delta t \leq \Delta x / c\)</span>), le schéma de Preissmann est stable pour tout pas de temps. On peut choisir des pas de temps plus grands que ce que la physique des ondes imposerait — ce qui accélère considérablement le calcul sur des simulations longues durées.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Stabilité inconditionnelle ≠ précision inconditionnelle
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Un schéma implicite ne diverge pas pour un grand pas de temps — mais ses résultats peuvent être imprécis. Si le pas de temps est trop grand, les variations rapides de l’hydrogramme (front de montée, pointe) sont mal résolues — le modèle “lisse” les transitoires rapides. En pratique, un pas de temps de 1 à 5 minutes est un bon compromis pour la simulation d’événements pluvieux urbains. Pour les transitoires très rapides (remplissage d’un collecteur vide), on peut descendre à 10 à 30 secondes.</p>
+</div>
+</div>
+</section>
+<section id="le-pas-de-temps-adaptatif" class="level3" data-number="2.3">
+<h3 data-number="2.3" class="anchored" data-anchor-id="le-pas-de-temps-adaptatif"><span class="header-section-number">2.3</span> Le pas de temps adaptatif</h3>
+<p>Les logiciels modernes utilisent un <strong>pas de temps adaptatif</strong> : le pas de temps est automatiquement réduit lorsque les gradients sont forts (front de montée de crue, transition surface libre/charge) et augmenté lorsque l’écoulement est lent et régulier. Cette adaptation permet de maintenir la précision aux moments critiques sans pénaliser le temps de calcul sur les phases tranquilles.</p>
+<hr>
+</section>
+</section>
+<section id="la-fente-de-preissmann-fonctionnement-détaillé" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="la-fente-de-preissmann-fonctionnement-détaillé"><span class="header-section-number">3</span> La fente de Preissmann : fonctionnement détaillé</h2>
+<section id="rappel-du-principe" class="level3" data-number="3.1">
+<h3 data-number="3.1" class="anchored" data-anchor-id="rappel-du-principe"><span class="header-section-number">3.1</span> Rappel du principe</h3>
+<p>La <strong>fente de Preissmann</strong> (Preissmann &amp; Cunge, 1961) est l’artifice numérique qui permet de simuler la transition entre surface libre et charge dans un modèle Saint-Venant sans changer les équations résolues. On suppose l’existence d’une fente virtuelle de largeur <span class="math inline">\(T_s\)</span> au sommet de la conduite, ouverte vers le haut. Cette fente permet à une “surface libre fictive” de monter au-dessus du sommet réel de la conduite.</p>
+<p>Lorsque <span class="math inline">\(h \leq D\)</span> (surface libre réelle) : la fente n’intervient pas — les équations de Saint-Venant s’appliquent normalement avec la géométrie réelle de la section.</p>
+<p>Lorsque <span class="math inline">\(h &gt; D\)</span> (mise en charge) : la hauteur d’eau fictive <span class="math inline">\(h\)</span> monte dans la fente. La pression au sommet de la conduite est alors :</p>
+<p><span class="math display">\[P = \rho g (h - D)\]</span></p>
+<p>Le débit dans la fente est négligeable (elle est étroite), mais sa présence maintient la continuité mathématique des équations à travers la transition.</p>
+</section>
+<section id="la-largeur-de-fente-et-la-célérité-artificielle" class="level3" data-number="3.2">
+<h3 data-number="3.2" class="anchored" data-anchor-id="la-largeur-de-fente-et-la-célérité-artificielle"><span class="header-section-number">3.2</span> La largeur de fente et la célérité artificielle</h3>
+<p>La largeur <span class="math inline">\(T_s\)</span> de la fente est le paramètre clé. Elle définit la <strong>célérité artificielle des ondes de pression</strong> en régime de charge simulé via la fente :</p>
+<p><span class="math display">\[c_s = \sqrt{\frac{gA}{T_s}}\]</span></p>
+<p>où <span class="math inline">\(A\)</span> est la section de la conduite à pleine section. Plus la fente est étroite, plus la célérité artificielle est élevée — et plus les ondes de pression se propagent rapidement dans le modèle.</p>
+<p>La célérité réelle des ondes de pression en conduite sous pression est de 800 à 1200 m/s (cf.&nbsp;note 2.A2). Pour des raisons de stabilité numérique et de temps de calcul, les logiciels d’assainissement utilisent une fente suffisamment large pour que la célérité artificielle reste dans des valeurs raisonnables (typiquement 50 à 300 m/s), bien inférieures à la célérité réelle.</p>
+<p><strong>Implication :</strong> la fente de Preissmann ne modélise pas fidèlement la propagation des ondes de pression réelles (coups de bélier) dans une conduite en charge. Elle modélise correctement la <strong>hauteur piézométrique moyenne</strong> et le <strong>débit moyen</strong> en régime de charge quasi-permanent, mais pas les transitoires rapides de pression. Pour les études de coups de bélier, un modèle spécifique (méthode des caractéristiques, cf.&nbsp;note 2.A2) est indispensable.</p>
+</section>
+<section id="le-compromis-précisionstabilité" class="level3" data-number="3.3">
+<h3 data-number="3.3" class="anchored" data-anchor-id="le-compromis-précisionstabilité"><span class="header-section-number">3.3</span> Le compromis précision/stabilité</h3>
+<p>Le choix de <span class="math inline">\(T_s\)</span> est un compromis délicat :</p>
+<p><strong>Fente trop étroite</strong> (<span class="math inline">\(T_s \to 0\)</span>, <span class="math inline">\(c_s \to \infty\)</span>) : la célérité artificielle est très élevée. Le critère CFL impose un pas de temps très petit si le schéma est explicite — ou génère des oscillations numériques si le schéma est implicite avec un grand pas de temps. Le modèle peut devenir instable ou produire des résultats oscillants autour de la ligne de mise en charge.</p>
+<p><strong>Fente trop large</strong> (<span class="math inline">\(T_s\)</span> grand, <span class="math inline">\(c_s\)</span> faible) : la fente représente un volume d’eau fictif non négligeable au-dessus du sommet de la conduite. Elle introduit une erreur sur le bilan de masse — le modèle “stocke” fictivement de l’eau dans la fente alors que la conduite est en réalité sous pression. La pression calculée est sous-estimée.</p>
+<p>En pratique, les logiciels proposent une valeur par défaut de <span class="math inline">\(T_s\)</span> (souvent <span class="math inline">\(10^{-3}\)</span> à <span class="math inline">\(10^{-2}\)</span> fois la largeur au sommet de la conduite) qui constitue un bon compromis pour la plupart des cas. L’ingénieur n’a généralement pas à modifier ce paramètre — sauf sur des cas pathologiques (très forte mise en charge, transitions très rapides) où les oscillations numériques signalent un problème.</p>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Avertissement</span>La fente de Preissmann et les pressions maximales
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>La fente de Preissmann modélise correctement la mise en charge jusqu’à des pressions de quelques bars. Pour des pressions très élevées (conduites à forte pression statique, stations de refoulement), l’erreur introduite par la fente peut devenir significative. Dans ces cas, un couplage explicite entre un modèle Saint-Venant (surface libre) et un modèle de réseau sous pression (type EPANET) est préférable — c’est l’approche adoptée par certains logiciels avancés (Infoworks ICM, Mike Urban+).</p>
+</div>
+</div>
+<hr>
+</section>
+</section>
+<section id="le-dual-drainage-couplage-réseau-et-surface" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="le-dual-drainage-couplage-réseau-et-surface"><span class="header-section-number">4</span> Le dual-drainage : couplage réseau et surface</h2>
+<section id="le-principe-deux-réseaux-superposés" class="level3" data-number="4.1">
+<h3 data-number="4.1" class="anchored" data-anchor-id="le-principe-deux-réseaux-superposés"><span class="header-section-number">4.1</span> Le principe : deux réseaux superposés</h3>
+<p>Le <strong>dual-drainage</strong> (<em>ruissellement urbain dual</em>) est le concept qui reconnaît que l’eau en ville circule simultanément dans <strong>deux réseaux superposés</strong> :</p>
+<ul>
+<li>Le <strong>réseau souterrain</strong> (collecteurs d’assainissement) : dimensionné pour les événements fréquents (pluies annuelles à décennales)</li>
+<li>Le <strong>réseau de surface</strong> (rues, trottoirs, places) : le “réseau d’urgence” qui prend en charge les débits débordés lors des événements rares (pluies décennales à centennales)</li>
+</ul>
+<p>Ces deux réseaux échangent de l’eau en permanence lors des événements intenses : - <strong>Réseau souterrain → surface</strong> : débordement par les regards et bouches d’égout lorsque le réseau est en charge - <strong>Surface → réseau souterrain</strong> : réinjection de l’eau de ruissellement via les avaloirs et bouches d’égout</p>
+<p>Ce cycle d’échanges crée un système couplé qui ne peut être correctement modélisé ni par le seul modèle 1D du réseau souterrain, ni par le seul modèle de surface.</p>
+</section>
+<section id="les-échanges-réseausurface-modélisation-des-regards" class="level3" data-number="4.2">
+<h3 data-number="4.2" class="anchored" data-anchor-id="les-échanges-réseausurface-modélisation-des-regards"><span class="header-section-number">4.2</span> Les échanges réseau/surface : modélisation des regards</h3>
+<p>L’échange entre le réseau souterrain et la surface se produit au niveau des <strong>regards et bouches d’égout</strong>. Il est modélisé par une <strong>loi d’orifice</strong> :</p>
+<p><strong>Débordement (réseau → surface) :</strong> lorsque la charge hydraulique dans le réseau dépasse la cote du tampon :</p>
+<p><span class="math display">\[Q_{débordement} = C_d \cdot A_{ouverture} \cdot \sqrt{2g \cdot (H_{réseau} - z_{tampon})}\]</span></p>
+<p>où <span class="math inline">\(C_d\)</span> est le coefficient de débit de l’orifice (<span class="math inline">\(\approx 0{,}6\)</span> pour un regard standard), <span class="math inline">\(A_{ouverture}\)</span> la surface d’ouverture du regard, et <span class="math inline">\(H_{réseau} - z_{tampon}\)</span> la différence de charge entre le réseau et la surface.</p>
+<p><strong>Réinjection (surface → réseau) :</strong> lorsque l’eau s’accumule en surface au-dessus d’une bouche d’égout :</p>
+<p><span class="math display">\[Q_{réinjection} = C_d \cdot A_{avaloir} \cdot \sqrt{2g \cdot h_{surface}}\]</span></p>
+<p>où <span class="math inline">\(h_{surface}\)</span> est la lame d’eau en surface au-dessus de l’avaloir. La capacité d’absorption d’un avaloir standard est typiquement limitée à 10 à 30 L/s — insuffisant pour absorber rapidement de grandes lames d’eau en surface.</p>
+</section>
+<section id="modélisation-1d1d-deux-réseaux-de-canaux-couplés" class="level3" data-number="4.3">
+<h3 data-number="4.3" class="anchored" data-anchor-id="modélisation-1d1d-deux-réseaux-de-canaux-couplés"><span class="header-section-number">4.3</span> Modélisation 1D/1D : deux réseaux de canaux couplés</h3>
+<p>L’approche <strong>1D/1D</strong> modélise le réseau de surface comme un <strong>second réseau de collecteurs</strong> à ciel ouvert, représentant les rues et les caniveaux. Chaque rue est modélisée comme un canal rectangulaire (section de rue) ou trapézoïdal, avec ses propres caractéristiques géométriques et hydrauliques.</p>
+<p>Les deux réseaux (souterrain et surface) sont couplés aux nœuds d’échange (regards, bouches d’égout) via les lois d’orifice décrites ci-dessus. Le système complet est résolu simultanément à chaque pas de temps.</p>
+<p><strong>Avantages :</strong> simple à mettre en œuvre dans les logiciels existants (SWMM, Infoworks ICM supportent nativement le 1D/1D), temps de calcul raisonnable, bonne représentation de l’écoulement le long des rues.</p>
+<p><strong>Limites :</strong> la géométrie des rues est schématisée — on perd les effets de largeur variable, de carrefours, de trottoirs surélevés. L’écoulement en surface est contraint à rester dans les “canaux” définis — les débordements en dehors des rues (jardins, cours, parkings) ne sont pas représentés.</p>
+</section>
+<section id="modélisation-1d2d-réseau-souterrain-couplé-à-un-modèle-de-surface-2d" class="level3" data-number="4.4">
+<h3 data-number="4.4" class="anchored" data-anchor-id="modélisation-1d2d-réseau-souterrain-couplé-à-un-modèle-de-surface-2d"><span class="header-section-number">4.4</span> Modélisation 1D/2D : réseau souterrain couplé à un modèle de surface 2D</h3>
+<p>L’approche <strong>1D/2D</strong> couple le modèle 1D du réseau souterrain avec un <strong>modèle 2D de surface</strong> (Saint-Venant 2D) qui calcule l’écoulement sur l’ensemble de la surface urbaine — rues, trottoirs, places, espaces verts, parkings.</p>
+<p>Le modèle 2D de surface résout les équations de Saint-Venant bidimensionnelles (dans le plan horizontal) sur un maillage de la surface urbaine. Les échanges avec le réseau souterrain sont assurés aux nœuds d’échange par les mêmes lois d’orifice.</p>
+<p><strong>Avantages :</strong> représentation fidèle de l’écoulement en surface, sans hypothèse sur les chemins préférentiels. Cartographie directe des zones inondées, des hauteurs d’eau et des vitesses en surface. Indispensable pour les études d’aléa inondation par débordement de réseau.</p>
+<p><strong>Limites :</strong> coût de calcul élevé (maillage 2D de la surface urbaine, pas de temps contraint par la condition CFL du modèle 2D). Nécessite un MNT (Modèle Numérique de Terrain) de haute résolution (&lt; 1 m) pour capturer la microtopographie urbaine. Construction et calage du modèle 2D significativement plus complexes.</p>
+<div id="tbl-dual" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-dual-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Comparaison des approches de modélisation du dual-drainage
+</figcaption>
+<div aria-describedby="tbl-dual-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Critère</th>
+<th>Modèle 1D seul</th>
+<th>Modèle 1D/1D</th>
+<th>Modèle 1D/2D</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Calcul des débits en réseau</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr class="even">
+<td>Volume débordé par regard</td>
+<td>✅ (bilan)</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr class="odd">
+<td>Écoulement en surface</td>
+<td>❌</td>
+<td>✅ (rues)</td>
+<td>✅ (complet)</td>
+</tr>
+<tr class="even">
+<td>Cartographie des zones inondées</td>
+<td>❌</td>
+<td>Partielle</td>
+<td>✅</td>
+</tr>
+<tr class="odd">
+<td>Hauteurs d’eau en surface</td>
+<td>❌</td>
+<td>Le long des rues</td>
+<td>✅</td>
+</tr>
+<tr class="even">
+<td>Temps de calcul</td>
+<td>Faible</td>
+<td>Moyen</td>
+<td>Élevé</td>
+</tr>
+<tr class="odd">
+<td>Données nécessaires</td>
+<td>SIG réseau</td>
+<td>SIG réseau + rues</td>
+<td>SIG réseau + MNT HR</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+</section>
+<section id="quand-choisir-quelle-approche" class="level3" data-number="4.5">
+<h3 data-number="4.5" class="anchored" data-anchor-id="quand-choisir-quelle-approche"><span class="header-section-number">4.5</span> Quand choisir quelle approche ?</h3>
+<p><strong>Modèle 1D seul :</strong> suffisant pour le dimensionnement standard (taux de remplissage, vérification de capacité) et le diagnostic hydraulique du réseau. Inadapté dès qu’on veut quantifier les impacts en surface.</p>
+<p><strong>Modèle 1D/1D :</strong> bon compromis pour les études de maîtrise des eaux pluviales en milieu urbain dense où les écoulements de surface sont canalisés par les rues. Adapté aux études de schéma directeur d’assainissement pluvial avec contraintes de délai et de budget.</p>
+<p><strong>Modèle 1D/2D :</strong> indispensable pour les études d’aléa inondation réglementaires (PPRi, cartographie directive inondation), les études de génie urbain en zone inondable, et les secteurs à topographie complexe où les chemins d’écoulement de surface ne sont pas prévisibles a priori.</p>
+<hr>
+</section>
+</section>
+<section id="les-ouvrages-de-régulation-en-événement-extrême" class="level2" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="les-ouvrages-de-régulation-en-événement-extrême"><span class="header-section-number">5</span> Les ouvrages de régulation en événement extrême</h2>
+<section id="les-déversoirs-dorage-en-surcharge" class="level3" data-number="5.1">
+<h3 data-number="5.1" class="anchored" data-anchor-id="les-déversoirs-dorage-en-surcharge"><span class="header-section-number">5.1</span> Les déversoirs d’orage en surcharge</h3>
+<p>Un déversoir d’orage est dimensionné pour déverser un certain débit vers le milieu naturel lorsque le débit dans le collecteur dépasse un seuil. Mais lors d’un événement extrême, deux situations de surcharge peuvent survenir :</p>
+<p><strong>Surcharge du collecteur amont du déversoir :</strong> le débit entrant dépasse la somme de la capacité de transit et de la capacité de déversement. Le niveau monte en amont du déversoir, créant un remous qui se propage vers l’amont. Le modèle doit correctement représenter cette saturation — notamment le fait que le déversoir ne peut pas évacuer plus que ce que sa loi hydraulique autorise, même si le collecteur est en charge.</p>
+<p><strong>Surcharge du milieu récepteur :</strong> la rivière ou le canal récepteur est en crue. La lame déversante est réduite voire annulée (déversoir noyé). Le modèle doit intégrer une condition aux limites aval sur le déversoir — la cote du milieu récepteur — pour calculer correctement le débit déversé.</p>
+<p>La modélisation correcte d’un déversoir d’orage en événement extrême nécessite donc une <strong>condition aux limites aval dynamique</strong>, couplée avec un modèle hydraulique de la rivière réceptrice.</p>
+</section>
+<section id="les-bassins-de-rétention-dimensionnement-pour-les-événements-rares" class="level3" data-number="5.2">
+<h3 data-number="5.2" class="anchored" data-anchor-id="les-bassins-de-rétention-dimensionnement-pour-les-événements-rares"><span class="header-section-number">5.2</span> Les bassins de rétention : dimensionnement pour les événements rares</h3>
+<p>Un bassin de rétention est dimensionné pour écrêter les pointes de débit — il stocke temporairement le volume excédentaire et le restitue progressivement après la pointe. Son efficacité dépend de la relation entre le <strong>volume de stockage disponible</strong> et le <strong>volume de la pointe à écrêter</strong>.</p>
+<p>Pour les événements extrêmes, deux comportements limites méritent d’être modélisés :</p>
+<p><strong>Bassin plein en début d’événement :</strong> si un premier épisode pluvieux a rempli le bassin et que la vidange n’est pas complète avant un second épisode, la capacité d’écrêtement est réduite. La simulation en continu longue durée (cf.&nbsp;note 2.B2) est l’outil pour évaluer la probabilité de ce scénario.</p>
+<p><strong>Dépassement de la capacité de stockage :</strong> lorsque le volume de la pluie extrême dépasse le volume utile du bassin, l’ouvrage de sécurité (déversoir de crue) entre en action. Sa capacité et sa cote de déclenchement sont des paramètres critiques à modéliser correctement — un déversoir de crue sous-dimensionné peut conduire à la rupture du bassin.</p>
+</section>
+<section id="les-clapets-anti-retour-protection-et-risque" class="level3" data-number="5.3">
+<h3 data-number="5.3" class="anchored" data-anchor-id="les-clapets-anti-retour-protection-et-risque"><span class="header-section-number">5.3</span> Les clapets anti-retour : protection et risque</h3>
+<p>Les clapets anti-retour protègent les zones basses contre le reflux depuis les collecteurs en charge — ils s’ouvrent dans le sens normal d’écoulement et se ferment lors d’un retour aval. En événement extrême, deux comportements pathologiques méritent attention :</p>
+<p><strong>Clapet fermé sur un sous-bassin versant actif :</strong> si le clapet se ferme parce que le collecteur principal est en charge, tout le débit pluvial du sous-bassin versant amont ne peut plus s’évacuer par le réseau. L’eau s’accumule dans le sous-réseau amont jusqu’à débordement — parfois dans des zones qui n’étaient pas identifiées comme à risque.</p>
+<p><strong>Coup de bélier à la fermeture :</strong> comme pour les clapets en réseau AEP (cf.&nbsp;note 2.A2), la fermeture brusque d’un clapet anti-retour sur un collecteur en charge peut générer une surpression significative. Ce phénomène est rarement modélisé dans les études d’assainissement — à tort, car il peut être une cause de rupture de conduite en événement extrême.</p>
+<hr>
+</section>
+</section>
+<section id="la-modélisation-des-événements-extrêmes-données-et-limites" class="level2" data-number="6">
+<h2 data-number="6" class="anchored" data-anchor-id="la-modélisation-des-événements-extrêmes-données-et-limites"><span class="header-section-number">6</span> La modélisation des événements extrêmes : données et limites</h2>
+<section id="le-problème-de-la-validation-sans-données" class="level3" data-number="6.1">
+<h3 data-number="6.1" class="anchored" data-anchor-id="le-problème-de-la-validation-sans-données"><span class="header-section-number">6.1</span> Le problème de la validation sans données</h3>
+<p>Le défi fondamental de la modélisation des événements extrêmes est que, par définition, <strong>on ne dispose pas de données de calage pour les événements rares</strong>. Un événement centennal est observé en moyenne une fois par siècle — les séries de mesures disponibles (10 à 30 ans pour les meilleurs réseaux de mesure) ne contiennent pas de tels événements.</p>
+<p>Cette absence de données de validation directe oblige à s’appuyer sur des <strong>proxys</strong> :</p>
+<p><strong>Les laisses de crue :</strong> traces physiques laissées par les inondations passées (lignes de boue, dépôts sur les murs, végétation couchée). Elles donnent des indications sur les hauteurs d’eau maximales atteintes, mais rarement sur les débits ou les durées. Leur incertitude est de l’ordre de 10 à 30 cm verticalement.</p>
+<p><strong>Les témoignages et rapports d’événements :</strong> comptes rendus d’exploitation, rapports de sinistres, archives de presse. Ils permettent de cartographier les zones touchées et d’estimer la sévérité relative des événements historiques. Leur fiabilité est variable.</p>
+<p><strong>Les dommages assurés :</strong> les données des assureurs (CAT-NAT) permettent de spatialiser les dommages par événement. Ils constituent une validation indirecte — un modèle qui prédit des inondations dans des zones sans dommages assurés, ou qui ne prédit pas d’inondations dans des zones fortement sinistrées, est clairement incorrect.</p>
+<p><strong>Les retours d’expérience post-événement (REX) :</strong> inspection du réseau après un événement intense, avec relevé des regards débordés, des conduites endommagées, des zones inondées. C’est la donnée de validation la plus précieuse — mais elle nécessite une organisation spécifique pour être collectée rapidement après l’événement.</p>
+</section>
+<section id="lanalyse-de-sensibilité-comme-substitut-à-la-validation" class="level3" data-number="6.2">
+<h3 data-number="6.2" class="anchored" data-anchor-id="lanalyse-de-sensibilité-comme-substitut-à-la-validation"><span class="header-section-number">6.2</span> L’analyse de sensibilité comme substitut à la validation</h3>
+<p>En l’absence de données de validation directe, l’<strong>analyse de sensibilité</strong> permet de quantifier l’incertitude des résultats du modèle et d’identifier les paramètres qui la dominent.</p>
+<p>Pour un modèle d’événement extrême, les paramètres les plus sensibles sont généralement :</p>
+<ul>
+<li><strong>L’intensité et la distribution spatiale de la pluie</strong> : une incertitude de ±20 % sur la pluie se traduit par une incertitude de ±30 à 50 % sur le débit de pointe et les volumes débordés</li>
+<li><strong>Le coefficient de ruissellement</strong> <span class="math inline">\(C\)</span> (ou <span class="math inline">\(CN\)</span>) : sa valeur en conditions saturées est mal connue et très différente de sa valeur en conditions normales</li>
+<li><strong>Les conditions aux limites aval</strong> : la cote de la rivière réceptrice lors d’un événement extrême est souvent inconnue</li>
+</ul>
+<p>L’analyse de sensibilité se conduit en faisant varier chaque paramètre dans sa plage d’incertitude et en observant l’impact sur les sorties d’intérêt (volume débordé, nombre de regards en charge, hauteur d’eau maximale en surface). Elle permet de hiérarchiser les efforts de collecte de données et de quantifier la robustesse des conclusions du modèle.</p>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Communiquer l’incertitude des événements extrêmes
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Les résultats d’un modèle d’événement extrême ne sont pas des prédictions précises — ce sont des <strong>estimations entachées d’une incertitude significative</strong>. Un résultat présenté sans fourchette d’incertitude (“le modèle prédit 450 maisons inondées pour la pluie centennale”) induit une fausse précision qui peut conduire à de mauvaises décisions. La bonne pratique est de présenter une plage de résultats (“entre 300 et 600 maisons inondées selon les hypothèses de pluie et de ruissellement”) et d’expliquer d’où vient l’incertitude dominante.</p>
+</div>
+</div>
+<hr>
+</section>
+</section>
+<section id="du-modèle-à-la-décision-carte-daléa-et-gestion-des-risques" class="level2" data-number="7">
+<h2 data-number="7" class="anchored" data-anchor-id="du-modèle-à-la-décision-carte-daléa-et-gestion-des-risques"><span class="header-section-number">7</span> Du modèle à la décision : carte d’aléa et gestion des risques</h2>
+<section id="cartographie-des-zones-inondables-par-débordement-de-réseau" class="level3" data-number="7.1">
+<h3 data-number="7.1" class="anchored" data-anchor-id="cartographie-des-zones-inondables-par-débordement-de-réseau"><span class="header-section-number">7.1</span> Cartographie des zones inondables par débordement de réseau</h3>
+<p>Le modèle 1D/2D produit directement une cartographie des hauteurs d’eau maximales en surface pour un événement de référence (pluie décennale, centennale). Cette cartographie est le livrable central des études d’aléa inondation par débordement de réseau.</p>
+<p>Les cartes d’aléa distinguent généralement plusieurs classes de hauteur d’eau :</p>
+<div id="tbl-alea" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-alea-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;2: Classes d’aléa inondation par hauteur d’eau
+</figcaption>
+<div aria-describedby="tbl-alea-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Hauteur d’eau en surface</th>
+<th>Niveau d’aléa</th>
+<th>Conséquences typiques</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(h &lt; 0{,}20\)</span> m</td>
+<td>Faible</td>
+<td>Mouillage des pieds, accès difficile</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(0{,}20 \leq h &lt; 0{,}50\)</span> m</td>
+<td>Moyen</td>
+<td>Inondation des caves, difficultés de circulation</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(0{,}50 \leq h &lt; 1{,}00\)</span> m</td>
+<td>Fort</td>
+<td>Inondation des rez-de-chaussée, risque pour les personnes</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(h \geq 1{,}00\)</span> m</td>
+<td>Très fort</td>
+<td>Danger pour les personnes, dommages structurels</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+</section>
+<section id="fréquence-de-débordement-par-nœud-de-la-simulation-à-la-carte-de-risque" class="level3" data-number="7.2">
+<h3 data-number="7.2" class="anchored" data-anchor-id="fréquence-de-débordement-par-nœud-de-la-simulation-à-la-carte-de-risque"><span class="header-section-number">7.2</span> Fréquence de débordement par nœud : de la simulation à la carte de risque</h3>
+<p>La simulation longue durée (cf.&nbsp;note 2.B2) permet de calculer, pour chaque nœud du réseau, la <strong>fréquence annuelle de débordement</strong> : nombre moyen d’événements par an pendant lesquels la charge hydraulique dépasse la cote du tampon.</p>
+<p>Cette fréquence, cartographiée sur le réseau, permet d’identifier les points noirs chroniques (débordement plusieurs fois par an) et de les distinguer des dysfonctionnements rares (débordement tous les 10 à 50 ans). C’est un indicateur opérationnel précieux pour prioriser les investissements de mise à niveau du réseau.</p>
+</section>
+<section id="mesures-de-réduction-du-risque" class="level3" data-number="7.3">
+<h3 data-number="7.3" class="anchored" data-anchor-id="mesures-de-réduction-du-risque"><span class="header-section-number">7.3</span> Mesures de réduction du risque</h3>
+<p>Face aux événements extrêmes, les mesures de réduction du risque peuvent être classées en trois familles :</p>
+<p><strong>Mesures structurelles sur le réseau :</strong> - Renforcement des collecteurs sous-capacitaires (augmentation de diamètre, création de dérivations) - Création de bassins de rétention pour écrêter les pointes - Séparation des réseaux unitaires (réduction des volumes transitant vers la station) - Amélioration des déversoirs d’orage (augmentation de la capacité de déversement)</p>
+<p><strong>Mesures de gestion du ruissellement à la source :</strong> - Désimperméabilisation des surfaces (jardins, toitures végétalisées, parkings perméables) - Noues et tranchées drainantes : stockage et infiltration décentralisés - Toitures stockantes : rétention temporaire à la parcelle</p>
+<p><strong>Mesures de résilience urbaine :</strong> - Adaptation de l’urbanisme (interdiction de construction en zones à risque, prescriptions sur les niveaux de plancher) - Systèmes d’alerte et de gestion de crise - Acceptation de la sur-inondation contrôlée : concevoir des espaces publics (places, parcs) capables d’accueillir temporairement les débordements sans dommage — c’est la philosophie des “éponges urbaines” (<em>sponge cities</em>)</p>
+</section>
+<section id="la-résilience-urbaine-concevoir-pour-lextrême-pas-seulement-contre-lui" class="level3" data-number="7.4">
+<h3 data-number="7.4" class="anchored" data-anchor-id="la-résilience-urbaine-concevoir-pour-lextrême-pas-seulement-contre-lui"><span class="header-section-number">7.4</span> La résilience urbaine : concevoir pour l’extrême, pas seulement contre lui</h3>
+<p>La philosophie qui émerge dans les approches les plus avancées de gestion des eaux pluviales urbaines est celle de la <strong>résilience</strong> plutôt que de la <strong>résistance</strong>. Résister signifie dimensionner le réseau pour contenir tout événement jusqu’à une certaine période de retour — une approche coûteuse et qui ne peut jamais être totalement efficace (il y aura toujours un événement plus extrême). Être résilient signifie accepter que certains événements dépasseront les capacités du réseau, et concevoir la ville pour que les dommages de ces débordements soient minimaux et la remise en état rapide.</p>
+<p>Cette philosophie se traduit par des concepts comme les <strong>voies d’eau d’urgence</strong> (emergency spillways) — des cheminements préférentiels pour les eaux débordées, délibérément conçus pour guider les écoulements vers des zones à moindre enjeu — et les <strong>espaces de sur-inondation consentie</strong> — des places publiques ou des parcs conçus pour être temporairement inondés sans dommage lors des événements extrêmes.</p>
+<p>Le modèle hydraulique, dans ce contexte, devient un outil de <strong>conception de la résilience</strong> autant qu’un outil de vérification de la performance hydraulique.</p>
+<hr>
+</section>
+</section>
+<section id="conclusion" class="level2" data-number="8">
+<h2 data-number="8" class="anchored" data-anchor-id="conclusion"><span class="header-section-number">8</span> Conclusion</h2>
+<p>La modélisation des événements extrêmes en assainissement est la discipline où les modèles sont les plus sophistiqués, les données les plus rares, et les enjeux les plus importants. Elle mobilise simultanément la mécanique des fluides (Saint-Venant transitoire, fente de Preissmann), l’hydrologie (ruissellement extrême, saturation du sol), la modélisation 2D (dual-drainage), et la gestion des risques (analyse de sensibilité, communication de l’incertitude).</p>
+<p>Trois convictions doivent guider l’ingénieur dans cette discipline :</p>
+<p><strong>Premièrement</strong>, un modèle non calé sur des événements observés est un outil d’exploration de scénarios, pas de prédiction — et il faut le présenter comme tel. <strong>Deuxièmement</strong>, la cartographie des incertitudes est aussi importante que la cartographie des résultats — un décideur qui ignore l’incertitude d’un modèle prend des décisions sur des bases fragiles. <strong>Troisièmement</strong>, la résilience urbaine est une approche complémentaire, pas alternative, à la modélisation hydraulique — concevoir la ville pour bien se comporter lors des événements extrêmes est un objectif que le modèle peut aider à atteindre, mais pas définir seul.</p>
+<hr>
+</section>
+<section id="pour-aller-plus-loin-dans-cette-série" class="level2" data-number="9">
+<h2 data-number="9" class="anchored" data-anchor-id="pour-aller-plus-loin-dans-cette-série"><span class="header-section-number">9</span> Pour aller plus loin dans cette série</h2>
+<ul>
+<li><strong>Note 3.1</strong> — <em>Calage et validation de modèles hydrauliques</em> : méthodes d’optimisation automatique, analyse de sensibilité formelle, gestion de l’équifinalité</li>
+<li><strong>Note 3.2</strong> — <em>Quand le 1D ne suffit plus</em> : introduction aux modèles 2D et 3D, critères de passage, aperçu de Telemac-2D et HEC-RAS 2D</li>
+<li><strong>Note 3.3</strong> — <em>Données et modèles : SIG, capteurs, vers le jumeau numérique hydraulique</em> : MNT haute résolution, intégration SIG, IoT réseau, notion de jumeau numérique</li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copié");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copié");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>© 2026 Johary - Ingénieur Hydraulicien</p>
+</div>   
+    <div class="nav-footer-center">
+<p><span style="font-size:0.85em; color:#888;"> Copyright © 2026 SmartHydro </span></p>
+</div>
+    <div class="nav-footer-right">
+<p>Conception par Johary Ramorasata</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+<script src="../../site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

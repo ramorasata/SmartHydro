@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="fr" xml:lang="fr"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="">
+
+<title>L’approche énergétique en hydraulique – Johary - Ingénieur Hydraulicien</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<link href="../../static/avatar.jpg" rel="icon" type="image/jpeg">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark-23bbe8b5e4efc1e257f6d59dce478b08.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-7f128302b46659ec05c1cdf12d27b5f1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-dark-fcb2e74b6da07224c5b59afd36009af3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../../site_libs/bootstrap/bootstrap-7f128302b46659ec05c1cdf12d27b5f1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "Pas de résultats",
+    "search-matching-documents-text": "documents trouvés",
+    "search-copy-link-title": "Copier le lien vers la recherche",
+    "search-hide-matches-text": "Cacher les correspondances additionnelles",
+    "search-more-match-text": "correspondance de plus dans ce document",
+    "search-more-matches-text": "correspondances de plus dans ce document",
+    "search-clear-button-title": "Effacer",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Annuler",
+    "search-submit-button-title": "Envoyer",
+    "search-label": "Recherche"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+<meta property="og:title" content="L’approche énergétique en hydraulique – Johary - Ingénieur Hydraulicien">
+<meta property="og:description" content="Charge, puissance et dégradation : la grille de lecture du mécanicien">
+<meta property="og:image" content="0_2_modelisation_energie_files/figure-html/fig-ligne-charge-output-1.png">
+<meta property="og:site_name" content="Johary - Ingénieur Hydraulicien">
+<meta property="og:locale" content="fr_FR">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Johary - Ingénieur Hydraulicien</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Recherche"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Basculer la navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link active" href="../../index.html" aria-current="page"> 
+<span class="menu-text">Accueil</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../formation/index.html"> 
+<span class="menu-text">Formation</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../etudes-de-cas/index.html"> 
+<span class="menu-text">Études de cas</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../geomatique/index.html"> 
+<span class="menu-text">Géomatique</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../programmation/index.html"> 
+<span class="menu-text">Programmation</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../parcours/index.html"> 
+<span class="menu-text">Parcours</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../contact.html"> 
+<span class="menu-text">Contact</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/ramorasata"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://www.linkedin.com/in/johariniaina-ramorasata"> <i class="bi bi-linkedin" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../en/index.qmd"> 
+<span class="menu-text">EN</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Basculer le mode sombre"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Basculer la barre latérale" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item">L’approche énergétique en hydraulique</li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Basculer la barre latérale" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🏠 Accueil</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../formation/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🌊 Formation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../etudes-de-cas/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">📐 Études de cas</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../geomatique/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🌍 Géomatique</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../programmation/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🐍 Programmation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../parcours/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🗺️ Parcours</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../contact.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">✉️ Contact</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Sommaire</h2>
+   
+  <ul>
+  <li><a href="#pourquoi-raisonner-en-énergie" id="toc-pourquoi-raisonner-en-énergie" class="nav-link active" data-scroll-target="#pourquoi-raisonner-en-énergie"><span class="header-section-number">1</span> Pourquoi raisonner en énergie ?</a>
+  <ul class="collapse">
+  <li><a href="#le-réflexe-du-mécanicien" id="toc-le-réflexe-du-mécanicien" class="nav-link" data-scroll-target="#le-réflexe-du-mécanicien"><span class="header-section-number">1.1</span> Le réflexe du mécanicien</a></li>
+  <li><a href="#ce-que-lénergie-révèle-que-les-forces-masquent" id="toc-ce-que-lénergie-révèle-que-les-forces-masquent" class="nav-link" data-scroll-target="#ce-que-lénergie-révèle-que-les-forces-masquent"><span class="header-section-number">1.2</span> Ce que l’énergie révèle que les forces masquent</a></li>
+  </ul></li>
+  <li><a href="#lénergie-mécanique-dun-fluide" id="toc-lénergie-mécanique-dun-fluide" class="nav-link" data-scroll-target="#lénergie-mécanique-dun-fluide"><span class="header-section-number">2</span> L’énergie mécanique d’un fluide</a>
+  <ul class="collapse">
+  <li><a href="#les-trois-formes-de-lénergie-mécanique" id="toc-les-trois-formes-de-lénergie-mécanique" class="nav-link" data-scroll-target="#les-trois-formes-de-lénergie-mécanique"><span class="header-section-number">2.1</span> Les trois formes de l’énergie mécanique</a></li>
+  <li><a href="#la-charge-hydraulique-comme-énergie" id="toc-la-charge-hydraulique-comme-énergie" class="nav-link" data-scroll-target="#la-charge-hydraulique-comme-énergie"><span class="header-section-number">2.2</span> La charge hydraulique comme énergie</a></li>
+  <li><a href="#pourquoi-diviser-par-rho-g" id="toc-pourquoi-diviser-par-rho-g" class="nav-link" data-scroll-target="#pourquoi-diviser-par-rho-g"><span class="header-section-number">2.3</span> Pourquoi diviser par <span class="math inline">\(\rho g\)</span> ?</a></li>
+  </ul></li>
+  <li><a href="#ligne-de-charge-et-ligne-piézométrique" id="toc-ligne-de-charge-et-ligne-piézométrique" class="nav-link" data-scroll-target="#ligne-de-charge-et-ligne-piézométrique"><span class="header-section-number">3</span> Ligne de charge et ligne piézométrique</a>
+  <ul class="collapse">
+  <li><a href="#deux-lignes-deux-énergies" id="toc-deux-lignes-deux-énergies" class="nav-link" data-scroll-target="#deux-lignes-deux-énergies"><span class="header-section-number">3.1</span> Deux lignes, deux énergies</a></li>
+  <li><a href="#lire-une-ligne-de-charge" id="toc-lire-une-ligne-de-charge" class="nav-link" data-scroll-target="#lire-une-ligne-de-charge"><span class="header-section-number">3.2</span> Lire une ligne de charge</a></li>
+  </ul></li>
+  <li><a href="#le-théorème-de-bernoulli-comme-bilan-dénergie" id="toc-le-théorème-de-bernoulli-comme-bilan-dénergie" class="nav-link" data-scroll-target="#le-théorème-de-bernoulli-comme-bilan-dénergie"><span class="header-section-number">4</span> Le théorème de Bernoulli comme bilan d’énergie</a>
+  <ul class="collapse">
+  <li><a href="#la-forme-conservative" id="toc-la-forme-conservative" class="nav-link" data-scroll-target="#la-forme-conservative"><span class="header-section-number">4.1</span> La forme conservative</a></li>
+  <li><a href="#la-forme-généralisée-avec-dégradation" id="toc-la-forme-généralisée-avec-dégradation" class="nav-link" data-scroll-target="#la-forme-généralisée-avec-dégradation"><span class="header-section-number">4.2</span> La forme généralisée avec dégradation</a></li>
+  </ul></li>
+  <li><a href="#la-dégradation-énergétique" id="toc-la-dégradation-énergétique" class="nav-link" data-scroll-target="#la-dégradation-énergétique"><span class="header-section-number">5</span> La dégradation énergétique</a>
+  <ul class="collapse">
+  <li><a href="#la-perte-de-charge-est-une-conversion-irréversible" id="toc-la-perte-de-charge-est-une-conversion-irréversible" class="nav-link" data-scroll-target="#la-perte-de-charge-est-une-conversion-irréversible"><span class="header-section-number">5.1</span> La perte de charge est une conversion irréversible</a></li>
+  <li><a href="#quel-échauffement" id="toc-quel-échauffement" class="nav-link" data-scroll-target="#quel-échauffement"><span class="header-section-number">5.2</span> Quel échauffement ?</a></li>
+  </ul></li>
+  <li><a href="#la-puissance-hydraulique" id="toc-la-puissance-hydraulique" class="nav-link" data-scroll-target="#la-puissance-hydraulique"><span class="header-section-number">6</span> La puissance hydraulique</a>
+  <ul class="collapse">
+  <li><a href="#de-lénergie-à-la-puissance" id="toc-de-lénergie-à-la-puissance" class="nav-link" data-scroll-target="#de-lénergie-à-la-puissance"><span class="header-section-number">6.1</span> De l’énergie à la puissance</a></li>
+  <li><a href="#le-rendement-énergétique-dune-pompe" id="toc-le-rendement-énergétique-dune-pompe" class="nav-link" data-scroll-target="#le-rendement-énergétique-dune-pompe"><span class="header-section-number">6.2</span> Le rendement énergétique d’une pompe</a></li>
+  <li><a href="#le-rendement-énergétique-global-dun-réseau" id="toc-le-rendement-énergétique-global-dun-réseau" class="nav-link" data-scroll-target="#le-rendement-énergétique-global-dun-réseau"><span class="header-section-number">6.3</span> Le rendement énergétique global d’un réseau</a></li>
+  </ul></li>
+  <li><a href="#le-coup-de-bélier-vu-sous-langle-énergétique" id="toc-le-coup-de-bélier-vu-sous-langle-énergétique" class="nav-link" data-scroll-target="#le-coup-de-bélier-vu-sous-langle-énergétique"><span class="header-section-number">7</span> Le coup de bélier vu sous l’angle énergétique</a>
+  <ul class="collapse">
+  <li><a href="#une-conversion-énergie-cinétique-énergie-élastique" id="toc-une-conversion-énergie-cinétique-énergie-élastique" class="nav-link" data-scroll-target="#une-conversion-énergie-cinétique-énergie-élastique"><span class="header-section-number">7.1</span> Une conversion énergie cinétique ↔︎ énergie élastique</a></li>
+  <li><a href="#pourquoi-lénergie-explique-lamplitude" id="toc-pourquoi-lénergie-explique-lamplitude" class="nav-link" data-scroll-target="#pourquoi-lénergie-explique-lamplitude"><span class="header-section-number">7.2</span> Pourquoi l’énergie explique l’amplitude</a></li>
+  </ul></li>
+  <li><a href="#lénergie-dans-chaque-domaine-de-leau" id="toc-lénergie-dans-chaque-domaine-de-leau" class="nav-link" data-scroll-target="#lénergie-dans-chaque-domaine-de-leau"><span class="header-section-number">8</span> L’énergie dans chaque domaine de l’eau</a></li>
+  <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion"><span class="header-section-number">9</span> Conclusion</a></li>
+  <li><a href="#pour-aller-plus-loin-dans-cette-série" id="toc-pour-aller-plus-loin-dans-cette-série" class="nav-link" data-scroll-target="#pour-aller-plus-loin-dans-cette-série"><span class="header-section-number">10</span> Pour aller plus loin dans cette série</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">L’approche énergétique en hydraulique</h1>
+<p class="subtitle lead">Charge, puissance et dégradation : la grille de lecture du mécanicien</p>
+  <div class="quarto-categories">
+    <div class="quarto-category">Hydraulique</div>
+    <div class="quarto-category">Énergie</div>
+    <div class="quarto-category">Modélisation</div>
+    <div class="quarto-category">Ingénierie</div>
+  </div>
+  </div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+    <div>
+    <div class="quarto-title-meta-heading">Date de publication</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">16 mai 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Note de fondement de la série
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Cette note est l’une des notes de fondement transversal de la série sur la modélisation des réseaux hydrauliques. Elle complète la note introductive <em>Généralités sur la modélisation des réseaux hydrauliques</em> en posant le <strong>fil rouge énergétique</strong> qui traverse toute l’hydraulique appliquée. Comprendre l’écoulement comme un problème d’énergie — et pas seulement de forces et de débits — est le réflexe fondamental du mécanicien, et la clé qui éclaire la plupart des phénomènes traités dans le reste de la série.</p>
+</div>
+</div>
+<section id="pourquoi-raisonner-en-énergie" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="pourquoi-raisonner-en-énergie"><span class="header-section-number">1</span> Pourquoi raisonner en énergie ?</h2>
+<section id="le-réflexe-du-mécanicien" class="level3" data-number="1.1">
+<h3 data-number="1.1" class="anchored" data-anchor-id="le-réflexe-du-mécanicien"><span class="header-section-number">1.1</span> Le réflexe du mécanicien</h3>
+<p>Devant un système mécanique, l’ingénieur dispose toujours de deux grilles de lecture complémentaires : l’approche par les <strong>forces</strong> (le principe fondamental de la dynamique, <span class="math inline">\(\sum \vec{F} = m\vec{a}\)</span>) et l’approche par l’<strong>énergie</strong> (le théorème de l’énergie mécanique, le bilan de puissance). Les deux sont rigoureusement équivalentes — elles décrivent la même physique — mais elles n’éclairent pas les mêmes aspects du problème.</p>
+<p>L’approche par les forces est naturelle pour calculer une réaction d’appui, une poussée sur un coude, l’effort sur une vanne. L’approche énergétique est souvent plus puissante pour <strong>comprendre</strong> ce qui se passe : où l’énergie est apportée, où elle est stockée, où elle est dégradée, comment elle se transforme d’une forme en une autre.</p>
+<p>En hydraulique, cette dualité est constamment présente mais rarement explicitée. La note introductive a posé les équations de conservation (masse et quantité de mouvement) — l’approche par les forces. Cette note pose l’approche <strong>énergétique</strong>, qui en est le complément indispensable.</p>
+</section>
+<section id="ce-que-lénergie-révèle-que-les-forces-masquent" class="level3" data-number="1.2">
+<h3 data-number="1.2" class="anchored" data-anchor-id="ce-que-lénergie-révèle-que-les-forces-masquent"><span class="header-section-number">1.2</span> Ce que l’énergie révèle que les forces masquent</h3>
+<p>Trois exemples, repris en détail dans la suite de cette note, montrent ce que l’approche énergétique apporte :</p>
+<p>La <strong>perte de charge</strong> dans une conduite est, dans l’approche par les forces, le résultat d’un équilibre entre la pression motrice et le frottement pariétal. Dans l’approche énergétique, c’est une <strong>dégradation irréversible</strong> d’énergie mécanique en chaleur — un phénomène gouverné par le second principe de la thermodynamique, qui explique pourquoi on ne peut jamais “récupérer” une perte de charge.</p>
+<p>Le <strong>coup de bélier</strong> est, dans l’approche par les forces, une onde de surpression qui se propage à la célérité <span class="math inline">\(c\)</span>. Dans l’approche énergétique, c’est une <strong>conversion oscillante</strong> entre l’énergie cinétique du fluide en mouvement et l’énergie élastique stockée dans la compression du fluide et la déformation de la conduite — une lecture qui explique immédiatement pourquoi l’amplitude de la surpression dépend de la vitesse initiale et de la rigidité de la conduite.</p>
+<p>Le <strong>dimensionnement d’une station de pompage</strong> est, dans l’approche par les forces, un problème de pression à fournir. Dans l’approche énergétique, c’est un problème de <strong>puissance</strong> et de <strong>rendement</strong> — la grille qui relie directement le dimensionnement hydraulique à la facture d’électricité de l’exploitant.</p>
+<hr>
+</section>
+</section>
+<section id="lénergie-mécanique-dun-fluide" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="lénergie-mécanique-dun-fluide"><span class="header-section-number">2</span> L’énergie mécanique d’un fluide</h2>
+<section id="les-trois-formes-de-lénergie-mécanique" class="level3" data-number="2.1">
+<h3 data-number="2.1" class="anchored" data-anchor-id="les-trois-formes-de-lénergie-mécanique"><span class="header-section-number">2.1</span> Les trois formes de l’énergie mécanique</h3>
+<p>Une particule de fluide en écoulement possède de l’énergie mécanique sous trois formes :</p>
+<p><strong>L’énergie potentielle de position</strong> : liée à l’altitude <span class="math inline">\(z\)</span> de la particule dans le champ de pesanteur. Par unité de poids de fluide, elle vaut simplement <span class="math inline">\(z\)</span> (en mètres).</p>
+<p><strong>L’énergie potentielle de pression</strong> : liée à la pression <span class="math inline">\(p\)</span> régnant dans le fluide. Une particule sous pression peut fournir un travail en se détendant — c’est une énergie stockée. Par unité de poids, elle vaut <span class="math inline">\(p / (\rho g)\)</span> (en mètres).</p>
+<p><strong>L’énergie cinétique</strong> : liée à la vitesse <span class="math inline">\(V\)</span> de la particule. Par unité de poids, elle vaut <span class="math inline">\(V^2 / (2g)\)</span> (en mètres).</p>
+</section>
+<section id="la-charge-hydraulique-comme-énergie" class="level3" data-number="2.2">
+<h3 data-number="2.2" class="anchored" data-anchor-id="la-charge-hydraulique-comme-énergie"><span class="header-section-number">2.2</span> La charge hydraulique comme énergie</h3>
+<p>La somme de ces trois termes est la <strong>charge hydraulique</strong> <span class="math inline">\(H\)</span> :</p>
+<p><span class="math display">\[H = z + \frac{p}{\rho g} + \frac{V^2}{2g}\]</span></p>
+<p>Le point fondamental, souvent oublié dans la pratique, est que <strong><span class="math inline">\(H\)</span> est une énergie</strong> — précisément l’énergie mécanique totale du fluide par unité de poids. Son unité est le mètre, mais cette longueur représente une énergie : c’est la hauteur dont il faudrait faire chuter le poids du fluide pour libérer une énergie équivalente à son énergie mécanique.</p>
+</section>
+<section id="pourquoi-diviser-par-rho-g" class="level3" data-number="2.3">
+<h3 data-number="2.3" class="anchored" data-anchor-id="pourquoi-diviser-par-rho-g"><span class="header-section-number">2.3</span> Pourquoi diviser par <span class="math inline">\(\rho g\)</span> ?</h3>
+<p>L’énergie mécanique d’un volume <span class="math inline">\(\mathcal{V}\)</span> de fluide s’écrirait, en joules :</p>
+<p><span class="math display">\[E = \underbrace{\rho \mathcal{V} g z}_{\text{potentielle position}} + \underbrace{p \mathcal{V}}_{\text{pression}} + \underbrace{\frac{1}{2}\rho \mathcal{V} V^2}_{\text{cinétique}}\]</span></p>
+<p>En divisant par le poids du volume de fluide <span class="math inline">\(\rho \mathcal{V} g\)</span>, on obtient l’énergie <strong>par unité de poids</strong> — et chaque terme devient une longueur :</p>
+<p><span class="math display">\[\frac{E}{\rho \mathcal{V} g} = z + \frac{p}{\rho g} + \frac{V^2}{2g} = H\]</span></p>
+<p>Cette normalisation par le poids n’est pas un artifice de calcul — c’est le choix qui rend l’hydraulique pratique. Toutes les grandeurs (charge, perte de charge, hauteur de pompe) s’expriment en mètres, directement comparables à des cotes altimétriques et à des hauteurs d’eau. C’est cette commodité qui a fait de la charge hydraulique le langage universel de l’ingénierie de l’eau — au prix d’un oubli fréquent : derrière chaque mètre de charge se cache une énergie.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Astuce</span>Charge, énergie, et les autres normalisations
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>On peut aussi normaliser l’énergie par unité de <strong>masse</strong> (en J/kg, on obtient <span class="math inline">\(gz + p/\rho + V^2/2\)</span>) ou par unité de <strong>volume</strong> (en J/m³ = Pa, on obtient <span class="math inline">\(\rho g z + p + \rho V^2/2\)</span>). La normalisation par unité de volume donne des pressions — c’est la formulation préférée en mécanique des fluides théorique. La normalisation par unité de poids donne des hauteurs — c’est la formulation de l’hydraulicien. Les trois décrivent la même énergie ; seule l’unité change.</p>
+</div>
+</div>
+<hr>
+</section>
+</section>
+<section id="ligne-de-charge-et-ligne-piézométrique" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="ligne-de-charge-et-ligne-piézométrique"><span class="header-section-number">3</span> Ligne de charge et ligne piézométrique</h2>
+<section id="deux-lignes-deux-énergies" class="level3" data-number="3.1">
+<h3 data-number="3.1" class="anchored" data-anchor-id="deux-lignes-deux-énergies"><span class="header-section-number">3.1</span> Deux lignes, deux énergies</h3>
+<p>La représentation graphique de l’énergie le long d’un écoulement est l’un des outils les plus puissants de l’hydraulicien. On trace deux lignes le long du profil de la conduite ou du canal :</p>
+<p><strong>La ligne de charge</strong> (ou ligne d’énergie) représente la charge totale <span class="math inline">\(H = z + p/\rho g + V^2/2g\)</span> — l’énergie mécanique totale par unité de poids. En l’absence de pompe ou de turbine, elle ne peut que <strong>décroître</strong> dans le sens de l’écoulement (la dégradation par frottement ne peut qu’ôter de l’énergie).</p>
+<p><strong>La ligne piézométrique</strong> représente la charge sans le terme cinétique : <span class="math inline">\(z + p/\rho g\)</span> — l’énergie potentielle (position + pression) par unité de poids. C’est la cote qu’atteindrait l’eau dans un tube piézométrique branché sur la conduite. L’écart entre la ligne de charge et la ligne piézométrique est exactement la charge cinétique <span class="math inline">\(V^2/2g\)</span>.</p>
+<div id="cell-fig-ligne-charge" class="cell" data-execution_count="1">
+<div class="cell-output cell-output-display">
+<div id="fig-ligne-charge" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ligne-charge-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="0_2_modelisation_energie_files/figure-html/fig-ligne-charge-output-1.png" width="854" height="467" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ligne-charge-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Ligne de charge et ligne piézométrique le long d’une conduite alimentée par un réservoir. La décroissance de la ligne de charge mesure l’énergie mécanique irréversiblement dégradée. Le saut à mi-parcours correspond à la dégradation localisée par une vanne partiellement fermée.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="lire-une-ligne-de-charge" class="level3" data-number="3.2">
+<h3 data-number="3.2" class="anchored" data-anchor-id="lire-une-ligne-de-charge"><span class="header-section-number">3.2</span> Lire une ligne de charge</h3>
+<p>La pente de la ligne de charge a une signification physique directe : c’est le <strong>taux de dégradation de l’énergie mécanique</strong> par unité de longueur. Une pente forte signifie une dégradation rapide (tronçon de fort frottement, vitesse élevée). Un saut vertical signale une <strong>dégradation localisée</strong> — une perte de charge singulière à un ouvrage (vanne, coude, jonction).</p>
+<p>La position relative des deux lignes est aussi riche d’enseignement :</p>
+<ul>
+<li>Si la ligne piézométrique passe <strong>en dessous de l’axe de la conduite</strong>, la pression y est négative (dépression) — risque de cavitation et d’entrée d’air.</li>
+<li>Si la ligne piézométrique est <strong>au-dessus du terrain naturel</strong>, une fuite éventuelle se traduit par une sortie d’eau sous pression.</li>
+<li>L’écart constant entre les deux lignes (quand la section est constante) confirme que la charge cinétique ne varie pas — tout le travail du frottement se fait au détriment de la pression.</li>
+</ul>
+<hr>
+</section>
+</section>
+<section id="le-théorème-de-bernoulli-comme-bilan-dénergie" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="le-théorème-de-bernoulli-comme-bilan-dénergie"><span class="header-section-number">4</span> Le théorème de Bernoulli comme bilan d’énergie</h2>
+<section id="la-forme-conservative" class="level3" data-number="4.1">
+<h3 data-number="4.1" class="anchored" data-anchor-id="la-forme-conservative"><span class="header-section-number">4.1</span> La forme conservative</h3>
+<p>Pour un écoulement permanent de fluide parfait incompressible (sans frottement), le théorème de Bernoulli énonce que la charge se conserve le long d’une ligne de courant :</p>
+<p><span class="math display">\[z + \frac{p}{\rho g} + \frac{V^2}{2g} = \text{constante}\]</span></p>
+<p>Lu énergétiquement, cet énoncé est le <strong>théorème de conservation de l’énergie mécanique</strong> appliqué au fluide : en l’absence de dissipation, l’énergie mécanique totale par unité de poids reste constante. Le fluide peut échanger de l’énergie entre ses trois formes (convertir de l’énergie de pression en énergie cinétique en accélérant dans un rétrécissement, par exemple), mais la somme reste invariante.</p>
+</section>
+<section id="la-forme-généralisée-avec-dégradation" class="level3" data-number="4.2">
+<h3 data-number="4.2" class="anchored" data-anchor-id="la-forme-généralisée-avec-dégradation"><span class="header-section-number">4.2</span> La forme généralisée avec dégradation</h3>
+<p>Aucun écoulement réel n’est sans frottement. Le théorème de Bernoulli généralisé introduit un terme de <strong>dégradation énergétique</strong> <span class="math inline">\(\Delta H_{1 \to 2}\)</span> entre deux sections :</p>
+<p><span class="math display">\[\underbrace{z_1 + \frac{p_1}{\rho g} + \frac{V_1^2}{2g}}_{H_1 \text{ : énergie en amont}} = \underbrace{z_2 + \frac{p_2}{\rho g} + \frac{V_2^2}{2g}}_{H_2 \text{ : énergie en aval}} + \underbrace{\Delta H_{1 \to 2}}_{\text{énergie dégradée}}\]</span></p>
+<p>Cette équation est un <strong>bilan d’énergie mécanique</strong> : l’énergie mécanique en amont se retrouve en aval, diminuée de la part irréversiblement dégradée en chaleur par le frottement. Chaque terme a une interprétation énergétique précise :</p>
+<ul>
+<li><span class="math inline">\(z\)</span> : énergie potentielle de position échangeable réversiblement (un fluide qui monte stocke de l’énergie, un fluide qui descend la restitue)</li>
+<li><span class="math inline">\(p/\rho g\)</span> : énergie de pression échangeable réversiblement (compression/détente)</li>
+<li><span class="math inline">\(V^2/2g\)</span> : énergie cinétique échangeable réversiblement (accélération/décélération)</li>
+<li><span class="math inline">\(\Delta H_{1 \to 2}\)</span> : énergie mécanique perdue <strong>irréversiblement</strong> — elle ne reviendra jamais sous forme mécanique</li>
+</ul>
+<p>Cette dernière distinction est fondamentale et c’est elle que l’approche énergétique met en lumière : les trois premiers termes sont des formes interchangeables de l’énergie mécanique, le quatrième est une <strong>fuite définitive</strong> vers l’énergie thermique.</p>
+<hr>
+</section>
+</section>
+<section id="la-dégradation-énergétique" class="level2" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="la-dégradation-énergétique"><span class="header-section-number">5</span> La dégradation énergétique</h2>
+<section id="la-perte-de-charge-est-une-conversion-irréversible" class="level3" data-number="5.1">
+<h3 data-number="5.1" class="anchored" data-anchor-id="la-perte-de-charge-est-une-conversion-irréversible"><span class="header-section-number">5.1</span> La perte de charge est une conversion irréversible</h3>
+<p>Le terme <span class="math inline">\(\Delta H\)</span> que l’hydraulicien appelle “perte de charge” porte un nom trompeur du point de vue énergétique. L’énergie n’est pas “perdue” au sens où elle disparaîtrait — le premier principe de la thermodynamique l’interdit. Elle est <strong>convertie</strong> : l’énergie mécanique dégradée par le frottement visqueux et la turbulence se retrouve sous forme d’<strong>énergie thermique</strong> — le fluide et la conduite s’échauffent très légèrement.</p>
+<p>Cette conversion est <strong>irréversible</strong> : le second principe de la thermodynamique interdit que cette énergie thermique se reconvertisse spontanément en énergie mécanique organisée. C’est pourquoi une perte de charge ne se “récupère” jamais — contrairement à une conversion énergie de pression ↔︎ énergie cinétique, qui est réversible.</p>
+<div id="cell-fig-degradation" class="cell" data-execution_count="2">
+<div class="cell-output cell-output-display">
+<div id="fig-degradation" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-degradation-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="0_2_modelisation_energie_files/figure-html/fig-degradation-output-1.png" width="853" height="430" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-degradation-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Dégradation cumulée de l’énergie mécanique le long d’un réseau. La part régulière (frottement réparti) croît linéairement ; les sauts correspondent aux dégradations localisées aux ouvrages. L’énergie dégradée ne peut, par principe, que croître dans le sens de l’écoulement.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="quel-échauffement" class="level3" data-number="5.2">
+<h3 data-number="5.2" class="anchored" data-anchor-id="quel-échauffement"><span class="header-section-number">5.2</span> Quel échauffement ?</h3>
+<p>L’ordre de grandeur de l’échauffement associé à une perte de charge est instructif. Une perte de charge <span class="math inline">\(\Delta H\)</span> (en mètres) correspond à une énergie dégradée par unité de masse de <span class="math inline">\(g \Delta H\)</span> (en J/kg). Si toute cette énergie échauffe le fluide (capacité thermique massique de l’eau <span class="math inline">\(c_{eau} \approx 4185\)</span> J/(kg·K)), l’élévation de température est :</p>
+<p><span class="math display">\[\Delta T = \frac{g \Delta H}{c_{eau}}\]</span></p>
+<p>Pour une perte de charge de 100 m (un ordre de grandeur élevé, typique d’un long refoulement) :</p>
+<p><span class="math display">\[\Delta T = \frac{9{,}81 \times 100}{4185} \approx 0{,}23 \text{ °C}\]</span></p>
+<p>L’échauffement est minuscule — c’est pourquoi on l’ignore en pratique pour l’hydraulique. Mais ce calcul rappelle une réalité physique : <strong>l’énergie dégradée ne disparaît pas, elle chauffe l’eau</strong>. Ce principe devient important dans certains contextes : conduites forcées de grande chute, circuits de refroidissement industriels, et plus généralement tout couplage hydraulique-thermique (traité dans une note dédiée de la série).</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Le lien avec l’entropie
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>La dégradation énergétique est, au sens thermodynamique strict, une <strong>production d’entropie</strong>. Le frottement visqueux convertit de l’énergie mécanique organisée (mouvement d’ensemble du fluide) en agitation thermique désordonnée (énergie interne). Cette production d’entropie est la signature de l’irréversibilité — et c’est elle qui rend la perte de charge fondamentalement différente des échanges réversibles entre les trois formes de l’énergie mécanique. L’hydraulicien qui dit “perte de charge” décrit en réalité une production d’entropie.</p>
+</div>
+</div>
+<hr>
+</section>
+</section>
+<section id="la-puissance-hydraulique" class="level2" data-number="6">
+<h2 data-number="6" class="anchored" data-anchor-id="la-puissance-hydraulique"><span class="header-section-number">6</span> La puissance hydraulique</h2>
+<section id="de-lénergie-à-la-puissance" class="level3" data-number="6.1">
+<h3 data-number="6.1" class="anchored" data-anchor-id="de-lénergie-à-la-puissance"><span class="header-section-number">6.1</span> De l’énergie à la puissance</h3>
+<p>L’énergie par unité de poids (la charge <span class="math inline">\(H\)</span>) devient une <strong>puissance</strong> dès qu’on la multiplie par le débit-poids <span class="math inline">\(\rho g Q\)</span> (le poids de fluide qui transite par seconde). La <strong>puissance hydraulique</strong> d’un écoulement de débit <span class="math inline">\(Q\)</span> et de charge <span class="math inline">\(H\)</span> est :</p>
+<p><span class="math display">\[P_{hyd} = \rho g Q H \qquad \text{(en watts)}\]</span></p>
+<p>Cette grandeur est la clé qui relie l’hydraulique à l’énergétique opérationnelle :</p>
+<ul>
+<li>La <strong>puissance dégradée</strong> dans un tronçon est <span class="math inline">\(P_{deg} = \rho g Q \Delta H\)</span> — c’est la puissance mécanique irréversiblement perdue par frottement.</li>
+<li>La <strong>puissance fournie par une pompe</strong> est <span class="math inline">\(P_{pompe} = \rho g Q H_{pompe}\)</span> — l’énergie mécanique apportée au fluide par seconde.</li>
+<li>La <strong>puissance récupérable par une turbine</strong> est <span class="math inline">\(P_{turbine} = \rho g Q H_{turbine}\)</span> — l’énergie mécanique extraite du fluide par seconde.</li>
+</ul>
+</section>
+<section id="le-rendement-énergétique-dune-pompe" class="level3" data-number="6.2">
+<h3 data-number="6.2" class="anchored" data-anchor-id="le-rendement-énergétique-dune-pompe"><span class="header-section-number">6.2</span> Le rendement énergétique d’une pompe</h3>
+<p>Une pompe ne convertit jamais intégralement l’énergie électrique qu’elle consomme en énergie hydraulique fournie au fluide. Le <strong>rendement</strong> <span class="math inline">\(\eta\)</span> caractérise cette conversion :</p>
+<p><span class="math display">\[\eta = \frac{P_{hyd}}{P_{absorbée}} = \frac{\rho g Q H}{P_{électrique}}\]</span></p>
+<p>La puissance électrique réellement consommée est donc :</p>
+<p><span class="math display">\[P_{électrique} = \frac{\rho g Q H}{\eta}\]</span></p>
+<p>Cette relation est le pont direct entre le <strong>dimensionnement hydraulique</strong> et la <strong>facture énergétique</strong> de l’exploitant. Elle montre aussi pourquoi le point de fonctionnement d’une pompe doit se situer dans sa plage de rendement optimal : une pompe qui fonctionne loin de son rendement maximal consomme une énergie électrique disproportionnée pour le service rendu.</p>
+<div id="cell-fig-puissance-pompe" class="cell" data-execution_count="3">
+<div class="cell-output cell-output-display">
+<div id="fig-puissance-pompe" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-puissance-pompe-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="0_2_modelisation_energie_files/figure-html/fig-puissance-pompe-output-1.png" width="1045" height="438" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-puissance-pompe-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: Lecture énergétique du fonctionnement d’une pompe. À gauche : le point de fonctionnement est l’intersection de la courbe de la pompe et de la courbe du réseau. À droite : le rendement à ce point conditionne directement la puissance électrique consommée. Un point de fonctionnement hors de la plage de rendement optimal pénalise fortement la facture énergétique.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="le-rendement-énergétique-global-dun-réseau" class="level3" data-number="6.3">
+<h3 data-number="6.3" class="anchored" data-anchor-id="le-rendement-énergétique-global-dun-réseau"><span class="header-section-number">6.3</span> Le rendement énergétique global d’un réseau</h3>
+<p>À l’échelle d’un réseau entier, on peut définir un <strong>rendement énergétique global</strong> : le rapport entre l’énergie hydraulique utile (celle effectivement délivrée aux usagers à la pression requise) et l’énergie totale fournie (par les pompes et/ou par la gravité). Ce rendement est dégradé par toutes les pertes de charge du réseau — chaque mètre de perte de charge est une fraction de l’énergie d’entrée convertie en chaleur plutôt qu’en service rendu.</p>
+<p>Cette lecture énergétique globale est devenue un enjeu opérationnel majeur : dans un contexte de coût croissant de l’énergie, l’<strong>efficience énergétique des réseaux d’eau</strong> (réduction des pertes de charge évitables, optimisation du pompage, récupération d’énergie par micro-turbines sur les conduites en charge excédentaire) est un domaine en plein développement.</p>
+<hr>
+</section>
+</section>
+<section id="le-coup-de-bélier-vu-sous-langle-énergétique" class="level2" data-number="7">
+<h2 data-number="7" class="anchored" data-anchor-id="le-coup-de-bélier-vu-sous-langle-énergétique"><span class="header-section-number">7</span> Le coup de bélier vu sous l’angle énergétique</h2>
+<section id="une-conversion-énergie-cinétique-énergie-élastique" class="level3" data-number="7.1">
+<h3 data-number="7.1" class="anchored" data-anchor-id="une-conversion-énergie-cinétique-énergie-élastique"><span class="header-section-number">7.1</span> Une conversion énergie cinétique ↔︎ énergie élastique</h3>
+<p>Le coup de bélier est traité en détail dans une note dédiée de la série, sous l’angle des ondes et de la méthode des caractéristiques. L’approche énergétique en donne une lecture complémentaire particulièrement éclairante.</p>
+<p>Lorsqu’une vanne se ferme brusquement, le fluide en mouvement possède une <strong>énergie cinétique</strong> <span class="math inline">\(\frac{1}{2}\rho \mathcal{V} V_0^2\)</span>. Cette énergie ne peut pas disparaître instantanément. Elle se convertit en <strong>énergie élastique</strong> : l’énergie de compression du fluide (l’eau est légèrement compressible) et l’énergie de déformation élastique de la paroi de la conduite (qui se dilate sous la surpression).</p>
+<p>Cette conversion énergie cinétique → énergie élastique est <strong>réversible</strong> (aux pertes par frottement près) : l’énergie élastique stockée se reconvertit en énergie cinétique lorsque l’onde repart en sens inverse, et le cycle recommence. C’est pourquoi le coup de bélier est un phénomène <strong>oscillant</strong> — un échange périodique entre deux formes d’énergie, exactement comme un pendule échange énergie cinétique et énergie potentielle.</p>
+<div id="cell-fig-energie-belier" class="cell" data-execution_count="4">
+<div class="cell-output cell-output-display">
+<div id="fig-energie-belier" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-energie-belier-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="0_2_modelisation_energie_files/figure-html/fig-energie-belier-output-1.png" width="855" height="430" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-energie-belier-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: Coup de bélier : oscillation de l’énergie entre forme cinétique (fluide en mouvement) et forme élastique (compression du fluide et déformation de la conduite). L’énergie mécanique totale décroît lentement sous l’effet du frottement — c’est cet amortissement qui finit par dissiper le coup de bélier.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="pourquoi-lénergie-explique-lamplitude" class="level3" data-number="7.2">
+<h3 data-number="7.2" class="anchored" data-anchor-id="pourquoi-lénergie-explique-lamplitude"><span class="header-section-number">7.2</span> Pourquoi l’énergie explique l’amplitude</h3>
+<p>L’approche énergétique explique immédiatement deux faits expérimentaux du coup de bélier qui semblent mystérieux dans l’approche par les forces seule :</p>
+<p><strong>Pourquoi la surpression est-elle proportionnelle à la vitesse initiale <span class="math inline">\(V_0\)</span> ?</strong> Parce que l’énergie cinétique à convertir est <span class="math inline">\(\frac{1}{2}\rho \mathcal{V} V_0^2\)</span> et que la surpression correspond au stockage de cette énergie sous forme élastique. Plus la vitesse initiale est grande, plus il y a d’énergie cinétique à “absorber” élastiquement, donc plus la surpression est forte. (La formule de Joukowsky <span class="math inline">\(\Delta H = c V_0 / g\)</span> est la traduction quantitative de ce bilan énergétique.)</p>
+<p><strong>Pourquoi une conduite rigide génère-t-elle des surpressions plus fortes qu’une conduite souple ?</strong> Parce que la même énergie cinétique doit être stockée sous forme élastique. Une conduite souple (PE, PVC) se déforme facilement — elle “absorbe” l’énergie en se dilatant, sans monter trop en pression. Une conduite rigide (acier, fonte) se déforme peu — toute l’énergie élastique se stocke sous forme de compression du fluide, ce qui exige une surpression beaucoup plus élevée. La rigidité du système conditionne la “raideur” de ce ressort énergétique, donc l’amplitude de la pression.</p>
+<p>Cette lecture énergétique est exactement celle qui sous-tend la formule de la célérité de Korteweg : la célérité <span class="math inline">\(c\)</span> dépend du module de compressibilité de l’eau <strong>et</strong> du module d’élasticité de la conduite — les deux “ressorts” qui stockent l’énergie élastique.</p>
+<hr>
+</section>
+</section>
+<section id="lénergie-dans-chaque-domaine-de-leau" class="level2" data-number="8">
+<h2 data-number="8" class="anchored" data-anchor-id="lénergie-dans-chaque-domaine-de-leau"><span class="header-section-number">8</span> L’énergie dans chaque domaine de l’eau</h2>
+<p>L’approche énergétique offre une grille de lecture transversale aux trois grands domaines traités dans la série :</p>
+<p><strong>En adduction d’eau potable</strong>, l’énergie est avant tout un <strong>coût d’exploitation</strong>. Le pompage représente souvent le premier poste de dépense énergétique d’un service d’eau. Chaque perte de charge évitable (conduite sous-dimensionnée, vanne mal réglée, rugosité accrue par entartrage) est une surconsommation électrique directe. La lecture énergétique du réseau AEP est donc indissociable de son optimisation économique.</p>
+<p><strong>En assainissement gravitaire</strong>, l’énergie est essentiellement <strong>fournie par la gravité</strong> et <strong>dégradée par le frottement</strong>. Le dimensionnement consiste à organiser cette dégradation : assez de pente pour assurer l’auto-curage (vitesse suffisante = énergie cinétique suffisante pour transporter les sédiments), mais pas trop pour éviter les vitesses érosives et la nécessité de dissipateurs d’énergie aux chutes. L’auto-curage lui-même est, énergétiquement, la condition que l’énergie de l’écoulement soit suffisante pour maintenir les particules en mouvement plutôt que de les laisser se déposer.</p>
+<p><strong>En irrigation gravitaire</strong>, l’énergie disponible est celle du dénivelé topographique entre la ressource et les parcelles. Toute la conception d’un réseau gravitaire consiste à gérer cette énergie : la distribuer équitablement entre les prises (uniformité), la dissiper de façon contrôlée aux ouvrages de régulation, et éviter de la gaspiller en pertes par infiltration. En irrigation sous pression, l’énergie est fournie par pompage — et la contrainte d’uniformité de distribution se lit énergétiquement comme une contrainte sur l’homogénéité de l’énergie disponible aux émetteurs.</p>
+<hr>
+</section>
+<section id="conclusion" class="level2" data-number="9">
+<h2 data-number="9" class="anchored" data-anchor-id="conclusion"><span class="header-section-number">9</span> Conclusion</h2>
+<p>L’approche énergétique n’est pas un point de vue parmi d’autres sur l’hydraulique — c’est la grille de lecture qui unifie l’ensemble des phénomènes traités dans cette série. La charge est une énergie. La perte de charge est une dégradation irréversible de cette énergie en chaleur, gouvernée par le second principe. Le coup de bélier est une oscillation entre énergie cinétique et énergie élastique. Le dimensionnement d’une pompe est un problème de puissance et de rendement. L’auto-curage est une condition énergétique sur l’écoulement.</p>
+<p>Garder cette grille de lecture à l’esprit transforme la compréhension des phénomènes hydrauliques : là où l’approche par les forces décrit <em>ce qui se passe</em>, l’approche énergétique explique souvent <em>pourquoi cela se passe ainsi</em>. Le réflexe du mécanicien — toujours doubler l’analyse des forces d’un bilan d’énergie — est l’une des compétences les plus précieuses de l’ingénieur hydraulicien.</p>
+<p>Les notes suivantes de la série mobiliseront constamment cette double lecture : chaque fois qu’un phénomène est décrit par ses équations de quantité de mouvement, il sera utile de se demander <em>où est l’énergie, sous quelle forme, et comment elle se transforme</em>.</p>
+<hr>
+</section>
+<section id="pour-aller-plus-loin-dans-cette-série" class="level2" data-number="10">
+<h2 data-number="10" class="anchored" data-anchor-id="pour-aller-plus-loin-dans-cette-série"><span class="header-section-number">10</span> Pour aller plus loin dans cette série</h2>
+<ul>
+<li><strong>Note 0.1</strong> — <em>Généralités sur la modélisation des réseaux hydrauliques</em> : la cascade dimensionnelle et les régimes, à relire sous l’angle énergétique</li>
+<li><strong>Note 0.3</strong> — <em>Les ouvrages hydrauliques : physique et conditions aux limites</em> : chaque ouvrage comme un point d’apport, de stockage ou de dégradation d’énergie</li>
+<li><strong>Note 2.A2</strong> — <em>Coups de bélier en réseau AEP</em> : le traitement complet du coup de bélier, dont cette note donne la lecture énergétique</li>
+<li><strong>Note 2.D</strong> — <em>Pompes et turbines : machines hydrauliques en réseau</em> : l’apport et l’extraction d’énergie mécanique au fluide</li>
+<li><strong>Note 3.3</strong> — <em>Qualité de l’eau et thermique</em> : le couplage entre l’écoulement et les transferts thermiques, prolongement de la dégradation énergétique</li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copié");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copié");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>© 2026 Johary - Ingénieur Hydraulicien</p>
+</div>   
+    <div class="nav-footer-center">
+<p><span style="font-size:0.85em; color:#888;"> Copyright © 2026 SmartHydro </span></p>
+</div>
+    <div class="nav-footer-right">
+<p>Conception par Johary Ramorasata</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+<script src="../../site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

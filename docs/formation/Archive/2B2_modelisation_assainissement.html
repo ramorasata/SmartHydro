@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="fr" xml:lang="fr"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="">
+
+<title>Modélisation pluviale : de la pluie au débit – Johary - Ingénieur Hydraulicien</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<link href="../../static/avatar.jpg" rel="icon" type="image/jpeg">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark-23bbe8b5e4efc1e257f6d59dce478b08.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-7f128302b46659ec05c1cdf12d27b5f1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-dark-fcb2e74b6da07224c5b59afd36009af3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../../site_libs/bootstrap/bootstrap-7f128302b46659ec05c1cdf12d27b5f1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "Pas de résultats",
+    "search-matching-documents-text": "documents trouvés",
+    "search-copy-link-title": "Copier le lien vers la recherche",
+    "search-hide-matches-text": "Cacher les correspondances additionnelles",
+    "search-more-match-text": "correspondance de plus dans ce document",
+    "search-more-matches-text": "correspondances de plus dans ce document",
+    "search-clear-button-title": "Effacer",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Annuler",
+    "search-submit-button-title": "Envoyer",
+    "search-label": "Recherche"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+<meta property="og:title" content="Modélisation pluviale : de la pluie au débit – Johary - Ingénieur Hydraulicien">
+<meta property="og:description" content="Calage et validation d’un modèle d’assainissement pluvial">
+<meta property="og:site_name" content="Johary - Ingénieur Hydraulicien">
+<meta property="og:locale" content="fr_FR">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Johary - Ingénieur Hydraulicien</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Recherche"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Basculer la navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link active" href="../../index.html" aria-current="page"> 
+<span class="menu-text">Accueil</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../formation/index.html"> 
+<span class="menu-text">Formation</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../etudes-de-cas/index.html"> 
+<span class="menu-text">Études de cas</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../geomatique/index.html"> 
+<span class="menu-text">Géomatique</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../programmation/index.html"> 
+<span class="menu-text">Programmation</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../parcours/index.html"> 
+<span class="menu-text">Parcours</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../contact.html"> 
+<span class="menu-text">Contact</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/ramorasata"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://www.linkedin.com/in/johariniaina-ramorasata"> <i class="bi bi-linkedin" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../en/index.qmd"> 
+<span class="menu-text">EN</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Basculer le mode sombre"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Basculer la barre latérale" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item">Modélisation pluviale : de la pluie au débit</li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Basculer la barre latérale" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🏠 Accueil</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../formation/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🌊 Formation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../etudes-de-cas/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">📐 Études de cas</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../geomatique/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🌍 Géomatique</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../programmation/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🐍 Programmation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../parcours/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🗺️ Parcours</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../contact.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">✉️ Contact</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Sommaire</h2>
+   
+  <ul>
+  <li><a href="#la-pluie-comme-donnée-dentrée-nature-et-représentations" id="toc-la-pluie-comme-donnée-dentrée-nature-et-représentations" class="nav-link active" data-scroll-target="#la-pluie-comme-donnée-dentrée-nature-et-représentations"><span class="header-section-number">1</span> La pluie comme donnée d’entrée : nature et représentations</a>
+  <ul class="collapse">
+  <li><a href="#une-variable-aléatoire-spatiale-et-temporelle" id="toc-une-variable-aléatoire-spatiale-et-temporelle" class="nav-link" data-scroll-target="#une-variable-aléatoire-spatiale-et-temporelle"><span class="header-section-number">1.1</span> Une variable aléatoire, spatiale et temporelle</a></li>
+  <li><a href="#les-données-disponibles" id="toc-les-données-disponibles" class="nav-link" data-scroll-target="#les-données-disponibles"><span class="header-section-number">1.2</span> Les données disponibles</a></li>
+  <li><a href="#la-courbe-idf-loutil-statistique-de-référence" id="toc-la-courbe-idf-loutil-statistique-de-référence" class="nav-link" data-scroll-target="#la-courbe-idf-loutil-statistique-de-référence"><span class="header-section-number">1.3</span> La courbe IDF : l’outil statistique de référence</a></li>
+  <li><a href="#la-période-de-retour-ce-quelle-signifie-vraiment" id="toc-la-période-de-retour-ce-quelle-signifie-vraiment" class="nav-link" data-scroll-target="#la-période-de-retour-ce-quelle-signifie-vraiment"><span class="header-section-number">1.4</span> La période de retour : ce qu’elle signifie vraiment</a></li>
+  </ul></li>
+  <li><a href="#de-la-pluie-brute-à-la-pluie-nette-le-ruissellement" id="toc-de-la-pluie-brute-à-la-pluie-nette-le-ruissellement" class="nav-link" data-scroll-target="#de-la-pluie-brute-à-la-pluie-nette-le-ruissellement"><span class="header-section-number">2</span> De la pluie brute à la pluie nette : le ruissellement</a>
+  <ul class="collapse">
+  <li><a href="#le-bilan-hydrologique-sur-un-bassin-versant-urbain" id="toc-le-bilan-hydrologique-sur-un-bassin-versant-urbain" class="nav-link" data-scroll-target="#le-bilan-hydrologique-sur-un-bassin-versant-urbain"><span class="header-section-number">2.1</span> Le bilan hydrologique sur un bassin versant urbain</a></li>
+  <li><a href="#le-coefficient-de-ruissellement-c" id="toc-le-coefficient-de-ruissellement-c" class="nav-link" data-scroll-target="#le-coefficient-de-ruissellement-c"><span class="header-section-number">2.2</span> Le coefficient de ruissellement <span class="math inline">\(C\)</span></a></li>
+  <li><a href="#les-méthodes-avancées-de-calcul-de-la-pluie-nette" id="toc-les-méthodes-avancées-de-calcul-de-la-pluie-nette" class="nav-link" data-scroll-target="#les-méthodes-avancées-de-calcul-de-la-pluie-nette"><span class="header-section-number">2.3</span> Les méthodes avancées de calcul de la pluie nette</a></li>
+  </ul></li>
+  <li><a href="#de-la-pluie-nette-au-débit-la-transformation-hydrologique" id="toc-de-la-pluie-nette-au-débit-la-transformation-hydrologique" class="nav-link" data-scroll-target="#de-la-pluie-nette-au-débit-la-transformation-hydrologique"><span class="header-section-number">3</span> De la pluie nette au débit : la transformation hydrologique</a>
+  <ul class="collapse">
+  <li><a href="#le-temps-de-concentration-la-grandeur-clé" id="toc-le-temps-de-concentration-la-grandeur-clé" class="nav-link" data-scroll-target="#le-temps-de-concentration-la-grandeur-clé"><span class="header-section-number">3.1</span> Le temps de concentration : la grandeur clé</a></li>
+  <li><a href="#la-méthode-rationnelle-le-cas-le-plus-simple" id="toc-la-méthode-rationnelle-le-cas-le-plus-simple" class="nav-link" data-scroll-target="#la-méthode-rationnelle-le-cas-le-plus-simple"><span class="header-section-number">3.2</span> La méthode rationnelle : le cas le plus simple</a></li>
+  <li><a href="#lhydrogramme-unitaire-la-forme-temporelle-de-la-réponse" id="toc-lhydrogramme-unitaire-la-forme-temporelle-de-la-réponse" class="nav-link" data-scroll-target="#lhydrogramme-unitaire-la-forme-temporelle-de-la-réponse"><span class="header-section-number">3.3</span> L’hydrogramme unitaire : la forme temporelle de la réponse</a></li>
+  </ul></li>
+  <li><a href="#les-pluies-de-projet-construction-et-choix" id="toc-les-pluies-de-projet-construction-et-choix" class="nav-link" data-scroll-target="#les-pluies-de-projet-construction-et-choix"><span class="header-section-number">4</span> Les pluies de projet : construction et choix</a>
+  <ul class="collapse">
+  <li><a href="#les-courbes-montana" id="toc-les-courbes-montana" class="nav-link" data-scroll-target="#les-courbes-montana"><span class="header-section-number">4.1</span> Les courbes Montana</a></li>
+  <li><a href="#le-choix-de-la-durée-critique" id="toc-le-choix-de-la-durée-critique" class="nav-link" data-scroll-target="#le-choix-de-la-durée-critique"><span class="header-section-number">4.2</span> Le choix de la durée critique</a></li>
+  <li><a href="#les-pluies-à-répartition-temporelle-double-triangle-et-chicago" id="toc-les-pluies-à-répartition-temporelle-double-triangle-et-chicago" class="nav-link" data-scroll-target="#les-pluies-à-répartition-temporelle-double-triangle-et-chicago"><span class="header-section-number">4.3</span> Les pluies à répartition temporelle : double triangle et Chicago</a></li>
+  </ul></li>
+  <li><a href="#la-modélisation-continue-longue-durée" id="toc-la-modélisation-continue-longue-durée" class="nav-link" data-scroll-target="#la-modélisation-continue-longue-durée"><span class="header-section-number">5</span> La modélisation continue longue durée</a>
+  <ul class="collapse">
+  <li><a href="#pourquoi-simuler-sur-une-longue-série" id="toc-pourquoi-simuler-sur-une-longue-série" class="nav-link" data-scroll-target="#pourquoi-simuler-sur-une-longue-série"><span class="header-section-number">5.1</span> Pourquoi simuler sur une longue série ?</a></li>
+  <li><a href="#les-données-nécessaires" id="toc-les-données-nécessaires" class="nav-link" data-scroll-target="#les-données-nécessaires"><span class="header-section-number">5.2</span> Les données nécessaires</a></li>
+  <li><a href="#les-indicateurs-de-sortie" id="toc-les-indicateurs-de-sortie" class="nav-link" data-scroll-target="#les-indicateurs-de-sortie"><span class="header-section-number">5.3</span> Les indicateurs de sortie</a></li>
+  </ul></li>
+  <li><a href="#le-calage-du-modèle-pluvial-méthodes-et-difficultés" id="toc-le-calage-du-modèle-pluvial-méthodes-et-difficultés" class="nav-link" data-scroll-target="#le-calage-du-modèle-pluvial-méthodes-et-difficultés"><span class="header-section-number">6</span> Le calage du modèle pluvial : méthodes et difficultés</a>
+  <ul class="collapse">
+  <li><a href="#les-paramètres-à-caler" id="toc-les-paramètres-à-caler" class="nav-link" data-scroll-target="#les-paramètres-à-caler"><span class="header-section-number">6.1</span> Les paramètres à caler</a></li>
+  <li><a href="#les-données-de-calage" id="toc-les-données-de-calage" class="nav-link" data-scroll-target="#les-données-de-calage"><span class="header-section-number">6.2</span> Les données de calage</a></li>
+  <li><a href="#la-procédure-de-calage" id="toc-la-procédure-de-calage" class="nav-link" data-scroll-target="#la-procédure-de-calage"><span class="header-section-number">6.3</span> La procédure de calage</a></li>
+  <li><a href="#les-difficultés-spécifiques-au-calage-pluvial" id="toc-les-difficultés-spécifiques-au-calage-pluvial" class="nav-link" data-scroll-target="#les-difficultés-spécifiques-au-calage-pluvial"><span class="header-section-number">6.4</span> Les difficultés spécifiques au calage pluvial</a></li>
+  </ul></li>
+  <li><a href="#la-validation-et-les-limites-du-modèle" id="toc-la-validation-et-les-limites-du-modèle" class="nav-link" data-scroll-target="#la-validation-et-les-limites-du-modèle"><span class="header-section-number">7</span> La validation et les limites du modèle</a>
+  <ul class="collapse">
+  <li><a href="#caler-valider" id="toc-caler-valider" class="nav-link" data-scroll-target="#caler-valider"><span class="header-section-number">7.1</span> Caler ≠ valider</a></li>
+  <li><a href="#indicateurs-de-qualité" id="toc-indicateurs-de-qualité" class="nav-link" data-scroll-target="#indicateurs-de-qualité"><span class="header-section-number">7.2</span> Indicateurs de qualité</a></li>
+  <li><a href="#ce-que-le-modèle-pluvial-ne-peut-pas-faire" id="toc-ce-que-le-modèle-pluvial-ne-peut-pas-faire" class="nav-link" data-scroll-target="#ce-que-le-modèle-pluvial-ne-peut-pas-faire"><span class="header-section-number">7.3</span> Ce que le modèle pluvial ne peut pas faire</a></li>
+  </ul></li>
+  <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion"><span class="header-section-number">8</span> Conclusion</a></li>
+  <li><a href="#pour-aller-plus-loin-dans-cette-série" id="toc-pour-aller-plus-loin-dans-cette-série" class="nav-link" data-scroll-target="#pour-aller-plus-loin-dans-cette-série"><span class="header-section-number">9</span> Pour aller plus loin dans cette série</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Modélisation pluviale : de la pluie au débit</h1>
+<p class="subtitle lead">Calage et validation d’un modèle d’assainissement pluvial</p>
+  <div class="quarto-categories">
+    <div class="quarto-category">Hydraulique</div>
+    <div class="quarto-category">Assainissement</div>
+    <div class="quarto-category">Hydrologie</div>
+    <div class="quarto-category">Modélisation</div>
+    <div class="quarto-category">Ingénierie</div>
+  </div>
+  </div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+    <div>
+    <div class="quarto-title-meta-heading">Date de publication</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">16 mai 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Note de la série
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Cette note fait partie d’une série sur la modélisation des réseaux hydrauliques. Elle suppose la lecture des notes <em>Généralités sur la modélisation des réseaux hydrauliques</em>, <em>Modéliser un réseau d’assainissement — spécificités physiques et enjeux métier</em>, et <em>Dimensionnement d’un réseau gravitaire</em>. On aborde ici la chaîne complète pluie → ruissellement → débit dans le réseau, avec une attention particulière au calage et à ses difficultés spécifiques au contexte pluvial urbain.</p>
+</div>
+</div>
+<section id="la-pluie-comme-donnée-dentrée-nature-et-représentations" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="la-pluie-comme-donnée-dentrée-nature-et-représentations"><span class="header-section-number">1</span> La pluie comme donnée d’entrée : nature et représentations</h2>
+<section id="une-variable-aléatoire-spatiale-et-temporelle" class="level3" data-number="1.1">
+<h3 data-number="1.1" class="anchored" data-anchor-id="une-variable-aléatoire-spatiale-et-temporelle"><span class="header-section-number">1.1</span> Une variable aléatoire, spatiale et temporelle</h3>
+<p>La pluie est fondamentalement différente des autres données d’entrée d’un modèle hydraulique. Un diamètre de conduite est une donnée géométrique mesurable avec précision. Une courbe de pompe est une caractéristique physique déterministe. La pluie, elle, est une <strong>variable aléatoire</strong> dans le temps et dans l’espace — elle ne se répète jamais exactement, et sa mesure en un point ne représente qu’imparfaitement ce qui tombe sur un bassin versant.</p>
+<p>Cette nature aléatoire est la source principale d’incertitude de toute modélisation pluviale. Même un modèle hydraulique parfaitement calé produira des résultats incertains si la pluie d’entrée est mal connue.</p>
+</section>
+<section id="les-données-disponibles" class="level3" data-number="1.2">
+<h3 data-number="1.2" class="anchored" data-anchor-id="les-données-disponibles"><span class="header-section-number">1.2</span> Les données disponibles</h3>
+<p><strong>Le pluviographe</strong> est l’instrument de mesure de référence. Il enregistre la hauteur de pluie en un point au pas de temps fin (1 à 5 minutes), permettant de reconstituer l’intensité instantanée. Sa limite est sa représentativité spatiale : un pluviographe représente typiquement un rayon de 5 à 15 km en zone de plaine, mais beaucoup moins en zone urbaine où les orages convectifs sont très localisés.</p>
+<p><strong>Le radar météorologique</strong> fournit une image spatiale de la pluie sur une grille de 1 km × 1 km (produits Météo-France, réseau ARAMIS). Il est précieux pour les grands bassins versants et les études de ruissellement urbain étendu, mais sa précision en intensité est inférieure à celle du pluviographe — le signal radar mesure une réflectivité, pas directement une hauteur de pluie. La relation <span class="math inline">\(Z = a \cdot R^b\)</span> (Marshall-Palmer) qui convertit la réflectivité <span class="math inline">\(Z\)</span> en intensité de pluie <span class="math inline">\(R\)</span> est une source d’incertitude significative.</p>
+<p><strong>Les réanalyses climatiques</strong> (ERA5, SAFRAN) reconstituent des champs de pluie historiques à partir de modèles météorologiques et de données d’observation. Utiles pour les études de changement climatique et les simulations longues durées, mais à résolution spatiale trop grossière (5 à 25 km) pour la modélisation urbaine fine.</p>
+</section>
+<section id="la-courbe-idf-loutil-statistique-de-référence" class="level3" data-number="1.3">
+<h3 data-number="1.3" class="anchored" data-anchor-id="la-courbe-idf-loutil-statistique-de-référence"><span class="header-section-number">1.3</span> La courbe IDF : l’outil statistique de référence</h3>
+<p>La <strong>courbe IDF</strong> (Intensité-Durée-Fréquence) synthétise la statistique des pluies intenses en un lieu donné. Elle donne, pour une <strong>durée</strong> <span class="math inline">\(d\)</span> et une <strong>fréquence</strong> (ou période de retour <span class="math inline">\(T\)</span>) données, l’intensité moyenne maximale <span class="math inline">\(i(d, T)\)</span> observée sur la série historique.</p>
+<p>Elle se lit ainsi : pour une durée de 30 minutes et une période de retour de 10 ans, l’intensité moyenne maximale est <span class="math inline">\(i\)</span> mm/h. Cela signifie qu’en moyenne, une pluie d’intensité supérieure à <span class="math inline">\(i\)</span> mm/h pendant 30 minutes consécutives survient une fois tous les 10 ans.</p>
+<p>Les courbes IDF sont établies par Météo-France à partir des séries longues des pluviographes. En France, les données sont disponibles via le portail Météo-France ou les études régionales (SHYREG, méthode du Gradex).</p>
+</section>
+<section id="la-période-de-retour-ce-quelle-signifie-vraiment" class="level3" data-number="1.4">
+<h3 data-number="1.4" class="anchored" data-anchor-id="la-période-de-retour-ce-quelle-signifie-vraiment"><span class="header-section-number">1.4</span> La période de retour : ce qu’elle signifie vraiment</h3>
+<p>La notion de <strong>période de retour</strong> est l’une des plus mal comprises — et des plus mal communiquées — de l’hydrologie urbaine. Il est essentiel de la poser clairement.</p>
+<p>La période de retour <span class="math inline">\(T\)</span> d’un événement n’est <strong>pas</strong> “l’intervalle de temps entre deux occurrences de cet événement”. C’est l’inverse de la probabilité annuelle de dépassement :</p>
+<p><span class="math display">\[T = \frac{1}{P(\text{événement dépassé en une année})}\]</span></p>
+<p>Une pluie décennale (<span class="math inline">\(T = 10\)</span> ans) a une probabilité <span class="math inline">\(1/10 = 10\%\)</span> d’être dépassée chaque année, indépendamment des années précédentes. Sur une durée de vie d’un ouvrage de 50 ans, la probabilité qu’une pluie décennale soit dépassée <strong>au moins une fois</strong> est :</p>
+<p><span class="math display">\[P = 1 - \left(1 - \frac{1}{T}\right)^n = 1 - \left(0{,}9\right)^{50} \approx 99{,}5\%\]</span></p>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Ce que cela signifie pour la communication avec les élus
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Un réseau dimensionné pour la pluie décennale sera très probablement mis en défaut au moins une fois dans sa vie de service. Ce n’est pas un défaut de conception — c’est la conséquence du choix de la période de retour, qui est un <strong>choix politique et économique</strong> (coût de l’ouvrage vs coût du dommage acceptable), pas un choix purement technique. L’ingénieur doit être capable d’expliquer cette réalité au maître d’ouvrage sans jargon.</p>
+</div>
+</div>
+<hr>
+</section>
+</section>
+<section id="de-la-pluie-brute-à-la-pluie-nette-le-ruissellement" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="de-la-pluie-brute-à-la-pluie-nette-le-ruissellement"><span class="header-section-number">2</span> De la pluie brute à la pluie nette : le ruissellement</h2>
+<section id="le-bilan-hydrologique-sur-un-bassin-versant-urbain" class="level3" data-number="2.1">
+<h3 data-number="2.1" class="anchored" data-anchor-id="le-bilan-hydrologique-sur-un-bassin-versant-urbain"><span class="header-section-number">2.1</span> Le bilan hydrologique sur un bassin versant urbain</h3>
+<p>Toute la pluie qui tombe sur un bassin versant ne rejoint pas le réseau d’assainissement. Une partie s’infiltre dans le sol, une partie s’évapore, une partie est interceptée par la végétation. Seule la fraction qui <strong>ruisselle</strong> sur les surfaces imperméabilisées atteint le réseau — c’est la <strong>pluie nette</strong> (ou pluie efficace).</p>
+<p>Le bilan s’écrit :</p>
+<p><span class="math display">\[P_{nette} = P_{brute} - I - E - F\]</span></p>
+<p>où <span class="math inline">\(I\)</span> est l’interception par la végétation, <span class="math inline">\(E\)</span> l’évapotranspiration, et <span class="math inline">\(F\)</span> l’infiltration dans le sol. En contexte urbain, <span class="math inline">\(E\)</span> et <span class="math inline">\(I\)</span> sont négligeables sur la durée d’un événement pluvieux intense (quelques heures) — c’est <span class="math inline">\(F\)</span> qui domine, et son estimation est le cœur du problème.</p>
+</section>
+<section id="le-coefficient-de-ruissellement-c" class="level3" data-number="2.2">
+<h3 data-number="2.2" class="anchored" data-anchor-id="le-coefficient-de-ruissellement-c"><span class="header-section-number">2.2</span> Le coefficient de ruissellement <span class="math inline">\(C\)</span></h3>
+<p>La méthode la plus simple — et la plus utilisée en pratique courante — est d’exprimer la pluie nette comme une fraction de la pluie brute via le <strong>coefficient de ruissellement</strong> <span class="math inline">\(C\)</span> :</p>
+<p><span class="math display">\[P_{nette} = C \cdot P_{brute}, \quad 0 \leq C \leq 1\]</span></p>
+<p><span class="math inline">\(C\)</span> est une propriété du bassin versant qui dépend principalement du <strong>type de surface</strong> :</p>
+<div id="tbl-ruissellement" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-ruissellement-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Coefficients de ruissellement par type de surface
+</figcaption>
+<div aria-describedby="tbl-ruissellement-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Type de surface</th>
+<th><span class="math inline">\(C\)</span> typique</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Toiture (béton, tuile, ardoise)</td>
+<td>0,85 — 0,95</td>
+</tr>
+<tr class="even">
+<td>Voirie bitumée</td>
+<td>0,80 — 0,90</td>
+</tr>
+<tr class="odd">
+<td>Parking béton</td>
+<td>0,75 — 0,85</td>
+</tr>
+<tr class="even">
+<td>Trottoir pavé</td>
+<td>0,70 — 0,80</td>
+</tr>
+<tr class="odd">
+<td>Espace vert tondu</td>
+<td>0,10 — 0,25</td>
+</tr>
+<tr class="even">
+<td>Jardin avec arbres</td>
+<td>0,05 — 0,15</td>
+</tr>
+<tr class="odd">
+<td>Sol nu (argile)</td>
+<td>0,30 — 0,50</td>
+</tr>
+<tr class="even">
+<td>Sol nu (sable)</td>
+<td>0,05 — 0,15</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>Pour un bassin versant hétérogène (mélange de surfaces), on calcule un <strong>coefficient de ruissellement moyen</strong> pondéré par les surfaces :</p>
+<p><span class="math display">\[C_{moyen} = \frac{\sum_k C_k \cdot A_k}{\sum_k A_k}\]</span></p>
+<p><strong>Limites du coefficient constant :</strong> <span class="math inline">\(C\)</span> est en réalité variable dans le temps — il augmente avec la durée de la pluie (saturation progressive du sol), avec l’état hydrique antérieur (sol déjà humide vs sol sec), et avec l’intensité (ruissellement hortonien sur sols peu perméables). L’utilisation d’un <span class="math inline">\(C\)</span> constant est une approximation acceptable pour le dimensionnement, mais insuffisante pour le calage fin sur des événements réels.</p>
+</section>
+<section id="les-méthodes-avancées-de-calcul-de-la-pluie-nette" class="level3" data-number="2.3">
+<h3 data-number="2.3" class="anchored" data-anchor-id="les-méthodes-avancées-de-calcul-de-la-pluie-nette"><span class="header-section-number">2.3</span> Les méthodes avancées de calcul de la pluie nette</h3>
+<p><strong>La méthode SCS-CN</strong> (Soil Conservation Service — Curve Number) est une alternative au coefficient constant qui intègre l’état hydrique antérieur du sol et la saturation progressive :</p>
+<p><span class="math display">\[P_{nette} = \frac{(P_{brute} - I_a)^2}{P_{brute} - I_a + S}\]</span></p>
+<p>où <span class="math inline">\(S = 25400/CN - 254\)</span> est la rétention potentielle maximale du sol (mm), <span class="math inline">\(CN\)</span> le <em>Curve Number</em> (0 à 100, tabulé selon le type de sol et d’occupation), et <span class="math inline">\(I_a = 0{,}2 \cdot S\)</span> l’abstraction initiale (interception + infiltration avant démarrage du ruissellement).</p>
+<p>Le <em>Curve Number</em> est un paramètre de calage puissant : il intègre à la fois le type de sol et le degré d’imperméabilisation, et sa valeur est bien documentée pour les contextes américains, moins pour le contexte français. Son utilisation en France nécessite une adaptation locale.</p>
+<p><strong>Le modèle de Green-Ampt</strong> est une approche physique qui modélise l’infiltration par la loi de Darcy dans un sol à front d’humidification net. Plus physique que SCS-CN, il nécessite des paramètres de sol (conductivité hydraulique saturée, succion capillaire) difficiles à mesurer à l’échelle d’un bassin versant urbain.</p>
+<hr>
+</section>
+</section>
+<section id="de-la-pluie-nette-au-débit-la-transformation-hydrologique" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="de-la-pluie-nette-au-débit-la-transformation-hydrologique"><span class="header-section-number">3</span> De la pluie nette au débit : la transformation hydrologique</h2>
+<section id="le-temps-de-concentration-la-grandeur-clé" class="level3" data-number="3.1">
+<h3 data-number="3.1" class="anchored" data-anchor-id="le-temps-de-concentration-la-grandeur-clé"><span class="header-section-number">3.1</span> Le temps de concentration : la grandeur clé</h3>
+<p>Le <strong>temps de concentration</strong> <span class="math inline">\(t_c\)</span> est le temps que met la goutte d’eau tombant au point le plus éloigné du bassin versant pour atteindre l’exutoire. Il détermine la durée critique de la pluie de projet (la durée pour laquelle l’intensité moyenne est maximale et toute la surface du bassin contribue simultanément à l’écoulement) et conditionne directement le débit de pointe.</p>
+<p>Plusieurs formules empiriques permettent d’estimer <span class="math inline">\(t_c\)</span> :</p>
+<p><strong>Formule de Kirpich</strong> (bassins versants ruraux, pentes &gt; 3 %) : <span class="math display">\[t_c = 0{,}0195 \cdot \frac{L^{0{,}77}}{S^{0{,}385}}\]</span></p>
+<p><strong>Formule de Passini</strong> (bassins versants urbains) : <span class="math display">\[t_c = 0{,}108 \cdot \frac{(A \cdot L)^{1/3}}{S^{1/2}}\]</span></p>
+<p><strong>Formule de Ventura</strong> : <span class="math display">\[t_c = 0{,}1272 \cdot \sqrt{\frac{A}{S}}\]</span></p>
+<p>où <span class="math inline">\(L\)</span> est la longueur du plus long chemin hydraulique (m), <span class="math inline">\(A\)</span> la superficie du bassin versant (km²), et <span class="math inline">\(S\)</span> la pente moyenne (m/m).</p>
+<p>Ces formules donnent des résultats très différents pour un même bassin — des écarts de 30 à 50 % sont courants. <span class="math inline">\(t_c\)</span> est l’un des paramètres les plus incertains de la modélisation pluviale, et l’un des plus sensibles sur le débit de pointe.</p>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Avertissement</span><span class="math inline">\(t_c\)</span> : une grandeur à caler, pas à calculer aveuglément
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Les formules empiriques de <span class="math inline">\(t_c\)</span> ont été calées sur des bassins versants spécifiques (ruraux américains pour Kirpich, urbains européens pour Passini). Leur application directe à un bassin versant différent peut induire des erreurs significatives. En pratique, <span class="math inline">\(t_c\)</span> est un <strong>paramètre de calage</strong> : on l’ajuste jusqu’à ce que le temps de montée de l’hydrogramme simulé corresponde à celui mesuré. Les formules empiriques donnent une valeur initiale, pas une valeur définitive.</p>
+</div>
+</div>
+</section>
+<section id="la-méthode-rationnelle-le-cas-le-plus-simple" class="level3" data-number="3.2">
+<h3 data-number="3.2" class="anchored" data-anchor-id="la-méthode-rationnelle-le-cas-le-plus-simple"><span class="header-section-number">3.2</span> La méthode rationnelle : le cas le plus simple</h3>
+<p>La <strong>méthode rationnelle</strong> est la méthode de calcul du débit de pointe la plus ancienne et la plus utilisée pour les petits bassins versants urbains (&lt; 1 km²) :</p>
+<p><span class="math display">\[Q_p = \frac{1}{360} \cdot C \cdot i(t_c, T) \cdot A\]</span></p>
+<p>où <span class="math inline">\(Q_p\)</span> est le débit de pointe (m³/s), <span class="math inline">\(C\)</span> le coefficient de ruissellement, <span class="math inline">\(i(t_c, T)\)</span> l’intensité de pluie pour une durée <span class="math inline">\(t_c\)</span> et une période de retour <span class="math inline">\(T\)</span> (mm/h), et <span class="math inline">\(A\)</span> la superficie du bassin versant (ha).</p>
+<p>Le facteur <span class="math inline">\(1/360\)</span> assure la cohérence des unités. La méthode rationnelle repose sur une hypothèse forte : <strong>le débit de pointe est atteint lorsque toute la surface du bassin contribue simultanément</strong>, ce qui correspond à une durée de pluie égale à <span class="math inline">\(t_c\)</span>. Pour des durées inférieures à <span class="math inline">\(t_c\)</span>, seule une partie du bassin contribue (débit inférieur) ; pour des durées supérieures, l’intensité est plus faible (débit aussi inférieur pour un <span class="math inline">\(C\)</span> constant).</p>
+<p><strong>Domaine de validité :</strong> bassins versants &lt; 1 km², temps de concentration &lt; 30 minutes, réponse hydrologique simple (pas de stockage significatif, bassin homogène). Au-delà, les méthodes par hydrogramme unitaire sont indispensables.</p>
+</section>
+<section id="lhydrogramme-unitaire-la-forme-temporelle-de-la-réponse" class="level3" data-number="3.3">
+<h3 data-number="3.3" class="anchored" data-anchor-id="lhydrogramme-unitaire-la-forme-temporelle-de-la-réponse"><span class="header-section-number">3.3</span> L’hydrogramme unitaire : la forme temporelle de la réponse</h3>
+<p>La méthode rationnelle donne le <strong>débit de pointe</strong>, mais pas la <strong>forme temporelle</strong> du débit (l’hydrogramme). Pour le dimensionnement des ouvrages de stockage (bassins de rétention) ou la simulation de la propagation dans le réseau, on a besoin de l’hydrogramme complet.</p>
+<p>Le principe de l’<strong>hydrogramme unitaire</strong> est de décomposer la pluie nette en une série d’impulsions élémentaires, et de convoluer chaque impulsion avec une <strong>réponse unitaire</strong> <span class="math inline">\(u(t)\)</span> (l’hydrogramme produit par une impulsion de pluie nette de 1 mm sur le bassin) :</p>
+<p><span class="math display">\[Q(t) = \sum_k P_{nette,k} \cdot u(t - k \cdot \Delta t)\]</span></p>
+<p>où la somme porte sur tous les pas de temps de pluie nette.</p>
+<p>Plusieurs formes de réponse unitaire sont utilisées en pratique :</p>
+<p><strong>Hydrogramme triangulaire</strong> : montée linéaire jusqu’au pic à <span class="math inline">\(t = t_c\)</span>, descente linéaire jusqu’à <span class="math inline">\(t = 2{,}67 \cdot t_c\)</span>. Simple, deux paramètres (<span class="math inline">\(t_c\)</span> et <span class="math inline">\(Q_p\)</span>), utilisé dans les méthodes SCS.</p>
+<p><strong>Hydrogramme de Desbordes</strong> : développé spécifiquement pour les bassins versants urbains français. Il intègre un paramètre <span class="math inline">\(w\)</span> de forme qui tient compte du degré d’imperméabilisation.</p>
+<p><strong>Modèle de Nash</strong> : hydrogramme en forme de gamma, caractérisé par <span class="math inline">\(n\)</span> réservoirs linéaires en série de temps de stockage <span class="math inline">\(K\)</span> chacun. Paramètres : <span class="math inline">\(n\)</span> et <span class="math inline">\(K\)</span>, calés sur les hydrogrammes observés.</p>
+<hr>
+</section>
+</section>
+<section id="les-pluies-de-projet-construction-et-choix" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="les-pluies-de-projet-construction-et-choix"><span class="header-section-number">4</span> Les pluies de projet : construction et choix</h2>
+<section id="les-courbes-montana" class="level3" data-number="4.1">
+<h3 data-number="4.1" class="anchored" data-anchor-id="les-courbes-montana"><span class="header-section-number">4.1</span> Les courbes Montana</h3>
+<p>La <strong>formule de Montana</strong> est la représentation analytique simplifiée de la courbe IDF, valable pour des durées entre quelques minutes et quelques heures :</p>
+<p><span class="math display">\[i = a \cdot t^{-b}\]</span></p>
+<p>où <span class="math inline">\(i\)</span> est l’intensité moyenne (mm/h), <span class="math inline">\(t\)</span> la durée (minutes ou heures selon la convention), et <span class="math inline">\(a\)</span>, <span class="math inline">\(b\)</span> les coefficients de Montana locaux. Ces coefficients varient selon la station pluviométrique et la période de retour considérée.</p>
+<p>Les coefficients de Montana sont disponibles auprès de Météo-France pour les principales stations françaises, ou peuvent être estimés à partir de la méthode SHYREG pour les zones sans données longues séries.</p>
+<p><strong>Exemple :</strong> pour une station donnée, <span class="math inline">\(a = 5{,}3\)</span> et <span class="math inline">\(b = 0{,}63\)</span> pour <span class="math inline">\(T = 10\)</span> ans (durées en minutes). L’intensité pour une durée de 30 minutes est <span class="math inline">\(i = 5{,}3 \times 30^{-0{,}63} \approx 15{,}8\)</span> mm/h.</p>
+</section>
+<section id="le-choix-de-la-durée-critique" class="level3" data-number="4.2">
+<h3 data-number="4.2" class="anchored" data-anchor-id="le-choix-de-la-durée-critique"><span class="header-section-number">4.2</span> Le choix de la durée critique</h3>
+<p>La <strong>durée critique</strong> de la pluie de projet est la durée pour laquelle le débit de pointe à l’exutoire est maximal. Pour la méthode rationnelle, cette durée est <span class="math inline">\(t_c\)</span> par construction. Pour des modèles plus sophistiqués, la durée critique peut différer de <span class="math inline">\(t_c\)</span> — notamment si le réseau présente des effets de stockage significatifs.</p>
+<p>En pratique, on teste souvent plusieurs durées (0,5 <span class="math inline">\(t_c\)</span>, <span class="math inline">\(t_c\)</span>, 2 <span class="math inline">\(t_c\)</span>) et on retient la durée qui maximise le débit simulé à l’exutoire d’intérêt.</p>
+</section>
+<section id="les-pluies-à-répartition-temporelle-double-triangle-et-chicago" class="level3" data-number="4.3">
+<h3 data-number="4.3" class="anchored" data-anchor-id="les-pluies-à-répartition-temporelle-double-triangle-et-chicago"><span class="header-section-number">4.3</span> Les pluies à répartition temporelle : double triangle et Chicago</h3>
+<p>La formule de Montana donne une <strong>intensité moyenne</strong> sur une durée donnée — elle ne dit rien de la <strong>répartition temporelle</strong> de la pluie au sein de cet épisode. Or, la forme temporelle de la pluie influence fortement la forme de l’hydrogramme et le débit de pointe, notamment pour les bassins versants avec effets de stockage.</p>
+<p><strong>La pluie double triangle</strong> (ou pluie en bloc) répartit l’intensité uniformément sur toute la durée — c’est l’hypothèse la plus simple et la plus conservatrice pour le débit de pointe d’un bassin sans stockage.</p>
+<p><strong>La pluie de Chicago</strong> (<em>Chicago Design Storm</em>, Keifer &amp; Chu, 1957) est une pluie synthétique dont la courbe IDF est respectée pour toutes les durées centrées sur le pic. Elle est construite de façon à ce que l’intensité maximale sur toute sous-durée <span class="math inline">\(d\)</span> soit exactement l’intensité de la courbe IDF pour cette durée et cette période de retour. Elle produit un pic d’intensité très marqué, généralement plus défavorable que la pluie en bloc pour les réseaux avec stockage.</p>
+<p>Le paramètre <span class="math inline">\(r\)</span> de la pluie de Chicago (<span class="math inline">\(0 &lt; r &lt; 1\)</span>) positionne le pic dans la durée totale : <span class="math inline">\(r = 0{,}5\)</span> place le pic au milieu, <span class="math inline">\(r = 0{,}3\)</span> place le pic à 30 % de la durée (pic précoce). En France, <span class="math inline">\(r = 0{,}5\)</span> est la valeur conventionnelle la plus utilisée.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Astuce</span>Pluie de projet vs pluie observée : quand utiliser laquelle ?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>La <strong>pluie de projet</strong> (Montana, Chicago) est l’outil du <strong>dimensionnement</strong> : elle permet de vérifier qu’un ouvrage résiste à une pluie de fréquence donnée, avec un cadre réglementaire clair. La <strong>pluie observée</strong> (pluviogramme réel) est l’outil du <strong>calage</strong> et de la <strong>simulation longue durée</strong> : elle permet de confronter le modèle à la réalité et de calculer des statistiques de fonctionnement sur longue période. Les deux usages sont complémentaires et nécessaires — un modèle calé uniquement sur des pluies de projet n’a pas été confronté à la variabilité réelle des événements pluvieux.</p>
+</div>
+</div>
+<hr>
+</section>
+</section>
+<section id="la-modélisation-continue-longue-durée" class="level2" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="la-modélisation-continue-longue-durée"><span class="header-section-number">5</span> La modélisation continue longue durée</h2>
+<section id="pourquoi-simuler-sur-une-longue-série" class="level3" data-number="5.1">
+<h3 data-number="5.1" class="anchored" data-anchor-id="pourquoi-simuler-sur-une-longue-série"><span class="header-section-number">5.1</span> Pourquoi simuler sur une longue série ?</h3>
+<p>La simulation événementielle (une pluie de projet → un hydrogramme de sortie) est l’outil standard du dimensionnement. Mais elle présente une limite fondamentale : elle ne permet pas de calculer des <strong>statistiques de fonctionnement</strong> sur longue période — fréquence de débordement, volume annuel déversé, nombre de jours de mise en charge.</p>
+<p>Ces statistiques sont pourtant indispensables pour deux types d’applications :</p>
+<ul>
+<li><strong>L’évaluation réglementaire des déversoirs d’orage</strong> : la DCE et les arrêtés de rejet imposent des limites sur le volume annuel déversé ou le nombre d’événements de déversement. Ces indicateurs ne peuvent être calculés que par simulation sur une longue série pluviométrique.</li>
+<li><strong>L’analyse coût-bénéfice des ouvrages de stockage</strong> : le dimensionnement optimal d’un bassin de rétention dépend de la distribution statistique des volumes ruisselés, pas d’un seul événement de référence.</li>
+</ul>
+</section>
+<section id="les-données-nécessaires" class="level3" data-number="5.2">
+<h3 data-number="5.2" class="anchored" data-anchor-id="les-données-nécessaires"><span class="header-section-number">5.2</span> Les données nécessaires</h3>
+<p>Une simulation longue durée nécessite une <strong>série pluviométrique continue</strong> sur 10 à 30 ans, au pas de temps fin (1 à 5 minutes) pour capter les épisodes intenses. En France, Météo-France dispose de séries longues pour les principales stations pluviographiques. Pour les zones sans station de référence proche, les produits radar longues séries (ANTILOPE, COMEPHORE) sont une alternative, avec les réserves sur leur précision en intensité.</p>
+<p>La qualité de la série est critique : les lacunes, les pannes d’instruments, et les changements de site de mesure introduisent des biais qui se répercutent directement sur les statistiques simulées.</p>
+</section>
+<section id="les-indicateurs-de-sortie" class="level3" data-number="5.3">
+<h3 data-number="5.3" class="anchored" data-anchor-id="les-indicateurs-de-sortie"><span class="header-section-number">5.3</span> Les indicateurs de sortie</h3>
+<p>Les sorties d’une simulation longue durée sont des <strong>séries temporelles</strong> de débit, hauteur d’eau et volume déversé, à partir desquelles on calcule :</p>
+<ul>
+<li><strong>Fréquence de débordement</strong> : nombre moyen d’événements par an où la hauteur d’eau dépasse le niveau du tampon de regard en un point donné</li>
+<li><strong>Volume annuel déversé</strong> au déversoir d’orage : moyenne sur la série simulée, à comparer aux limites réglementaires</li>
+<li><strong>Courbe de dépassement</strong> : durée cumulée par an pendant laquelle le débit dépasse un seuil donné</li>
+<li><strong>Statistiques de mise en charge</strong> : fréquence et durée des épisodes de mise en charge par tronçon</li>
+</ul>
+<p>Ces indicateurs permettent de positionner le réseau par rapport aux objectifs réglementaires et de quantifier l’effet des aménagements envisagés (bassin de rétention, séparation de réseau, désimperméabilisation).</p>
+<hr>
+</section>
+</section>
+<section id="le-calage-du-modèle-pluvial-méthodes-et-difficultés" class="level2" data-number="6">
+<h2 data-number="6" class="anchored" data-anchor-id="le-calage-du-modèle-pluvial-méthodes-et-difficultés"><span class="header-section-number">6</span> Le calage du modèle pluvial : méthodes et difficultés</h2>
+<section id="les-paramètres-à-caler" class="level3" data-number="6.1">
+<h3 data-number="6.1" class="anchored" data-anchor-id="les-paramètres-à-caler"><span class="header-section-number">6.1</span> Les paramètres à caler</h3>
+<p>Un modèle pluvial complet a plusieurs familles de paramètres ajustables :</p>
+<p><strong>Paramètres hydrologiques</strong> (transformation pluie → ruissellement) : - Coefficient de ruissellement <span class="math inline">\(C\)</span> (ou <em>Curve Number</em> <span class="math inline">\(CN\)</span>) - Temps de concentration <span class="math inline">\(t_c\)</span> par sous-bassin versant - Paramètre de forme de l’hydrogramme unitaire (<span class="math inline">\(n\)</span>, <span class="math inline">\(K\)</span> pour Nash ; <span class="math inline">\(w\)</span> pour Desbordes)</p>
+<p><strong>Paramètres hydrauliques</strong> (propagation dans le réseau) : - Coefficient de Strickler <span class="math inline">\(K_s\)</span> des collecteurs (par matériau ou par tronçon) - Pertes de charge singulières aux ouvrages - Paramètres des ouvrages de régulation (cotes de seuil, coefficients de débit)</p>
+</section>
+<section id="les-données-de-calage" class="level3" data-number="6.2">
+<h3 data-number="6.2" class="anchored" data-anchor-id="les-données-de-calage"><span class="header-section-number">6.2</span> Les données de calage</h3>
+<p>Le calage d’un modèle pluvial nécessite des données <strong>synchrones</strong> : la pluie mesurée et le débit mesuré doivent être enregistrés simultanément, au même pas de temps, pendant le même événement.</p>
+<p><strong>Pluviogrammes</strong> : enregistrements au pas de 1 à 5 minutes, sur les pluviographes les plus représentatifs du bassin versant. Si plusieurs pluviographes sont disponibles, une spatialisation de la pluie (interpolation de Thiessen, krigeage) est nécessaire.</p>
+<p><strong>Hydrogrammes mesurés</strong> : débits enregistrés à l’exutoire du secteur de calage (débitmètre électromagnétique ou à ultrasons, limnigraphe couplé à une courbe de tarage). Le pas de temps doit être inférieur au temps de montée de l’hydrogramme — typiquement 5 à 15 minutes pour les petits bassins versants urbains.</p>
+</section>
+<section id="la-procédure-de-calage" class="level3" data-number="6.3">
+<h3 data-number="6.3" class="anchored" data-anchor-id="la-procédure-de-calage"><span class="header-section-number">6.3</span> La procédure de calage</h3>
+<p>Le calage se conduit en <strong>deux phases successives</strong>, comme pour le modèle AEP — du global vers le local :</p>
+<p><strong>Phase 1 — Calage volumétrique :</strong> On vérifie d’abord que le volume ruisselé simulé correspond au volume mesuré à l’exutoire. C’est le bilan de masse du modèle : si le volume simulé est systématiquement supérieur au volume mesuré, le coefficient de ruissellement est surestimé (ou les pertes initiales sont sous-estimées). Si le volume simulé est inférieur, l’imperméabilisation est sous-estimée ou des apports non modélisés existent (ECP, débordements de réseau voisin).</p>
+<p><strong>Phase 2 — Calage de la forme de l’hydrogramme :</strong> Une fois le bilan volumétrique correct, on ajuste les paramètres qui gouvernent la <strong>forme temporelle</strong> de l’hydrogramme : - Le <strong>temps de montée</strong> est principalement gouverné par <span class="math inline">\(t_c\)</span> : si le pic simulé arrive trop tôt, <span class="math inline">\(t_c\)</span> est sous-estimé. - L’<strong>amplitude du pic</strong> est gouvernée conjointement par <span class="math inline">\(C\)</span> (volume) et <span class="math inline">\(t_c\)</span> (concentration dans le temps). - La <strong>décrue</strong> est principalement gouvernée par le stockage dans le réseau et les paramètres de l’hydrogramme unitaire.</p>
+</section>
+<section id="les-difficultés-spécifiques-au-calage-pluvial" class="level3" data-number="6.4">
+<h3 data-number="6.4" class="anchored" data-anchor-id="les-difficultés-spécifiques-au-calage-pluvial"><span class="header-section-number">6.4</span> Les difficultés spécifiques au calage pluvial</h3>
+<p>Le calage d’un modèle pluvial est <strong>beaucoup plus difficile</strong> que celui d’un modèle AEP, pour plusieurs raisons structurelles :</p>
+<p><strong>La corrélation entre paramètres.</strong> <span class="math inline">\(C\)</span> et <span class="math inline">\(t_c\)</span> sont fortement corrélés sur le débit de pointe : une augmentation de <span class="math inline">\(C\)</span> (plus de ruissellement) peut être compensée par une augmentation de <span class="math inline">\(t_c\)</span> (étalement dans le temps) pour produire le même pic. Il existe donc de nombreuses combinaisons de paramètres qui reproduisent le même hydrogramme observé — c’est le problème de l’<strong>équifinalité</strong>. Un modèle peut être bien calé pour les mauvaises raisons physiques.</p>
+<p><strong>La sensibilité à la pluie d’entrée.</strong> Une incertitude de 10 % sur la hauteur de pluie se traduit par une incertitude de 10 à 20 % sur le débit de pointe via <span class="math inline">\(C\)</span>. Si le pluviographe de calage n’est pas représentatif de la pluie réellement tombée sur le bassin (variabilité spatiale de l’orage), le calage est biaisé dès le départ.</p>
+<p><strong>La non-stationnarité des paramètres.</strong> <span class="math inline">\(C\)</span> varie selon l’état hydrique antérieur du sol — un même bassin versant ne réagit pas de la même façon à une pluie tombant sur sol sec ou sur sol saturé. Un modèle calé sur des événements estivaux (sol sec) peut surestimer le ruissellement lors d’événements automnaux (sol saturé), et inversement.</p>
+<p><strong>Le nombre d’événements disponibles.</strong> Un modèle AEP peut être calé sur des données continues de pression (des milliers de points de mesure). Un modèle pluvial est calé sur des événements pluvieux bien instrumentés — souvent 3 à 10 événements en pratique, ce qui est insuffisant pour contraindre tous les paramètres. La validation sur des événements indépendants est d’autant plus importante.</p>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Avertissement</span>Le calage sur un seul événement : un piège courant
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Un modèle calé sur un unique événement pluvieux peut reproduire cet événement avec une excellente précision tout en étant très mauvais sur d’autres événements — notamment si l’événement de calage était exceptionnel (orage très localisé, saturation du sol particulière). Le calage minimum acceptable couvre <strong>au moins trois événements de caractéristiques différentes</strong> : pluie courte et intense, pluie longue et modérée, événement post-pluie sur sol humide.</p>
+</div>
+</div>
+<hr>
+</section>
+</section>
+<section id="la-validation-et-les-limites-du-modèle" class="level2" data-number="7">
+<h2 data-number="7" class="anchored" data-anchor-id="la-validation-et-les-limites-du-modèle"><span class="header-section-number">7</span> La validation et les limites du modèle</h2>
+<section id="caler-valider" class="level3" data-number="7.1">
+<h3 data-number="7.1" class="anchored" data-anchor-id="caler-valider"><span class="header-section-number">7.1</span> Caler ≠ valider</h3>
+<p>Le <strong>calage</strong> ajuste les paramètres pour reproduire les observations sur un jeu de données. La <strong>validation</strong> teste le modèle calé sur un jeu de données <strong>indépendant</strong> — des événements qui n’ont pas servi au calage.</p>
+<p>Un modèle qui se cale bien mais se valide mal souffre de <strong>surapprentissage</strong> : ses paramètres ont été ajustés pour coller aux spécificités des événements de calage (bruit de mesure, variabilité spatiale d’un orage particulier) plutôt qu’aux caractéristiques physiques permanentes du bassin versant.</p>
+<p>La procédure recommandée est de <strong>séparer les données disponibles</strong> en deux jeux dès le début : 60 à 70 % pour le calage, 30 à 40 % pour la validation. Si les données sont insuffisantes pour cette séparation, une validation croisée (<em>leave-one-out</em>) est possible.</p>
+</section>
+<section id="indicateurs-de-qualité" class="level3" data-number="7.2">
+<h3 data-number="7.2" class="anchored" data-anchor-id="indicateurs-de-qualité"><span class="header-section-number">7.2</span> Indicateurs de qualité</h3>
+<p>Les mêmes indicateurs que pour le modèle AEP s’appliquent, avec des nuances spécifiques au pluvial :</p>
+<div id="tbl-qualite" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-qualite-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;2: Indicateurs de qualité du calage pour un modèle pluvial
+</figcaption>
+<div aria-describedby="tbl-qualite-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Indicateur</th>
+<th>Formule</th>
+<th>Seuil acceptable</th>
+<th>Ce qu’il mesure</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Nash-Sutcliffe (NSE) sur débit</td>
+<td><span class="math inline">\(1 - \frac{\sum(Q_{sim}-Q_{obs})^2}{\sum(Q_{obs}-\bar{Q}_{obs})^2}\)</span></td>
+<td><span class="math inline">\(&gt; 0{,}70\)</span></td>
+<td>Performance globale sur l’hydrogramme</td>
+</tr>
+<tr class="even">
+<td>NSE sur <span class="math inline">\(\sqrt{Q}\)</span></td>
+<td>Idem avec <span class="math inline">\(\sqrt{Q}\)</span></td>
+<td><span class="math inline">\(&gt; 0{,}75\)</span></td>
+<td>Plus sensible aux débits faibles</td>
+</tr>
+<tr class="odd">
+<td>Erreur sur le volume</td>
+<td><span class="math inline">\(\frac{V_{sim} - V_{obs}}{V_{obs}}\)</span></td>
+<td><span class="math inline">\(&lt; \pm 10\%\)</span></td>
+<td>Bilan de masse</td>
+</tr>
+<tr class="even">
+<td>Erreur sur le pic</td>
+<td><span class="math inline">\(\frac{Q_{p,sim} - Q_{p,obs}}{Q_{p,obs}}\)</span></td>
+<td><span class="math inline">\(&lt; \pm 15\%\)</span></td>
+<td>Valeur dimensionnante</td>
+</tr>
+<tr class="odd">
+<td>Erreur sur le temps au pic</td>
+<td><span class="math inline">\(|t_{p,sim} - t_{p,obs}|\)</span></td>
+<td><span class="math inline">\(&lt; \Delta t\)</span> du pas de temps</td>
+<td>Dynamique temporelle</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>Le <strong>NSE sur <span class="math inline">\(\sqrt{Q}\)</span></strong> est particulièrement utile en assainissement pluvial : il donne plus de poids aux débits faibles et modérés (qui correspondent aux événements fréquents) sans ignorer les pointes. Le NSE classique, dominé par les écarts aux pics, peut conduire à optimiser uniquement le débit de pointe au détriment de la reproduction du volume et de la dynamique de décrue.</p>
+</section>
+<section id="ce-que-le-modèle-pluvial-ne-peut-pas-faire" class="level3" data-number="7.3">
+<h3 data-number="7.3" class="anchored" data-anchor-id="ce-que-le-modèle-pluvial-ne-peut-pas-faire"><span class="header-section-number">7.3</span> Ce que le modèle pluvial ne peut pas faire</h3>
+<p><strong>Extrapoler aux pluies extrêmes hors domaine de calage.</strong> Un modèle calé sur des événements décennaux n’a aucune garantie de performance pour une pluie centennale — les mécanismes de ruissellement peuvent changer de nature (saturation généralisée, voies d’eau préférentielles, débordements de réseaux). La prudence s’impose dans l’interprétation des résultats pour les périodes de retour très élevées.</p>
+<p><strong>Intégrer le changement climatique.</strong> Les coefficients de Montana et les courbes IDF sont établis sur des séries historiques supposées stationnaires. Or, le changement climatique modifie la fréquence et l’intensité des précipitations extrêmes — les études récentes suggèrent une augmentation des pluies courtes et intenses en France métropolitaine. Un modèle calé sur des données historiques peut sous-estimer les débits futurs.</p>
+<p><strong>Simuler l’évolution de l’urbanisation.</strong> Un modèle calé sur le bassin versant actuel ne prédit pas correctement les débits après densification ou désimperméabilisation futures. Les études prospectives doivent modifier les coefficients de ruissellement en conséquence — et quantifier l’incertitude associée.</p>
+<p><strong>Localiser les inondations de surface.</strong> Un modèle 1D de réseau simule la mise en charge et les débordements aux regards, mais ne prédit pas où va l’eau une fois en surface ni comment elle s’écoule dans les rues. Cette question nécessite un couplage avec un modèle 2D de surface (cf.&nbsp;note 2.B3 et note 3.2).</p>
+<hr>
+</section>
+</section>
+<section id="conclusion" class="level2" data-number="8">
+<h2 data-number="8" class="anchored" data-anchor-id="conclusion"><span class="header-section-number">8</span> Conclusion</h2>
+<p>La modélisation pluviale est la discipline hydraulique où l’incertitude est la plus grande et où la rigueur du calage est la plus exigeante. Elle mobilise à la fois des compétences hydrologiques (statistiques des pluies, modèles de ruissellement) et hydrauliques (propagation dans le réseau), dans un contexte où les données sont souvent insuffisantes et où les paramètres sont corrélés entre eux.</p>
+<p>La valeur d’un modèle pluvial bien conduit n’est pas dans la précision de ses résultats absolus — elle est dans sa capacité à <strong>comparer des scénarios</strong> de façon cohérente : un bassin de rétention réduit-il la fréquence de débordement ? Une désimperméabilisation améliore-t-elle le bilan des déversoirs d’orage ? Ces questions relatives sont bien plus robustes à l’incertitude des paramètres que les valeurs absolues de débit ou de hauteur d’eau.</p>
+<hr>
+</section>
+<section id="pour-aller-plus-loin-dans-cette-série" class="level2" data-number="9">
+<h2 data-number="9" class="anchored" data-anchor-id="pour-aller-plus-loin-dans-cette-série"><span class="header-section-number">9</span> Pour aller plus loin dans cette série</h2>
+<ul>
+<li><strong>Note 2.B3</strong> — <em>Surcharges et engorgements : modéliser les événements extrêmes en assainissement</em> : Saint-Venant transitoire, fente de Preissmann en pratique, dual-drainage 1D/2D</li>
+<li><strong>Note 3.1</strong> — <em>Calage et validation de modèles hydrauliques</em> : méthodes d’optimisation automatique, analyse de sensibilité formelle, équifinalité</li>
+<li><strong>Note 3.2</strong> — <em>Quand le 1D ne suffit plus</em> : couplage réseau/surface, modèles 2D de ruissellement urbain</li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copié");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copié");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>© 2026 Johary - Ingénieur Hydraulicien</p>
+</div>   
+    <div class="nav-footer-center">
+<p><span style="font-size:0.85em; color:#888;"> Copyright © 2026 SmartHydro </span></p>
+</div>
+    <div class="nav-footer-right">
+<p>Conception par Johary Ramorasata</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+<script src="../../site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>
