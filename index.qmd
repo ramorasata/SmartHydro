@@ -15,7 +15,7 @@ toc: false
   <div class="sh-hero-content">
     <p class="sh-hero-eyebrow">Ressources en hydraulique urbaine</p>
     <h1 class="sh-hero-title">Comprendre l'eau,<br><span>maîtriser les réseaux.</span></h1>
-    <p class="sh-hero-sub">Formations, études de cas, outils de calcul et scripts Python — tout ce qu'il faut pour progresser en hydraulique urbaine, eau potable et assainissement.</p>
+    <p class="sh-hero-sub">Notes mathématiques, outils de calcul, scripts Python — par un ingénieur en hydraulique urbaine, pour des ingénieurs.</p>
     <div class="sh-hero-actions">
       <a href="formation/index.html" class="sh-btn-primary">Explorer les ressources →</a>
       <a href="parcours.html"  class="sh-btn-ghost">Voir le parcours</a>
@@ -40,11 +40,11 @@ toc: false
   <div class="sh-stats-inner">
     <div class="sh-stat"><span class="sh-stat-n">12+</span><span class="sh-stat-l">Articles</span></div>
     <div class="sh-stat-sep"></div>
-    <div class="sh-stat"><span class="sh-stat-n">8</span><span class="sh-stat-l">Études de cas</span></div>
+    <div class="sh-stat"><span class="sh-stat-n">0</span><span class="sh-stat-l">Études de cas</span></div>
     <div class="sh-stat-sep"></div>
-    <div class="sh-stat"><span class="sh-stat-n">5</span><span class="sh-stat-l">Outils Python</span></div>
+    <div class="sh-stat"><span class="sh-stat-n">0</span><span class="sh-stat-l">Outils Python</span></div>
     <div class="sh-stat-sep"></div>
-    <div class="sh-stat"><span class="sh-stat-n">3</span><span class="sh-stat-l">Modules SIG</span></div>
+    <div class="sh-stat"><span class="sh-stat-n">0</span><span class="sh-stat-l">Modules SIG</span></div>
   </div>
 </section>
 
@@ -53,7 +53,7 @@ toc: false
   <div class="sh-section-inner">
     <div class="sh-section-header">
       <h2 class="sh-section-title">Dernières publications</h2>
-      <a href="#" class="sh-see-all">Voir tout →</a>
+      <a href="formation/index.html" class="sh-see-all">Voir tout →</a>
     </div>
     <div class="sh-carousel-wrap">
       <button class="sh-carousel-btn sh-prev" onclick="shSlide(-1)">&#8249;</button>

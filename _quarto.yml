@@ -5,7 +5,7 @@ project:
 website:
   title: "Johary - Ingénieur Hydraulicien"
   description: "hydraulique urbaine, eau potable, AEP, assainissement, python, code, SIG"
-  favicon: static/avatar.jpg
+  favicon: static/waves.svg
   search: true
   open-graph:
     locale: fr_FR
